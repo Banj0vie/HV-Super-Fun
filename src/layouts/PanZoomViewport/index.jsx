@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import './style.css';
 import TooltipButton from '../../components/buttons/TooltipButton';
+import BaseDialog from '../../components/dialogs/BaseDialog';
 
 const defaultHotspots = [
   { id: 'gold', label: 'GOLD', x: 210, y: 110, delay: 0 },
@@ -157,18 +158,12 @@ const PanZoomViewport = ({ backgroundSrc, hotspots = defaultHotspots, width, hei
       </div>
 
       {activeModal && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">{activeModal.label}</div>
-            <button className="modal-close" onClick={() => setActiveModal(null)}>X</button>
-            <div className="modal-body">
-              <div>Items Dropped</div>
-              <div style={{ marginTop: 12 }}>Chest Status</div>
-              <div style={{ marginTop: 12 }}>Next Chest In</div>
-              <div style={{ marginTop: 12 }}>Already Claimed</div>
-            </div>
-          </div>
-        </div>
+        <BaseDialog title={activeModal.label} onClose={() => setActiveModal(null)}>
+          <div>Items Dropped</div>
+          <div style={{ marginTop: 12 }}>Chest Status</div>
+          <div style={{ marginTop: 12 }}>Next Chest In</div>
+          <div style={{ marginTop: 12 }}>Already Claimed</div>
+        </BaseDialog>
       )}
     </div>
   );
