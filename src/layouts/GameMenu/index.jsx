@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { menuIcons } from '../../assets/images/baseimages';
+import { MENU_ITEMS } from '../../constants/menu';
 import MenuItem from './MenuItem';
 import ProfileBar from './ProfileBar';
 import './style.css';
@@ -8,13 +8,7 @@ import './style.css';
 const GameMenu = () => {
   const location = useLocation();
 
-  const menuItems = [
-    { path: '/house', icon: menuIcons.house, label: 'House' },
-    { path: '/farm', icon: menuIcons.farm, label: 'Farm' },
-    { path: '/market', icon: menuIcons.market, label: 'Market' },
-    { path: '/tavern', icon: menuIcons.tavern, label: 'Tavern' },
-    { path: '/', icon: menuIcons.valley, label: 'Valley' },
-  ];
+  const menuItems = MENU_ITEMS;
 
   return (
     <nav className="game-menu">

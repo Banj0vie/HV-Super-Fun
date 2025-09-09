@@ -1,6 +1,6 @@
 import React from 'react';
 import './style.css';
-import { buttonFrames } from '../../../assets/images/baseimages';
+import { buttonFrames } from '../../../constants/baseimages';
 
 const TooltipButton = ({ label, style, className = '', onClick, "data-hotspot": dataHotspot, frameSrc }) => {
   const combinedClass = `tooltip-btn ${className}`.trim();
