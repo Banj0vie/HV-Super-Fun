@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Valley from "./router/valley.jsx";
 import House from "./router/house.jsx";
 import Market from "./router/market.jsx";
-import GameMenu from "./layouts/GameMenu";
 import {
   baseFrames,
   buttonFrames,

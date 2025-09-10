@@ -4,12 +4,15 @@ import "./style.css";
 import VendorMenu from "./VendorMenu";
 import BuySeeds from "./BuySeeds";
 import RollChances from "./RollChances";
+import CustomSeedsDialog from "../CustomSeedsDialog";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const [pageIndex, setMenuIndex] = useState(0);
   // 0: Vendor Menu
   // 1: Buy Seeds
   // 2: Roll Chances
   const [selectedSeed, setSelectedSeed] = useState(0);
+  const [selectedSeedPack, setSelectedSeedPack] = useState({});
+  const [isCustomDlg, setIsCustomDlg] = useState(false);
 
   const onSeedsClicked = (id) => {
     setSelectedSeed(id);
@@ -21,14 +24,25 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   };
 
   const onBuy = (item) => {
-    if(item.count === 0){
-      
+    setSelectedSeedPack(item);
+    if (item.count === 0) {
+      setIsCustomDlg(true);
+    } else {
+      handleBuy(item);
     }
-  }
+  };
 
-  const handleBuy = () => {
+  const onConfirm = (count) => {
+    handleBuy({
+      ...selectedSeedPack,
+      count,
+    });
+    setIsCustomDlg(false);
+  };
 
-  }
+  const handleBuy = (item) => {
+    console.log("handleBuy", item, selectedSeed);
+  };
 
   return (
     <BaseDialog title={label} onClose={onClose} header={header}>
@@ -53,6 +67,15 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
             setMenuIndex(0);
           }}
         ></RollChances>
+      )}
+      {isCustomDlg && (
+        <CustomSeedsDialog
+          price={selectedSeedPack.price}
+          onConfirm={onConfirm}
+          onClose={() => {
+            setIsCustomDlg(false);
+          }}
+        ></CustomSeedsDialog>
       )}
     </BaseDialog>
   );
