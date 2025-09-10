@@ -1,14 +1,9 @@
 /* Global styles for CryptoValley */
 
-:root {
-  /* Default nine-slice border image for profile-style buttons */
-  --profile-btn-bg: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAuElEQVQ4jWNkgAIr+7j/DCSAowcWMjIwMDCwwDT3TqgnRT+DtUP8/6MHFjIywjSfvnSHJANM9VQYigsaIS5A1rxh9Va8GgNCvRmQ9bAgS25YvZVBTVkbrwEbVm+FG8LAwMDAhCxJSDM2NUw41BENRg1AMyA+wYWgBnQ1LAwMDAyXL91k0NVTZzh96Q5BQ2AJ6PKlmwgDrp45w8DAwAA3hBC4fOkmXA8jAwPpOREGjh5YyMgI45CbnQFYkEGQYdJn5wAAAABJRU5ErkJggg==');
-}
-
 /* ByteBounce Font Setup */
 @font-face {
-  font-family: 'ByteBounce';
-  src: url('/public/fonts/ByteBounce.ttf') format('truetype');
+  font-family: "ByteBounce";
+  src: url("/public/fonts/ByteBounce.ttf") format("truetype");
   font-weight: 100;
   font-style: normal;
   font-display: swap; /* Improves loading performance */
@@ -16,15 +11,15 @@
 
 /* Global font application */
 * {
-  font-family: 'ByteBounce', 'Courier New', monospace;
+  font-family: "ByteBounce", "Courier New", monospace;
 }
 
 body {
-  font-family: 'ByteBounce', 'Courier New', monospace;
+  font-family: "ByteBounce", "Courier New", monospace;
   margin: 0;
   padding: 0;
-  background-color: #2F2F2F;
-  color: #FFFFFF;
+  background-color: #2f2f2f;
+  color: #ffffff;
 }
 
 /* Ensure pixel-perfect rendering */
@@ -35,8 +30,11 @@ body {
 }
 
 /* Remove default button and input styling for game aesthetic */
-button, input, select, textarea {
-  font-family: 'ByteBounce', 'Courier New', monospace;
+button,
+input,
+select,
+textarea {
+  font-family: "ByteBounce", "Courier New", monospace;
 }
 
 /* Smooth scrolling for better UX */
@@ -45,28 +43,87 @@ html {
 }
 
 /* Global text styling for all elements */
-h1, h2, h3, h4, h5, h6, p, div, span, a, button, input, select, textarea {
-  text-shadow: rgb(43, 45, 49) -1px -1px 0px, rgb(43, 45, 49) 1px 1px 0px, rgb(43, 45, 49) -1px 0px 0px, rgb(43, 45, 49) 0px -1px 0px, rgb(43, 45, 49) 0px 1px 0px, rgb(43, 45, 49) 1px -1px 0px, rgb(43, 45, 49) 1px 0px 0px, rgb(43, 45, 49) -1px 1px 0px;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+div,
+span,
+a,
+button {
+  text-shadow: rgb(43, 45, 49) -1px -1px 0px, rgb(43, 45, 49) 1px 1px 0px,
+    rgb(43, 45, 49) -1px 0px 0px, rgb(43, 45, 49) 0px -1px 0px,
+    rgb(43, 45, 49) 0px 1px 0px, rgb(43, 45, 49) 1px -1px 0px,
+    rgb(43, 45, 49) 1px 0px 0px, rgb(43, 45, 49) -1px 1px 0px;
   color: white;
 }
 
-/* Specific sizing for headings */
-h1, h2 {
-  font-size: 1.5rem;
+div,
+p {
+  font-size: 1.75rem;
 }
 
 /* disable text selection globally */
-html, body {
+html,
+body {
   -webkit-user-select: none; /* Safari */
-  -moz-user-select: none;    /* Firefox */
-  -ms-user-select: none;     /* IE/Edge */
-  user-select: none;         /* standard */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* standard */
 }
 
 /* allow selection for controls like inputs/links */
-input, textarea, select, button, a {
+input,
+textarea,
+select,
+button,
+a {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
+}
+
+input:not(
+    [type="image" i],
+    [type="range" i],
+    [type="checkbox" i],
+    [type="radio" i]
+  ) {
+  overflow-clip-margin: 0px !important;
+  overflow: clip !important;
+}
+
+input[type="number" i] {
+  padding-block: 1px;
+  padding-inline: 2px;
+}
+
+input:not([type="image" i]) {
+  box-sizing: border-box;
+}
+
+input {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: #ffd664;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.highlight {
+  color: #ffcb5b;
+}
+
+.w-50 {
+  width: 50%;
+}
+
+.h-3rem {
+  height: 3rem;
 }

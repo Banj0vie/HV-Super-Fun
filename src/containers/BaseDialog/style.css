@@ -19,6 +19,7 @@
   padding: 16px;
   position: relative;
   z-index: 10000;
+  background-image: var(--dialog-bg);
   background-repeat: repeat-y, repeat-y, repeat-x, repeat-x;
   position: relative;
   box-shadow: none;

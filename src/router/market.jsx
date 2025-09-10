@@ -2,8 +2,8 @@ import React from 'react';
 import PanZoomViewport from '../layouts/PanZoomViewport';
 import { MARKET_VIEWPORT, MARKET_HOTSPOTS } from '../constants/market';
 import { dialogFrames } from '../constants/baseimages';
-import DexDialog from '../components/dialogs/Dex';
-import VendorDialog from '../components/dialogs/Vendor';
+import DexDialog from '../containers/Dex';
+import VendorDialog from '../containers/Vendor';
 
 const Market = () => {
   const { width, height } = MARKET_VIEWPORT;

@@ -1,0 +1,15 @@
+.balance-box {
+    font-size: 1.25rem;
+    height: 2.5rem;
+    width: 20%;
+    background: rgba(0, 0, 0, .25);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -o-border-image: var(--secondary-bg) 6 repeat;
+    border-image: var(--secondary-bg) 6 fill repeat;
+    border-image-width: .5rem;
+}

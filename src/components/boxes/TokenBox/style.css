@@ -1,0 +1,17 @@
+.token-box {
+  width: 20%;
+  text-align: start;
+  height: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -o-border-image: var(--secondary-bg) 6 repeat;
+  border-image: var(--secondary-bg) 6 fill repeat;
+  border-image-width: 0.5rem;
+  font-size: 1.65rem;
+}
+
+.token-box:hover {
+  transform: scale(1.025);
+  color: white;
+}

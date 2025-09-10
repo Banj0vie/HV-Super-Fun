@@ -1,0 +1,9 @@
+.swap-wrapper {
+    display: flex;
+}
+
+.dex-dialog {
+    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,48 @@
+.base-button-wrapper {
+  width: 100%;
+}
+
+.base-button {
+  width: 100%;
+  height: 100%;
+  min-width: 8rem;
+  min-height: 2.75rem;
+  -o-border-image: var(--base-button-bg) 15 repeat;
+  border-image: var(--base-button-bg) 15 fill repeat;
+  border-image-width: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.base-button p {
+  margin-bottom: 0.25rem;
+  margin-top: 0;
+}
+
+.base-button:hover {
+  filter: brightness(1.2);
+}
+
+@keyframes popup {
+  0% {
+    transform: scale(0.95);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
+.base-button:active {
+  border-image: var(--base-button-active-bg)
+    15 fill repeat;
+  border-image-width: 2rem;
+  animation: popup 0.1s ease-in;
+}

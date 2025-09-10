@@ -1,0 +1,27 @@
+.exchange-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  height: 2.25rem;
+  gap: 0.5rem;
+}
+
+.exchange-button p {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 20%;
+  height: 2.25rem;
+  -o-border-image: var(--secondary-bg) 6 repeat;
+  border-image: var(--secondary-bg) 6 fill repeat;
+  border-image-width: 0.5rem;
+  cursor: pointer;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.exchange-button p:hover {
+  transform: scale(1.1);
+}
