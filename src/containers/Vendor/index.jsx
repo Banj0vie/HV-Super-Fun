@@ -20,6 +20,16 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     setMenuIndex(2);
   };
 
+  const onBuy = (item) => {
+    if(item.count === 0){
+      
+    }
+  }
+
+  const handleBuy = () => {
+
+  }
+
   return (
     <BaseDialog title={label} onClose={onClose} header={header}>
       {pageIndex === 0 && (
@@ -34,6 +44,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           onBack={() => {
             setMenuIndex(0);
           }}
+          onBuy={onBuy}
         ></BuySeeds>
       )}
       {pageIndex === 2 && (

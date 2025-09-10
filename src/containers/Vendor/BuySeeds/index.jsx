@@ -5,12 +5,8 @@ import BaseDivider from "../../../components/dividers/BaseDivider";
 import BuySeedBox from "../../../components/boxes/BuySeedBox";
 import BaseButton from "../../../components/buttons/BaseButton";
 
-const BuySeeds = ({ menuId, onBack }) => {
+const BuySeeds = ({ menuId, onBack, onBuy }) => {
   const [seedPack, setSeedPack] = useState({});
-
-  const onBuy = (item) => {
-    console.log("Buy clicked", item);
-  };
 
   useEffect(() => {
     setSeedPack(SEED_PACKS.find((sp) => sp.id === menuId));

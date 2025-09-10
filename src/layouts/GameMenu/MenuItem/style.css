@@ -26,7 +26,6 @@
 .menu-label {
   text-align: center;
   font-size: 1.5rem;
-  color: inherit;
   position: absolute;
   z-index: 1;
   bottom: 0;

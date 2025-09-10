@@ -3,89 +3,101 @@ import { ID_SEED_SHOP_ITEMS } from "./id";
 
 export const SEED_PACKS = [
     {
-        id: ID_SEED_SHOP_ITEMS.FEEBLE_SEED, 
+        id: ID_SEED_SHOP_ITEMS.FEEBLE_SEED,
         items: [
             {
                 label: "1x Seed",
+                count: 1,
                 price: 1,
                 priceLabel: "1 Yield",
                 icon: seedIcons.feebleOneRandom,
             },
             {
                 label: "3x Seed",
+                count: 3,
                 price: 3,
                 priceLabel: "3 Yield",
                 icon: seedIcons.feebleThree,
             },
             {
                 label: "Custom",
+                count: 0,
                 price: -1,
                 priceLabel: "1.00 Yield x Seed",
                 icon: seedIcons.feebleOneRandom,
             },
         ],
         tip: "Feeble seeds won't give produce!",
-    },{
-        id: ID_SEED_SHOP_ITEMS.PICO_SEED, 
+    }, {
+        id: ID_SEED_SHOP_ITEMS.PICO_SEED,
         items: [
             {
                 label: "1x Seed",
+                count: 1,
                 price: 20,
                 priceLabel: "20 Yield",
                 icon: seedIcons.picoOne,
             },
             {
                 label: "3x Seed",
+                count: 3,
                 price: 60,
                 priceLabel: "60 Yield",
                 icon: seedIcons.picoThree,
             },
             {
                 label: "Custom",
+                count: 0,
                 price: -1,
                 priceLabel: "20 Yield x Seed",
                 icon: seedIcons.picoOneRandom,
             },
         ],
-    },{
-        id: ID_SEED_SHOP_ITEMS.BASIC_SEED, 
+    }, {
+        id: ID_SEED_SHOP_ITEMS.BASIC_SEED,
         items: [
             {
                 label: "1x Seed",
+                count: 1,
                 price: 100,
                 priceLabel: "100 Yield",
                 icon: seedIcons.basicOne,
             },
             {
                 label: "3x Seed",
+                count: 3,
                 price: 300,
                 priceLabel: "300 Yield",
                 icon: seedIcons.basicThree,
             },
             {
                 label: "Custom",
+                count: 0,
                 price: -1,
                 priceLabel: "100 Yield x Seed",
                 icon: seedIcons.basicOneRandom,
             },
         ],
-    },{
-        id: ID_SEED_SHOP_ITEMS.PREMIUM_SEED, 
+    }, {
+        id: ID_SEED_SHOP_ITEMS.PREMIUM_SEED,
         items: [
             {
                 label: "1x Seed",
+                count: 1,
                 price: 250,
                 priceLabel: "250 Yield",
                 icon: seedIcons.premiumOne,
             },
             {
                 label: "3x Seed",
+                count: 3,
                 price: 750,
                 priceLabel: "750 Yield",
                 icon: seedIcons.premiumThree,
             },
             {
                 label: "Custom",
+                count: 0,
                 price: -1,
                 priceLabel: "250 Yield x Seed",
                 icon: seedIcons.premiumOneRandom,
