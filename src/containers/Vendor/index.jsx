@@ -3,6 +3,7 @@ import BaseDialog from "../BaseDialog";
 import "./style.css";
 import VendorMenu from "./VendorMenu";
 import BuySeeds from "./BuySeeds";
+import RollChances from "./RollChances";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const [pageIndex, setMenuIndex] = useState(0);
   // 0: Vendor Menu
@@ -15,7 +16,9 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     setMenuIndex(1);
   };
 
-  const onRollChancesClicked = () => {};
+  const onRollChancesClicked = () => {
+    setMenuIndex(2);
+  };
 
   return (
     <BaseDialog title={label} onClose={onClose} header={header}>
@@ -32,6 +35,13 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
             setMenuIndex(0);
           }}
         ></BuySeeds>
+      )}
+      {pageIndex === 2 && (
+        <RollChances
+          onBack={() => {
+            setMenuIndex(0);
+          }}
+        ></RollChances>
       )}
     </BaseDialog>
   );

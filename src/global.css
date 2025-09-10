@@ -132,6 +132,14 @@ a {
   height: 4rem;
 }
 
+.w-full {
+  width: 100%;
+}
+
 .h-full {
   height: 100%;
+}
+
+.text-center {
+  text-align: center;
 }

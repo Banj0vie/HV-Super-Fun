@@ -9,6 +9,7 @@ import {
   buttonFrames,
   dialogFrames,
   profileAssets,
+  sliderImages,
 } from "./constants/baseimages.js";
 
 const App = () => {
@@ -48,6 +49,10 @@ const App = () => {
     document.documentElement.style.setProperty(
       "--base-button-active-bg",
       `url(${buttonFrames.baseButtonActiveBg})`
+    );
+    document.documentElement.style.setProperty(
+      "--slider-bg",
+      `url(${sliderImages.sliderBg})`
     );
   }, []);
 
