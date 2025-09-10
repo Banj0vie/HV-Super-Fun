@@ -1,14 +1,20 @@
 import React from "react";
 import BaseDialog from "../BaseDialog";
 import "./style.css";
+import VendorMenu from "./VendorMenu";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
-    return (
-        <BaseDialog title={label} onClose={onClose} header={header}>
-            <div>
-                <h1>{label}</h1>
-            </div>
-        </BaseDialog>
-    );
+  const onSeedsClicked = (id) => {};
+
+  const onRollChancesClicked = () => {};
+
+  return (
+    <BaseDialog title={label} onClose={onClose} header={header}>
+      <VendorMenu
+        onSeedsClicked={onSeedsClicked}
+        onRollChancesClicked={onRollChancesClicked}
+      ></VendorMenu>
+    </BaseDialog>
+  );
 };
 
 export default VendorDialog;

@@ -1,9 +1,9 @@
 import React from "react";
 import "./style.css";
 
-const BaseButton = ({ label = "Button", onClick }) => {
+const BaseButton = ({ className="", label = "Button", onClick }) => {
   return (
-    <div className="base-button-wrapper">
+    <div className={`${className} base-button-wrapper`}>
       <div
         className="base-button"
         onClick={(e) => {

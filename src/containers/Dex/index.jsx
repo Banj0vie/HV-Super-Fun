@@ -24,7 +24,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   }, []);
 
   return (
-    <BaseDialog title={label} onClose={onClose} header={header}>
+    <BaseDialog className="dex-wrapper" title={label} onClose={onClose} header={header}>
       <div className="dex-dialog">
         <div
           className="swap-wrapper"
