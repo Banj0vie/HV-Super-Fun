@@ -1,5 +1,6 @@
 .base-button-wrapper {
   width: 100%;
+  animation: popup 0.1s ease-in;
 }
 
 .base-button {
@@ -41,8 +42,6 @@
 }
 
 .base-button:active {
-  border-image: var(--base-button-active-bg)
-    15 fill repeat;
+  border-image: var(--base-button-active-bg) 15 fill repeat;
   border-image-width: 2rem;
-  animation: popup 0.1s ease-in;
 }

@@ -1,0 +1,45 @@
+.buy-seed-box {
+  min-height: 4rem;
+  height: auto;
+  -o-border-image: var(--primary-bg) 6 repeat;
+  border-image: var(--primary-bg) 6 fill repeat;
+  border-image-width: 0.5rem;
+  padding: 1rem;
+}
+
+.buy-seed-box-wrapper {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100% !important;
+  gap: 1rem;
+}
+
+.buy-seed-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.buy-seed-icon {
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+}
+
+.buy-seed-label {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.buy-seed-price {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.buy-seed-button-wrapper {
+  height: 4rem;
+  width: 33%;
+}
