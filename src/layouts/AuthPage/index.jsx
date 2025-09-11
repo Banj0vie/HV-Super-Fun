@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./style.css";
-import { SOCIAL_LINKS } from "../../constants/urls";
+import { SOCIAL_LINKS } from "../../constants/app_url";
 import SocialLink from "../../components/links/SocialLink";
 import ConnectWalletAuthBox from "./ConnectWalletAuthBox";
-import { ID_AUTH_PAGES } from "../../constants/id";
+import { ID_AUTH_PAGES } from "../../constants/app_ids";
 import ProfileAuthBox from "./ProfileAuthBox";
 
 const AuthPage = () => {

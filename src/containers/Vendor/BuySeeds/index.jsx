@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./style.css";
-import { SEED_PACKS } from "../../../constants/seedPack";
+import { SEED_PACKS } from "../../../constants/item_seed";
 import BaseDivider from "../../../components/dividers/BaseDivider";
 import BuySeedBox from "../../../components/boxes/BuySeedBox";
 import BaseButton from "../../../components/buttons/BaseButton";

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { MENU_ITEMS } from '../../constants/menu';
+import { MENU_ITEMS } from '../../constants/app_menu';
 import MenuItem from './MenuItem';
 import ProfileBar from './ProfileBar';
 import './style.css';

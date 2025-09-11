@@ -1,5 +1,5 @@
-import { seedIcons } from "./baseimages";
-import { ID_SEED_SHOP_ITEMS, ID_SEED_CATEGORIES, ID_SEEDS } from "./id";
+import { seedIcons } from "./_baseimages";
+import { ID_SEED_SHOP_ITEMS, ID_SEED_CATEGORIES, ID_SEEDS } from "./app_ids";
 
 export const SEED_PACKS = [
     {

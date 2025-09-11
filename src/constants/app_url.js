@@ -1,4 +1,4 @@
-import { ID_SOCIAL } from "./id";
+import { ID_SOCIAL } from "./app_ids";
 
 export const SOCIAL_LINKS = [
     {

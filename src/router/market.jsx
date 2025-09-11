@@ -1,10 +1,10 @@
 import React from 'react';
 import PanZoomViewport from '../layouts/PanZoomViewport';
-import { MARKET_VIEWPORT, MARKET_HOTSPOTS } from '../constants/market';
-import { dialogFrames } from '../constants/baseimages';
+import { MARKET_VIEWPORT, MARKET_HOTSPOTS } from '../constants/scene_market';
+import { dialogFrames } from '../constants/_baseimages';
 import DexDialog from '../containers/Dex';
 import VendorDialog from '../containers/Vendor';
-import { ID_MARKET_HOTSPOTS } from '../constants/id';
+import { ID_MARKET_HOTSPOTS } from '../constants/app_ids';
 
 const Market = () => {
   const { width, height } = MARKET_VIEWPORT;

@@ -3,7 +3,7 @@ import "./style.css";
 import { ReactComponent as TwitterIcon } from "./../../../assets/social/twitter.svg";
 import { ReactComponent as DiscordIcon } from "./../../../assets/social/discord.svg";
 import { ReactComponent as TutorialIcon } from "./../../../assets/social/tutorial.svg";
-import { ID_SOCIAL } from "../../../constants/id";
+import { ID_SOCIAL } from "../../../constants/app_ids";
 
 const socialIcons = {
   [ID_SOCIAL.TWITTER]: TwitterIcon,

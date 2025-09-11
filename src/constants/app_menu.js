@@ -1,4 +1,4 @@
-import { menuIcons } from './baseimages';
+import { menuIcons } from './_baseimages';
 
 export const MENU_ITEMS = [
   { path: '/house', icon: menuIcons.house, label: 'House' },

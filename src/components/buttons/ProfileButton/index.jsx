@@ -1,6 +1,6 @@
 import React from 'react';
 import './style.css';
-import { profileAssets } from '../../../constants/baseimages';
+import { profileAssets } from '../../../constants/_baseimages';
 
 const ProfileButton = ({ icon, text, title, ariaLabel, style, bg }) => {
   const backgroundUrl = bg || profileAssets.buttonBg;

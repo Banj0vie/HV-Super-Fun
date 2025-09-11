@@ -5,8 +5,8 @@ import VendorMenu from "./VendorMenu";
 import BuySeeds from "./BuySeeds";
 import RollChances from "./RollChances";
 import CustomSeedsDialog from "../CustomSeedsDialog";
-import { ID_SEED_SHOP_ITEMS, ID_SEED_SHOP_PAGES } from "../../constants/id";
-import { SEED_PACK_STATUS } from "../../constants/seedPack";
+import { ID_SEED_SHOP_ITEMS, ID_SEED_SHOP_PAGES } from "../../constants/app_ids";
+import { SEED_PACK_STATUS } from "../../constants/item_seed";
 import SeedRollingDialog from "../SeedRollingDialog";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const [pageIndex, setPageIndex] = useState(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);

@@ -3,7 +3,7 @@ import PanZoomViewport from '../layouts/PanZoomViewport';
 const House = () => {
     return (
         <div>
-            <PanZoomViewport backgroundSrc="/images/backgrounds/house_new.png" />
+            <PanZoomViewport backgroundSrc="/images/backgrounds/house.png" />
         </div>
     );
 }

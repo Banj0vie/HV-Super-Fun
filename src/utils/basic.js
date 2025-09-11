@@ -1,4 +1,4 @@
-import { SEEDS } from "../constants/seedPack";
+import { SEEDS } from "../constants/item_seed";
 
 export function generateId(prefix = "id") {
   return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;

@@ -3,8 +3,8 @@ import "./style.css";
 import BaseDivider from "../../../components/dividers/BaseDivider";
 import BaseButton from "../../../components/buttons/BaseButton";
 import ErrorLabel from "../../../components/labels/ErrorLabel";
-import { ID_SEED_SHOP_ITEMS } from "../../../constants/id";
-import { SEED_PACK_STATUS } from "../../../constants/seedPack";
+import { ID_SEED_SHOP_ITEMS } from "../../../constants/app_ids";
+import { SEED_PACK_STATUS } from "../../../constants/item_seed";
 
 const VendorMenu = ({ seedStatus, onSeedsClicked, onRollChancesClicked }) => {
   const availablePlots = 29;

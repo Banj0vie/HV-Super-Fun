@@ -4,7 +4,7 @@ import {
   ALL_SEED_IMAGE_HEIGHT,
   ONE_SEED_HEIGHT,
   SEED_CATEGORIES,
-} from "../../../constants/seedPack";
+} from "../../../constants/item_seed";
 import { getRandomSeedEntry } from "../../../utils/basic";
 
 const SeedRollingBox = ({ seedPackId, delay = 0 }) => {

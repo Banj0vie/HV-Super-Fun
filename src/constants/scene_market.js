@@ -1,4 +1,4 @@
-import { ID_MARKET_HOTSPOTS } from "./id";
+import { ID_MARKET_HOTSPOTS } from "./app_ids";
 
 export const MARKET_VIEWPORT = {
   width: 960,

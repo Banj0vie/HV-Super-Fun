@@ -2,7 +2,7 @@ import React from 'react';
 import './style.css';
 import Avatar from './Avatar';
 import ProfileButton from '../../../components/buttons/ProfileButton';
-import { profileAssets } from '../../../constants/baseimages';
+import { profileAssets } from '../../../constants/_baseimages';
 import ProfileView from './ProfileView';
 
 const ProfileBar = () => {
