@@ -88,6 +88,20 @@ const Farm = () => {
     return availableSeeds;
   }, [currentSeeds, usedSeedsInPreview]);
 
+  // Calculate available seeds (original count minus used in preview)
+  const getAvailableSeeds = useCallback(() => {
+    const availableSeeds = currentSeeds.map(seed => ({
+      ...seed,
+      count: Math.max(0, seed.count - (usedSeedsInPreview[seed.id] || 0))
+    })).filter(seed => seed.count > 0);
+    
+    console.log('getAvailableSeeds - Original seeds:', currentSeeds.map(s => ({ id: s.id, count: s.count })));
+    console.log('getAvailableSeeds - Used seeds in preview:', usedSeedsInPreview);
+    console.log('getAvailableSeeds - Available seeds:', availableSeeds.map(s => ({ id: s.id, count: s.count })));
+    
+    return availableSeeds;
+  }, [currentSeeds, usedSeedsInPreview]);
+
   // Load crops from contract
   const loadCropsFromContract = useCallback(
     async (address) => {
@@ -343,6 +357,7 @@ const Farm = () => {
     // Plant seeds starting with the best quality
     let totalPlanted = 0;
     let remainingEmptyPlots = emptyPlots;
+    const newUsedSeeds = { ...usedSeedsInPreview }; // Track seeds used in this plantAll operation
     
     for (const seed of sortedSeeds) {
       if (remainingEmptyPlots <= 0) break;
@@ -355,6 +370,9 @@ const Farm = () => {
       const planted = newPreviewCropArray.plantAll(seed.id, seedsToPlant, growthTime);
       totalPlanted += planted;
       remainingEmptyPlots -= planted;
+      
+      // Track the seeds used in this operation
+      newUsedSeeds[seed.id] = (newUsedSeeds[seed.id] || 0) + planted;
     }
 
     console.log(`Found ${emptyPlots} empty plots:`, emptyPlotNumbers);
