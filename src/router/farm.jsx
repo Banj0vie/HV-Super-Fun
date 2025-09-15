@@ -290,7 +290,6 @@ const Farm = () => {
     let emptyPlots = 0;
     const occupiedPlots = [];
     const emptyPlotNumbers = [];
-
     for (let i = 0; i < maxPlots; i++) {
       const item = newPreviewCropArray.getItem(i);
       if (item && (item.seedId === null || item.seedId === undefined)) {
@@ -303,6 +302,59 @@ const Farm = () => {
           status: item.growStatus,
         });
       }
+    }
+    
+    console.log(`Found ${emptyPlots} empty plots:`, emptyPlotNumbers);
+    console.log(`Found ${occupiedPlots.length} occupied plots:`, occupiedPlots);
+    
+    if (emptyPlots === 0) {
+      console.log('No empty plots available');
+      alert('All your farming plots are already planted!');
+      return;
+    }
+    
+    // Sort seeds by quality (best first): LEGENDARY > EPIC > RARE > UNCOMMON > COMMON
+    const qualityOrder = {
+      'ID_SEED_TYPE_LEGENDARY': 5,
+      'ID_SEED_TYPE_EPIC': 4,
+      'ID_SEED_TYPE_RARE': 3,
+      'ID_SEED_TYPE_UNCOMMON': 2,
+      'ID_SEED_TYPE_COMMON': 1
+    };
+    
+    const sortedSeeds = currentSeeds
+      .filter(seed => seed.count > 0)
+      .sort((a, b) => {
+        const aQuality = qualityOrder[a.category] || 0;
+        const bQuality = qualityOrder[b.category] || 0;
+        if (aQuality !== bQuality) {
+          return bQuality - aQuality; // Higher quality first
+        }
+        return b.yield - a.yield; // Higher yield first for same quality
+      });
+    
+    console.log('Sorted seeds by quality:', sortedSeeds.map(s => ({ id: s.id, label: s.label, category: s.category, count: s.count })));
+    
+    if (sortedSeeds.length === 0) {
+      alert('You don\'t have any seeds to plant!');
+      return;
+    }
+    
+    // Plant seeds starting with the best quality
+    let totalPlanted = 0;
+    let remainingEmptyPlots = emptyPlots;
+    
+    for (const seed of sortedSeeds) {
+      if (remainingEmptyPlots <= 0) break;
+      
+      const seedsToPlant = Math.min(seed.count, remainingEmptyPlots);
+      if (seedsToPlant <= 0) continue;
+      
+      // Get growth time for this seed type
+      const growthTime = await getGrowthTimeForSeed(seed.id);      
+      const planted = newPreviewCropArray.plantAll(seed.id, seedsToPlant, growthTime);
+      totalPlanted += planted;
+      remainingEmptyPlots -= planted;
     }
 
     console.log(`Found ${emptyPlots} empty plots:`, emptyPlotNumbers);
@@ -658,7 +710,6 @@ const Farm = () => {
           const item = cropArray.getItem(idx);
           const endTime = item?.plantedAt + item?.growthTime;
           const isActuallyReady = currentTime >= endTime;
-
           console.log(`Plot ${idx}:`, {
             seedId: item?.seedId,
             growStatus: item?.growStatus,
@@ -796,6 +847,9 @@ const Farm = () => {
           setPreviewCropArray(cropArray);
           setIsFarmMenu(true);
         }
+        
+        // Plant the selected seed directly
+        console.log('Planting selected seed:', selectedSeed, 'at plot:', index);
         setCurrentFieldIndex(index);
         handleClickSeedFromDialog(selectedSeed, index);
         return;
@@ -887,6 +941,7 @@ const Farm = () => {
   ];
   return (
     <div>
+      
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/farm.gif"
         hotspots={hotspots}
