@@ -28,6 +28,8 @@ const Farm = () => {
   const [userAddress, setUserAddress] = useState(null);
   const [maxPlots, setMaxPlots] = useState(0);
   const [previewUpdateKey, setPreviewUpdateKey] = useState(0);
+  const [userCropsLoaded, setUserCropsLoaded] = useState(false);
+  const [usedSeedsInPreview, setUsedSeedsInPreview] = useState({}); // Track seeds used in preview
 
   // Arrays are always 30 plots (15 per side), but maxPlots determines which are enabled
 
@@ -43,10 +45,25 @@ const Farm = () => {
     }
   }, [getGrowthTime]);
 
+  // Calculate available seeds (original count minus used in preview)
+  const getAvailableSeeds = useCallback(() => {
+    const availableSeeds = currentSeeds.map(seed => ({
+      ...seed,
+      count: Math.max(0, seed.count - (usedSeedsInPreview[seed.id] || 0))
+    })).filter(seed => seed.count > 0);
+    
+    console.log('getAvailableSeeds - Original seeds:', currentSeeds.map(s => ({ id: s.id, count: s.count })));
+    console.log('getAvailableSeeds - Used seeds in preview:', usedSeedsInPreview);
+    console.log('getAvailableSeeds - Available seeds:', availableSeeds.map(s => ({ id: s.id, count: s.count })));
+    
+    return availableSeeds;
+  }, [currentSeeds, usedSeedsInPreview]);
+
   // Load crops from contract
   const loadCropsFromContract = useCallback(async (address) => {
     try {
       console.log('Loading crops for address:', address);
+      setUserCropsLoaded(false); // Reset loading state
       const contractCrops = await getUserCrops(address);
       console.log('Contract crops received:', contractCrops);
       
@@ -79,12 +96,14 @@ const Farm = () => {
         
         setCropArray(newCropArray);
         setPreviewCropArray(newCropArray);
+        setUserCropsLoaded(true); // Mark as loaded
         console.log('Final crop array:', newCropArray);
       } else {
         console.log('No crops found, initializing empty array');
         const emptyArray = new CropItemArrayClass(30);
         setCropArray(emptyArray);
         setPreviewCropArray(emptyArray);
+        setUserCropsLoaded(true); // Mark as loaded even if no crops
       }
     } catch (error) {
       console.error('Failed to load crops from contract:', error);
@@ -92,6 +111,7 @@ const Farm = () => {
       const emptyArray = new CropItemArrayClass(30);
       setCropArray(emptyArray);
       setPreviewCropArray(emptyArray);
+      setUserCropsLoaded(true); // Mark as loaded even on error
     }
   }, [getUserCrops, getGrowthTimeForSeed]);
 
@@ -160,8 +180,24 @@ const Farm = () => {
   }, []);
 
   const startPlanting = () => {
+    // Check if userCrops are loaded before allowing planting mode
+    if (!userCropsLoaded) {
+      console.log('User crops not loaded yet - cannot start planting');
+      alert('Please wait for your farm data to load before planting seeds.');
+      return;
+    }
+    
+    // Check if user has unlocked farming plots
+    if (maxPlots <= 0) {
+      console.log('No farming plots available - cannot start planting');
+      alert('You need to level up to unlock farming plots!');
+      return;
+    }
+    
     if (!isFarmMenu) {
       setPreviewCropArray(cropArray);
+      // Reset used seeds tracking when starting planting
+      setUsedSeedsInPreview({});
     }
     setIsFarmMenu(true);
     setIsPlanting(true);
@@ -174,18 +210,29 @@ const Farm = () => {
     console.log('Current seeds available:', currentSeeds);
     console.log('maxPlots:', maxPlots);
     console.log('previewCropArray:', previewCropArray);
+    console.log('userCropsLoaded:', userCropsLoaded);
+    
+    // Check if userCrops are loaded before allowing planting
+    if (!userCropsLoaded) {
+      console.log('User crops not loaded yet - cannot plant');
+      alert('Please wait for your farm data to load before planting seeds.');
+      return;
+    }
+    
+    // Check if user has unlocked farming plots
+    if (maxPlots <= 0) {
+      console.log('No farming plots available - cannot plant');
+      alert('You need to level up to unlock farming plots!');
+      return;
+    }
     
     // Ensure farm menu is open to show preview
     if (!isFarmMenu) {
       console.log('Opening farm menu for Plant All');
       setIsFarmMenu(true);
       setIsPlanting(true);
-    }
-    
-    if (maxPlots <= 0) {
-      console.log('No plots available - cannot plant');
-      alert('You need to level up to unlock farming plots!');
-      return;
+      // Reset used seeds tracking when opening farm menu
+      setUsedSeedsInPreview({});
     }
     
     // Find all empty slots by checking the actual cropArray (not preview)
@@ -246,6 +293,7 @@ const Farm = () => {
     // Plant seeds starting with the best quality
     let totalPlanted = 0;
     let remainingEmptyPlots = emptyPlots;
+    const newUsedSeeds = { ...usedSeedsInPreview }; // Track seeds used in this plantAll operation
     
     for (const seed of sortedSeeds) {
       if (remainingEmptyPlots <= 0) break;
@@ -258,6 +306,9 @@ const Farm = () => {
       const planted = newPreviewCropArray.plantAll(seed.id, seedsToPlant, growthTime);
       totalPlanted += planted;
       remainingEmptyPlots -= planted;
+      
+      // Track the seeds used in this operation
+      newUsedSeeds[seed.id] = (newUsedSeeds[seed.id] || 0) + planted;
     }
 
     // Create a new array and copy the data
@@ -266,17 +317,21 @@ const Farm = () => {
     
     // Update both state variables
     setPreviewCropArray(updatedPreviewArray);
+    setUsedSeedsInPreview(newUsedSeeds); // Update used seeds tracking
     setPreviewUpdateKey(prev => {
       const newKey = prev + 1;
       return newKey;
     });
+    
+    console.log('Plant All - Updated used seeds tracking:', newUsedSeeds);
+    console.log('Plant All - Available seeds after planting:', getAvailableSeeds());
     
     
     if (totalPlanted === 0) {
       alert('No seeds were planted. All plots may already be occupied.');
       return;
     }
-  }, [currentSeeds, getGrowthTimeForSeed, maxPlots, cropArray, isFarmMenu, previewCropArray]);
+  }, [currentSeeds, maxPlots, previewCropArray, userCropsLoaded, isFarmMenu, cropArray, usedSeedsInPreview, getAvailableSeeds, getGrowthTimeForSeed]);
 
 
   const startHarvesting = () => {
@@ -341,17 +396,26 @@ const Farm = () => {
       return;
     }
     
+    // Check if userCrops are loaded before allowing planting
+    if (!userCropsLoaded) {
+      console.log('User crops not loaded yet - cannot plant');
+      alert('Please wait for your farm data to load before planting seeds.');
+      return;
+    }
+    
+    // Check if user has unlocked farming plots
+    if (maxPlots <= 0) {
+      console.log('No farming plots available - cannot plant');
+      alert('You need to level up to unlock farming plots!');
+      setIsFarmMenu(false);
+      return;
+    }
+    
     try {
       console.log('handlePlant called - checking preview array for crops to plant');
       console.log('Current maxPlots:', maxPlots);
       console.log('Current seeds:', currentSeeds);
-      
-      if (maxPlots <= 0) {
-        console.log('No plots available - cannot plant');
-        alert('You need to level up to unlock farming plots!');
-        setIsFarmMenu(false);
-        return;
-      }
+      console.log('userCropsLoaded:', userCropsLoaded);
       
       // Find all newly planted crops in preview (growStatus === -1)
       const cropsToPlant = [];
@@ -425,6 +489,9 @@ const Farm = () => {
         newPreviewCropArray.confirmPlanting();
         return newPreviewCropArray;
       });
+      
+      // Reset used seeds tracking after successful planting
+      setUsedSeedsInPreview({});
       
       console.log('Planting complete - closing farm menu');
       setIsFarmMenu(false);
@@ -522,10 +589,26 @@ const Farm = () => {
     setSelectedIndexes([]);
     setIsFarmMenu(false);
     setIsPlanting(true);
+    // Reset used seeds tracking when canceling
+    setUsedSeedsInPreview({});
   };
 
   const onClickCrop = (isShift, index) => {
     console.log('onClickCrop called:', { isShift, index, isPlanting, selectedSeed });
+    
+    // Check if userCrops are loaded before allowing any plot interaction
+    if (!userCropsLoaded) {
+      console.log('User crops not loaded yet - cannot interact with plots');
+      alert('Please wait for your farm data to load before interacting with plots.');
+      return;
+    }
+    
+    // Check if user has unlocked farming plots
+    if (maxPlots <= 0) {
+      console.log('No farming plots available - cannot interact with plots');
+      alert('You need to level up to unlock farming plots!');
+      return;
+    }
     
     if (isPlanting) {
       // Check if plot is empty (no seedId)
@@ -581,11 +664,12 @@ const Farm = () => {
       return;
     }
     
-    // Check if seed is available in current seeds from contract
-    const seed = currentSeeds.find((s) => s.id === id);
+    // Check if seed is available considering used seeds in preview
+    const availableSeeds = getAvailableSeeds();
+    const seed = availableSeeds.find((s) => s.id === id);
     if (!seed || seed.count <= 0) {
       console.log('Seed not available or count is 0:', seed);
-      alert('You don\'t have any seeds of this type!');
+      alert('You don\'t have any more seeds of this type available!');
       return;
     }
     
@@ -600,6 +684,12 @@ const Farm = () => {
     console.log('Growth time for seed', id, ':', growthTime);
     
     newPreviewCropArray.plantCropAt(idx, id, growthTime);
+    
+    // Update used seeds tracking
+    setUsedSeedsInPreview(prev => ({
+      ...prev,
+      [id]: (prev[id] || 0) + 1
+    }));
     
     setPreviewCropArray(newPreviewCropArray);
     setSelectedSeed(id);
@@ -640,6 +730,7 @@ const Farm = () => {
           isPlanting={isPlanting}
           maxPlots={maxPlots}
           totalPlots={30}
+          userCropsLoaded={userCropsLoaded}
         />
       </PanZoomViewport>
       {isFarmMenu && (
@@ -656,6 +747,7 @@ const Farm = () => {
         <SelectSeedDialog
           onClose={() => setIsSelectCropDialog(false)}
           onClickSeed={handleClickSeedFromDialog}
+          availableSeeds={getAvailableSeeds()}
         />
       )}
     </div>
