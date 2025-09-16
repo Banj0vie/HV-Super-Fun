@@ -612,7 +612,7 @@ const Farm = () => {
 
       // Check which crops are actually ready to harvest
       const readyCrops = [];
-      const currentTime = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+      const currentTime = Math.floor(Date.now()); // Current timestamp in seconds
       console.log("Current timestamp:", currentTime);
 
       for (const idx of selectedIndexes) {
