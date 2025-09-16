@@ -19,7 +19,9 @@ const BankerDialog = ({ onClose, label = "VENDOR", header = "" }) => {
       {bankerPage === ID_BANKER_PAGES.STAKE_READY && (
         <StakeReady onBack={() => setBankerPage(ID_BANKER_PAGES.BANKER_MENU)} />
       )}
-      {bankerPage === ID_BANKER_PAGES.STAKE_LP && <StakeLP />}
+      {bankerPage === ID_BANKER_PAGES.STAKE_LP && (
+        <StakeLP onBack={() => setBankerPage(ID_BANKER_PAGES.BANKER_MENU)} />
+      )}
     </BaseDialog>
   );
 };
