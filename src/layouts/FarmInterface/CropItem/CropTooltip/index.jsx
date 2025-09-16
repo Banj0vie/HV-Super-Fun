@@ -12,32 +12,95 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
   const [locked, setLocked] = useState("0");
   const [unlocked, setUnlocked] = useState("0");
 
-  const style = {};
-
-  // Compute only the scale value from the PanZoomViewport container (if present)
-  const viewportScale = useMemo(() => {
+  // Helper to compute viewport scale (scaleX) from container transform
+  const computeViewportScale = (el) => {
     try {
-      if (!container) return 1;
-      const cs = window.getComputedStyle(container);
+      if (!el) return 1;
+      const cs = window.getComputedStyle(el);
       const transform = cs.transform;
       if (!transform || transform === "none") return 1;
-      // DOMMatrix parses the matrix and we take the a (scaleX) component
       const m = new DOMMatrix(transform);
-      // For a 2D matrix, m.a is scaleX, m.d is scaleY
       return m.a || 1;
     } catch (e) {
       return 1;
     }
-  }, [container]);
+  };
 
-  // Apply inverse scale so tooltip remains visually fixed-size when the viewport scales
-  if (viewportScale && viewportScale !== 1) {
-    style.position = container === document.body ? "fixed" : "absolute";
-    style.left = typeof pos.x === "number" ? `${pos.x}px` : pos.x;
-    style.top = typeof pos.y === "number" ? `${pos.y}px` : pos.y;
-    style.transform = `translate(0,0) scale(${1 / viewportScale})`;
-    style.transformOrigin = "0 0";
-  }
+  // Compute style based on container, pos, and current viewport scale
+  const computeStyleState = (el, p) => {
+    const base = {
+      position: el === document.body ? "fixed" : "absolute",
+      left: typeof p.x === "number" ? `${p.x}px` : p.x,
+      top: typeof p.y === "number" ? `${p.y}px` : p.y,
+      transform: "translate(0,0)",
+    };
+    const s = computeViewportScale(el);
+    if (s && s !== 1) {
+      base.transform = `translate(0,0) scale(${1 / s})`;
+      base.transformOrigin = "0 0";
+    }
+    return base;
+  };
+
+  // Keep style as state so updates trigger re-render immediately when viewport scale changes
+  const [styleState, setStyleState] = useState(() => computeStyleState(container, pos));
+
+  // Update style when container or position changes, and observe container for inline style/class updates.
+  // Move computeStyleState logic inside the effect so we don't need to include the function as a dep.
+  useEffect(() => {
+    const compute = (el, p) => {
+      try {
+        const base = {
+          position: el === document.body ? "fixed" : "absolute",
+          left: typeof p.x === "number" ? `${p.x}px` : p.x,
+          top: typeof p.y === "number" ? `${p.y}px` : p.y,
+          transform: "translate(0,0)",
+        };
+        if (!el) return base;
+        const cs = window.getComputedStyle(el);
+        const transform = cs.transform;
+        if (!transform || transform === "none") return base;
+        const m = new DOMMatrix(transform);
+        const s = m.a || 1;
+        if (s && s !== 1) {
+          base.transform = `translate(0,0) scale(${1 / s})`;
+          base.transformOrigin = "0 0";
+        }
+        return base;
+      } catch {
+        return {
+          position: container === document.body ? "fixed" : "absolute",
+          left: typeof pos.x === "number" ? `${pos.x}px` : pos.x,
+          top: typeof pos.y === "number" ? `${pos.y}px` : pos.y,
+          transform: "translate(0,0)",
+        };
+      }
+    };
+
+    setStyleState(compute(container, pos));
+    if (!container || container === document.body) return undefined;
+
+    const update = () => setStyleState(compute(container, pos));
+
+    // Observe attribute changes (style/class) on the container to detect transform updates
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && (m.attributeName === "style" || m.attributeName === "class")) {
+          update();
+          break;
+        }
+      }
+    });
+    mo.observe(container, { attributes: true, attributeFilter: ["style", "class"] });
+
+    // Also update on window resize as bounding rects may change
+    window.addEventListener("resize", update);
+
+    return () => {
+      mo.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [container, pos]);
 
   const endTime = useMemo(() => {
     if (!data?.plantedAt || !data?.growthTime) return 0;
@@ -95,7 +158,7 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
   // total was previously computed here but the UI renders the calculation inline; removed unused memo
 
   const content = (
-    <div className="crop-tooltip" style={style}>
+    <div className="crop-tooltip" style={styleState}>
       <div className="content-info">
         <div className="crop-icon-bg">
           <div
