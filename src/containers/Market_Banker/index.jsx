@@ -3,7 +3,7 @@ import "./style.css";
 import BaseDialog from "../BaseDialog";
 import BankerMenu from "./BankerMenu";
 import { ID_BANKER_PAGES } from "../../constants/app_ids";
-import StakeYield from "./StakeYield";
+import StakeReady from "./StakeReady";
 import StakeLP from "./StakeLP";
 
 const BankerDialog = ({ onClose, label = "VENDOR", header = "" }) => {
@@ -12,11 +12,13 @@ const BankerDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     <BaseDialog onClose={onClose} title={label} header={header}>
       {bankerPage === ID_BANKER_PAGES.BANKER_MENU && (
         <BankerMenu
-          onStakeYieldClick={() => setBankerPage(ID_BANKER_PAGES.STAKE_YIELD)}
+          onStakeReadyClick={() => setBankerPage(ID_BANKER_PAGES.STAKE_READY)}
           onStakeLPClick={() => setBankerPage(ID_BANKER_PAGES.STAKE_LP)}
         ></BankerMenu>
       )}
-      {bankerPage === ID_BANKER_PAGES.STAKE_YIELD && <StakeYield />}
+      {bankerPage === ID_BANKER_PAGES.STAKE_READY && (
+        <StakeReady onBack={() => setBankerPage(ID_BANKER_PAGES.BANKER_MENU)} />
+      )}
       {bankerPage === ID_BANKER_PAGES.STAKE_LP && <StakeLP />}
     </BaseDialog>
   );
