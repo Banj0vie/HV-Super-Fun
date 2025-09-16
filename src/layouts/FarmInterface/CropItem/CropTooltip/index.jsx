@@ -12,12 +12,32 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
   const [locked, setLocked] = useState("0");
   const [unlocked, setUnlocked] = useState("0");
 
-  const style = {
-    position: container === document.body ? "fixed" : "absolute",
-    left: typeof pos.x === "number" ? `${pos.x}px` : pos.x,
-    top: typeof pos.y === "number" ? `${pos.y}px` : pos.y,
-    transform: "translate(0,0)",
-  };
+  const style = {};
+
+  // Compute only the scale value from the PanZoomViewport container (if present)
+  const viewportScale = useMemo(() => {
+    try {
+      if (!container) return 1;
+      const cs = window.getComputedStyle(container);
+      const transform = cs.transform;
+      if (!transform || transform === "none") return 1;
+      // DOMMatrix parses the matrix and we take the a (scaleX) component
+      const m = new DOMMatrix(transform);
+      // For a 2D matrix, m.a is scaleX, m.d is scaleY
+      return m.a || 1;
+    } catch (e) {
+      return 1;
+    }
+  }, [container]);
+
+  // Apply inverse scale so tooltip remains visually fixed-size when the viewport scales
+  if (viewportScale && viewportScale !== 1) {
+    style.position = container === document.body ? "fixed" : "absolute";
+    style.left = typeof pos.x === "number" ? `${pos.x}px` : pos.x;
+    style.top = typeof pos.y === "number" ? `${pos.y}px` : pos.y;
+    style.transform = `translate(0,0) scale(${1 / viewportScale})`;
+    style.transformOrigin = "0 0";
+  }
 
   const endTime = useMemo(() => {
     if (!data?.plantedAt || !data?.growthTime) return 0;
@@ -72,13 +92,7 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
     return `${hh}${mm}${ss}`.trim();
   };
 
-  const total = useMemo(() => {
-    try {
-      return (Number(locked) + Number(unlocked)) / 1e18;
-    } catch {
-      return 0;
-    }
-  }, [locked, unlocked]);
+  // total was previously computed here but the UI renders the calculation inline; removed unused memo
 
   const content = (
     <div className="crop-tooltip" style={style}>
