@@ -83,7 +83,8 @@ export const CONTRACT_ABIS = {
     "function lockGameToken(address user, uint256 amount)",
     "function unlockGameToken()",
     "function lockedGameToken(address) view returns (uint256)",
-    "function lastUnlockTime(address) view returns (uint64)"
+    "function lastUnlockTime(address) view returns (uint64)",
+    "function getUnlockCost(uint16 level) pure returns (uint256)"
   ],
   
   DEX: [
@@ -149,4 +150,14 @@ export const GROWTH_TIMES = {
   EPIC: 120,
   LEGENDARY: 240
 };
+
+// Sage unlock rate constants (matching smart contract)
+export const SAGE_UNLOCK_RATES = {
+  DEFAULT: 100,    // 1% (level < 10)
+  LEVEL_10: 1000,  // 10% (level >= 10)
+  LEVEL_15: 1500   // 15% (level >= 15)
+};
+
+// Sage unlock cooldown (matching smart contract)
+export const SAGE_UNLOCK_COOLDOWN = 7 * 60 * 1000; // 7 minutes in milliseconds (testnet)
 

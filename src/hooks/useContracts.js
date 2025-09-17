@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useWeb3 } from '../contexts/Web3Context';
-import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '../config/contracts';
+import { CONTRACT_ADDRESSES, CONTRACT_ABIS, SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
 
 export const useContracts = () => {
   const { provider, signer, isConnected, contractService } = useWeb3();
@@ -871,6 +871,114 @@ export const useLeaderboard = () => {
     epochStart,
     fetchLeaderboardData,
     getUserRank,
+    loading,
+    error
+  };
+};
+
+// Hook for Sage contract interactions
+export const useSage = () => {
+  const { contracts } = useContracts();
+  const { account } = useWeb3();
+  const [sageData, setSageData] = useState({
+    lockedAmount: 0,
+    lastUnlockTime: 0,
+    unlockRate: 0,
+    unlockAmount: 0,
+    canUnlock: false,
+    nextUnlockTime: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Calculate unlock rate based on player level
+  const calculateUnlockRate = useCallback((level) => {
+    if (level >= 15) return SAGE_UNLOCK_RATES.LEVEL_15;
+    if (level >= 10) return SAGE_UNLOCK_RATES.LEVEL_10;
+    return SAGE_UNLOCK_RATES.DEFAULT;
+  }, []);
+
+  // Fetch Sage data for the connected user
+  const fetchSageData = useCallback(async () => {
+    if (!contracts.sage || !account) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get locked amount and last unlock time
+      const [lockedAmount, lastUnlockTime] = await Promise.all([
+        contracts.sage.lockedGameToken(account),
+        contracts.sage.lastUnlockTime(account)
+      ]);
+
+      // Get player level from PlayerStore
+      let playerLevel = 0;
+      if (contracts.player_store) {
+        const profile = await contracts.player_store.profileOf(account);
+        playerLevel = profile.level;
+      }
+
+      // Calculate unlock rate and amount
+      const unlockRate = calculateUnlockRate(playerLevel);
+      const unlockAmount = (lockedAmount * BigInt(unlockRate)) / BigInt(10000);
+
+      // Check if user can unlock (cooldown check)
+      const now = Date.now();
+      const nextUnlockTime = Number(lastUnlockTime) * 1000 + SAGE_UNLOCK_COOLDOWN;
+      const canUnlock = lockedAmount > 0 && (lastUnlockTime === 0n || now >= nextUnlockTime);
+
+      setSageData({
+        lockedAmount: parseFloat(ethers.formatEther(lockedAmount)),
+        lastUnlockTime: Number(lastUnlockTime),
+        unlockRate: unlockRate / 100, // Convert to percentage
+        unlockAmount: parseFloat(ethers.formatEther(unlockAmount)),
+        canUnlock,
+        nextUnlockTime
+      });
+    } catch (err) {
+      console.error('Failed to fetch Sage data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts, account, calculateUnlockRate]);
+
+  // Unlock game tokens
+  const unlockGameTokens = useCallback(async () => {
+    if (!contracts.sage || !sageData.canUnlock) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const tx = await contracts.sage.unlockGameToken();
+      await tx.wait();
+
+      // Refresh data after successful unlock
+      await fetchSageData();
+      return tx;
+    } catch (err) {
+      console.error('Failed to unlock game tokens:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts.sage, sageData.canUnlock, fetchSageData]);
+
+  // Format remaining time until next unlock
+  const getTimeUntilNextUnlock = useCallback(() => {
+    const now = Date.now();
+    const remaining = sageData.nextUnlockTime - now;
+    return Math.max(0, remaining);
+  }, [sageData.nextUnlockTime]);
+
+  return {
+    sageData,
+    fetchSageData,
+    unlockGameTokens,
+    getTimeUntilNextUnlock,
     loading,
     error
   };
