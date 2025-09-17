@@ -39,7 +39,7 @@ const LeaderboardDialog = ({ onClose, label = "VENDOR", header = "" }) => {
         </div>
         <BaseDivider></BaseDivider>
         {data.map((item, index) => (
-          <CardView key={index} className="leaderboard-card p-0 h-fit">
+          <CardView key={index} className="leaderboard-card p-0">
             <div className="leaderboard-spliter">
               <div className="split">
                 {index + 1}. {item.name}
