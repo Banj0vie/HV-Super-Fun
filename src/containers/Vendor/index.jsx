@@ -10,13 +10,11 @@ import { SEED_PACK_STATUS } from "../../constants/item_seed";
 import SeedRollingDialog from "../SeedRollingDialog";
 import { useVendor, useFarming, useContracts } from "../../hooks/useContracts";
 import { useWeb3 } from "../../contexts/Web3Context";
-import { useNotification } from "../../contexts/NotificationContext";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const { isConnected, account } = useWeb3();
   const { contracts, isReady } = useContracts();
   const { buySeedPack, getPackPrice, checkPendingRequests, getAllPendingRequests, fulfillPendingRequest, listenForSeedsRevealed } = useVendor();
   const { getMaxPlots } = useFarming(contracts);
-  const { show } = useNotification();
   
   const [pageIndex, setPageIndex] = useState(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
   const [availablePlots, setAvailablePlots] = useState(0);
@@ -89,7 +87,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     try {
       const hasPending = await checkPendingRequests();
       setHasPendingRequests(hasPending);
-      
+      console.log('Has pending requests:', hasPending);
       if (hasPending) {
         const allPendingReqs = await getAllPendingRequests();
         setPendingRequests(allPendingReqs);
@@ -311,7 +309,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
 
   const handleBuy = useCallback(async (item) => {
     if (!isConnected) {
-      show('Please connect your wallet first', 'warning');
+      alert('Please connect your wallet first');
       return;
     }
 
@@ -346,7 +344,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
       } else {
         throw new Error('Purchase failed');
       }
-      } catch (err) {
+    } catch (err) {
       console.error('Failed to buy seed pack:', err);
       setSeedStatus((prev) => ({
         ...prev,
@@ -355,14 +353,14 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           status: SEED_PACK_STATUS.NORMAL,
         },
       }));
-      show(`Failed to buy seed pack: ${err.message}`);
+      alert(`Failed to buy seed pack: ${err.message}`);
     } finally {
       // Reset buying state
       setBuyingSeedId(null);
     }
 
     setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
-  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests, show]);
+  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests]);
 
   const onBuy = useCallback((item) => {
     setSelectedSeedPack(item);
