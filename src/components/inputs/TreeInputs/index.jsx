@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import "./style.css";
 import BaseInput from "../BaseInput";
 import BaseButton from "../../buttons/BaseButton";
-import { ALL_ITEM_TREE } from "../../../constants/item_data";
+import { useItems } from "../../../hooks/useItems";
 import CardView from "../../boxes/CardView";
 import BaseCheckBox from "../BaseCheckBox";
 
@@ -10,9 +10,15 @@ const TreeInput = ({ onBack, onSelect }) => {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(() => new Set());
   const [checked, setChecked] = useState(() => new Set());
+  const { items: itemsTree, loading, error } = useItems();
+  const onSelectRef = useRef(onSelect);
 
   useEffect(() => {
-    onSelect(Array.from(checked));
+    onSelectRef.current = onSelect;
+  });
+
+  useEffect(() => {
+    onSelectRef.current(Array.from(checked));
   }, [checked]);
 
   const toggleExpand = (id) => {
@@ -44,7 +50,9 @@ const TreeInput = ({ onBack, onSelect }) => {
   };
 
   const filtered = useMemo(() => {
-    if (!search) return ALL_ITEM_TREE;
+    if (!itemsTree || loading) return [];
+    if (!search) return itemsTree;
+    
     const matchesSearch = (node, q) => {
       if (!q) return true;
       const lower = q.toLowerCase();
@@ -61,8 +69,8 @@ const TreeInput = ({ onBack, onSelect }) => {
       }
       return out;
     };
-    return ALL_ITEM_TREE.map(filterNode).filter(Boolean);
-  }, [search]);
+    return itemsTree.map(filterNode).filter(Boolean);
+  }, [search, itemsTree, loading]);
 
   const renderNode = (node, level = 0) => {
     const isExpanded = expanded.has(node.id);
@@ -98,6 +106,23 @@ const TreeInput = ({ onBack, onSelect }) => {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="tree-input">
+        <div className="tree-loading">Loading items...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="tree-input">
+        <div className="tree-error">Error loading items: {error}</div>
+        <BaseButton label="Back" onClick={onBack} />
+      </div>
+    );
+  }
 
   return (
     <div className="tree-input">

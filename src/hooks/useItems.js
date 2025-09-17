@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useContracts } from './useContracts';
 import { useWeb3 } from '../contexts/Web3Context';
-import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS } from '../constants/app_ids';
+import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_POTIONS, ID_LOOT_CATEGORIES, ID_LOOTS } from '../constants/app_ids';
 import { ALL_ITEMS } from '../constants/item_data';
 
 export const useItems = () => {
@@ -72,19 +72,203 @@ export const useItems = () => {
     fetchItems();
   }, [contracts.items_1155, account, isReady, allItemIds]);
 
-  // Filter items by category and return as JSON object
+  // Organize items into tree structure like ALL_ITEM_TREE but exclude seeds
+  const itemsTree = useMemo(() => {
+    const createTreeWithItems = (treeStructure, userItems) => {
+      return treeStructure.map(node => {
+        if (node.children) {
+          // This is a category node - recursively process children
+          const processedChildren = createTreeWithItems(node.children, userItems);
+          
+          // Add items property to category nodes (exclude seeds)
+          const categoryItems = userItems.filter(item => {
+            if (node.id === ID_ITEM_CATEGORIES.CROP) {
+              // Only include produce items, exclude seeds
+              return item.category === ID_ITEM_CATEGORIES.PRODUCE;
+            }
+            return item.category === node.id;
+          });
+          
+          return {
+            ...node,
+            children: processedChildren,
+            items: categoryItems.length > 0 ? categoryItems : undefined
+          };
+        } else {
+          // This is a leaf node (individual item)
+          const userItem = userItems.find(item => item.id === node.id);
+          return {
+            ...node,
+            ...userItem,
+            count: userItem?.count || 0
+          };
+        }
+      });
+    };
+
+    // Base tree structure (exact same as ALL_ITEM_TREE but without seeds)
+    const baseTree = [
+      {
+        id: "ALL",
+        label: "All",
+        children: [
+          {
+            id: ID_ITEM_CATEGORIES.CROP,
+            label: "Crops",
+            children: [
+              {
+                id: ID_CROP_CATEGORIES.PICO_SEED,
+                label: "Pico",
+                children: [
+                  { id: ID_PRODUCE_ITEMS.POTATO, label: "Potato" },
+                  { id: ID_PRODUCE_ITEMS.LETTUCE, label: "Lettuce" },
+                  { id: ID_PRODUCE_ITEMS.CABBAGE, label: "Cabbage" },
+                  { id: ID_PRODUCE_ITEMS.ONION, label: "Onion" },
+                  { id: ID_PRODUCE_ITEMS.RADISH, label: "Radish" },
+                ]
+              },
+              {
+                id: ID_CROP_CATEGORIES.BASIC_SEED,
+                label: "Basic",
+                children: [
+                  { id: ID_PRODUCE_ITEMS.WHEAT, label: "Wheat" },
+                  { id: ID_PRODUCE_ITEMS.TOMATO, label: "Tomato" },
+                  { id: ID_PRODUCE_ITEMS.CARROT, label: "Carrot" },
+                  { id: ID_PRODUCE_ITEMS.CORN, label: "Corn" },
+                  { id: ID_PRODUCE_ITEMS.PUMPKIN, label: "Pumpkin" },
+                  { id: ID_PRODUCE_ITEMS.CHILI, label: "Chili" },
+                  { id: ID_PRODUCE_ITEMS.PARSNAP, label: "Parsnip" },
+                  { id: ID_PRODUCE_ITEMS.CELERY, label: "Celery" },
+                  { id: ID_PRODUCE_ITEMS.BROCCOLI, label: "Broccoli" },
+                  { id: ID_PRODUCE_ITEMS.CAULIFLOWER, label: "Cauliflower" },
+                  { id: ID_PRODUCE_ITEMS.BERRY, label: "Berry" },
+                  { id: ID_PRODUCE_ITEMS.GRAPES, label: "Grapes" },
+                ]
+              },
+              {
+                id: ID_CROP_CATEGORIES.PREMIUM_SEED,
+                label: "Premium",
+                children: [
+                  { id: ID_PRODUCE_ITEMS.BANANA, label: "Banana" },
+                  { id: ID_PRODUCE_ITEMS.MANGO, label: "Mango" },
+                  { id: ID_PRODUCE_ITEMS.AVOCADO, label: "Avocado" },
+                  { id: ID_PRODUCE_ITEMS.PINEAPPLE, label: "Pineapple" },
+                  { id: ID_PRODUCE_ITEMS.BLUEBERRY, label: "Blueberry" },
+                  { id: ID_PRODUCE_ITEMS.ARTICHOKE, label: "Artichoke" },
+                  { id: ID_PRODUCE_ITEMS.PAPAYA, label: "Papaya" },
+                  { id: ID_PRODUCE_ITEMS.FIG, label: "Fig" },
+                  { id: ID_PRODUCE_ITEMS.LYCHEE, label: "Lychee" },
+                  { id: ID_PRODUCE_ITEMS.LAVENDER, label: "Lavender" },
+                  { id: ID_PRODUCE_ITEMS.DRAGONFRUIT, label: "Dragon Fruit" },
+                ]
+              },
+            ],
+          },
+          {
+            id: ID_ITEM_CATEGORIES.POTION,
+            label: "Potions",
+            children: [
+              {
+                id: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
+                label: "Growth Elixirs",
+                children: [
+                  { id: ID_POTIONS.GROWTH_ELIXIR, label: "Growth Elixir I" },
+                  { id: ID_POTIONS.GROWTH_ELIXIR_II, label: "Growth Elixir II" },
+                  { id: ID_POTIONS.GROWTH_ELIXIR_III, label: "Growth Elixir III" },
+                ]
+              },
+              {
+                id: ID_POTION_CATEGORIES.FERTILIZER,
+                label: "Fertilizers",
+                children: [
+                  { id: ID_POTIONS.FERTILIZER, label: "Fertilizer" },
+                  { id: ID_POTIONS.FERTILIZER_II, label: "Fertilizer II" },
+                  { id: ID_POTIONS.FERTILIZER_III, label: "Fertilizer III" },
+                ]
+              },
+              {
+                id: ID_POTION_CATEGORIES.PESTICIDE,
+                label: "Pesticides",
+                children: [
+                  { id: ID_POTIONS.PESTICIDE, label: "Pesticide" },
+                  { id: ID_POTIONS.PESTICIDE_II, label: "Pesticide II" },
+                  { id: ID_POTIONS.PESTICIDE_III, label: "Pesticide III" },
+                ]
+              }
+            ]
+          },
+          {
+            id: ID_ITEM_CATEGORIES.LOOT,
+            label: "Loot",
+            children: [
+              {
+                id: ID_LOOT_CATEGORIES.CHEST,
+                label: "Chests",
+                children: [
+                  { id: ID_LOOTS.WOODEN_CHEST, label: "Wooden Chest" },
+                  { id: ID_LOOTS.BRONZE_CHEST, label: "Bronze Chest" },
+                  { id: ID_LOOTS.SILVER_CHEST, label: "Silver Chest" },
+                  { id: ID_LOOTS.GOLDEN_CHEST, label: "Golden Chest" },
+                  { id: ID_LOOTS.PLATINUM_CHEST, label: "Platinum Chest" },
+                ]
+              },
+              {
+                id: ID_LOOT_CATEGORIES.BAIT,
+                label: "Baits",
+                children: [
+                  { id: ID_LOOTS.BAIT_I, label: "Bait I" },
+                  { id: ID_LOOTS.BAIT_II, label: "Bait II" },
+                  { id: ID_LOOTS.BAIT_III, label: "Bait III" }
+                ]
+              },
+              {
+                id: ID_LOOT_CATEGORIES.FISH,
+                label: "Fish",
+                children: [
+                  { id: ID_LOOTS.ANCHOVY, label: "Anchovy" },
+                  { id: ID_LOOTS.SARDINE, label: "Sardine" },
+                  { id: ID_LOOTS.HERRING, label: "Herring" },
+                  { id: ID_LOOTS.SMALL_TROUT, label: "Small Trout" },
+                  { id: ID_LOOTS.YELLOW_PERCH, label: "Yellow Perch" },
+                  { id: ID_LOOTS.SALMON, label: "Salmon" },
+                  { id: ID_LOOTS.ORANGE_ROUGHY, label: "Orange Roughy" },
+                  { id: ID_LOOTS.CATFISH, label: "Catfish" },
+                  { id: ID_LOOTS.SMALL_SHARK, label: "Small Shark" },
+                ]
+              },
+              {
+                id: ID_LOOT_CATEGORIES.MISC,
+                label: "Misc",
+                children: [
+                  { id: ID_LOOTS.LIFE_BUD, label: "Life Bud" },
+                ]
+              }
+            ]
+          }
+        ],
+      },
+    ];
+
+    return createTreeWithItems(baseTree, items);
+  }, [items]);
+
+  // Legacy flat structure for backward compatibility
   const itemsByCategory = {
-    seeds: items.filter(item => item.category === 'SEED'),
-    productions: items.filter(item => item.category === 'PRODUCE'),
-    baits: items.filter(item => item.category === 'BAIT'),
-    fish: items.filter(item => item.category === 'FISH'),
-    chests: items.filter(item => item.category === 'CHEST'),
-    potions: items.filter(item => item.category === 'POTION'),
+    seeds: items.filter(item => item.category === ID_ITEM_CATEGORIES.SEED),
+    productions: items.filter(item => item.category === ID_ITEM_CATEGORIES.PRODUCE),
+    baits: items.filter(item => item.category === ID_ITEM_CATEGORIES.BAIT),
+    fish: items.filter(item => item.category === ID_ITEM_CATEGORIES.FISH),
+    chests: items.filter(item => item.category === ID_ITEM_CATEGORIES.CHEST),
+    potions: items.filter(item => item.category === ID_ITEM_CATEGORIES.POTION),
   };
 
   return {
-    ...itemsByCategory, // Spread category objects
-    all: items, // All items combined
+    // Tree structure (same as ALL_ITEM_TREE format)
+    items: itemsTree,
+    seeds: itemsByCategory.seeds,
+    // Legacy flat structure
+    ...itemsByCategory,
+    all: items,
     loading,
     error,
     refetch: () => {

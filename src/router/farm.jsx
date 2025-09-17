@@ -16,7 +16,7 @@ import { CropItemArrayClass } from "../models/crop";
 const Farm = () => {
   const { width, height } = FARM_VIEWPORT;
   const hotspots = FARM_HOTSPOTS;
-  const { seeds: currentSeeds, refetch: refetchSeeds } = useItems(); // Get seeds and refetch from contract
+  const { seeds: currentSeeds, refetch: refetchSeeds } = useItems();
   const { contracts, isReady } = useContracts();
   const {
     plant,
@@ -65,27 +65,12 @@ const Farm = () => {
 
   // Calculate available seeds (original count minus used in preview)
   const getAvailableSeeds = useCallback(() => {
-    const availableSeeds = currentSeeds
+    return currentSeeds
       .map((seed) => ({
         ...seed,
         count: Math.max(0, seed.count - (usedSeedsInPreview[seed.id] || 0)),
       }))
       .filter((seed) => seed.count > 0);
-
-    console.log(
-      "getAvailableSeeds - Original seeds:",
-      currentSeeds.map((s) => ({ id: s.id, count: s.count }))
-    );
-    console.log(
-      "getAvailableSeeds - Used seeds in preview:",
-      usedSeedsInPreview
-    );
-    console.log(
-      "getAvailableSeeds - Available seeds:",
-      availableSeeds.map((s) => ({ id: s.id, count: s.count }))
-    );
-
-    return availableSeeds;
   }, [currentSeeds, usedSeedsInPreview]);
 
 
