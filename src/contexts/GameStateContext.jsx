@@ -113,8 +113,7 @@ export const GameStateProvider = ({ children }) => {
           contracts.banker.balanceOf(account).then(balance => ({
             type: 'stakedYield',
             balance: balance.toString()
-          })).catch(err => {
-            console.warn('Failed to load staked yield balance:', err);
+          })).catch(() => {
             return { type: 'stakedYield', balance: '0' };
           })
         );

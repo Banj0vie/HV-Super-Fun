@@ -548,15 +548,94 @@ export const useFarming = (contracts) => {
   };
 };
 
+// Hook for getting ROI data and farm level
+export const useROIData = (contracts) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [roiData, setRoiData] = useState({
+    commons: 0,
+    uncommons: 0,
+    rares: 0,
+    epics: 0,
+    legendaries: 0
+  });
+  const [farmLevel, setFarmLevel] = useState(0);
+
+  const getROIData = useCallback(async (level = 0) => {
+    if (!contracts || !contracts.farming) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Getting ROI data for level:', level);
+      
+      // Get multipliers using contractService
+      if (!contracts.contractService) {
+        console.error('Contract service not available');
+        setError('Contract service not available');
+        return;
+      }
+      
+      const contractService = contracts.contractService;
+      const commonMult = Number(contractService.getCommonMultiplier(level));
+      const uncommonMult = Number(contractService.getUncommonMultiplier(level));
+      const rareMult = Number(contractService.getRareMultiplier(level));
+      const epicMult = Number(contractService.getEpicMultiplier(level));
+      const legendaryMult = Number(contractService.getLegendaryMultiplier(level));
+
+      console.log('Multipliers:', { commonMult, uncommonMult, rareMult, epicMult, legendaryMult });
+
+      // Base rates from contract constants (in parts per million)
+      const baseRates = {
+        commons: 273400,    // 27.34%
+        uncommons: 437600,  // 43.76%
+        rares: 218800,      // 21.88%
+        epics: 62600,       // 6.26%
+        legendaries: 7600   // 0.76%
+      };
+
+      // Calculate adjusted rates with multipliers (multipliers are scaled by 1000)
+      const adjustedRates = {
+        commons: (baseRates.commons * Number(commonMult)) / 1000000, // Convert to percentage
+        uncommons: (baseRates.uncommons * Number(uncommonMult)) / 1000000,
+        rares: (baseRates.rares * Number(rareMult)) / 1000000,
+        epics: (baseRates.epics * Number(epicMult)) / 1000000,
+        legendaries: (baseRates.legendaries * Number(legendaryMult)) / 1000000
+      };
+
+      console.log('Adjusted rates:', adjustedRates);
+      setRoiData(adjustedRates);
+      setFarmLevel(level);
+    } catch (err) {
+      console.error('Failed to get ROI data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts]);
+
+  return {
+    roiData,
+    farmLevel,
+    getROIData,
+    loading,
+    error
+  };
+};
+
 // Hook for Banker contract interactions
 export const useBanker = () => {
   const { contracts } = useContracts();
+  const { account } = useWeb3();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const stake = useCallback(async (amount) => {
-    if (!contracts.banker) {
-      setError('Banker contract not available');
+    if (!contracts.banker || !contracts.yield_token) {
+      setError('Banker or Yield token contract not available');
       return null;
     }
 
@@ -564,6 +643,20 @@ export const useBanker = () => {
     setError(null);
 
     try {
+      
+      if (!account) {
+        throw new Error('No account connected');
+      }
+      
+      // Validate amount
+      if (amount <= 0) {
+        throw new Error('Amount must be greater than 0');
+      }
+      const userBalance = await contracts.yield_token.balanceOf(account);
+      
+      if (userBalance < amount) {
+        throw new Error(`Insufficient Ready balance. You have ${ethers.formatEther(userBalance)} Ready, trying to stake ${ethers.formatEther(amount)}`);
+      }
       const tx = await contracts.banker.stake(amount);
       const receipt = await tx.wait();
       return receipt;
@@ -574,7 +667,7 @@ export const useBanker = () => {
     } finally {
       setLoading(false);
     }
-  }, [contracts.banker]);
+  }, [contracts.banker, contracts.yield_token, account]);
 
   const unstake = useCallback(async (shares) => {
     if (!contracts.banker) {
@@ -605,7 +698,6 @@ export const useBanker = () => {
       const balance = await contracts.banker.balanceOf(userAddress);
       return balance.toString();
     } catch (err) {
-      console.error('Failed to get balance:', err);
       return "0";
     }
   }, [contracts.banker]);

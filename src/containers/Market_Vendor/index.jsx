@@ -233,6 +233,16 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           setIsRevealing(false);
           setRevealCleanup(null);
           
+          // Reset seed status to NORMAL after successful reveal
+          setSeedStatus((prev) => ({
+            ...prev,
+            [tier]: {
+              ...prev[tier],
+              status: SEED_PACK_STATUS.NORMAL,
+              count: 0
+            }
+          }));
+          
           // Refresh pending requests after reveal
           setTimeout(async () => {
             await loadPendingRequests();
@@ -263,14 +273,32 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   }, [listenForSeedsRevealed, fulfillPendingRequest, loadPendingRequests, revealCleanup]);
 
   // Cancel reveal process
-  const cancelReveal = useCallback(() => {
+  const cancelReveal = useCallback(async () => {
     if (revealCleanup) {
       revealCleanup();
       setRevealCleanup(null);
     }
     setIsRevealing(false);
     setIsRollingDlg(false);
-  }, [revealCleanup]);
+    
+    // Reset all seed statuses to NORMAL when dialog is closed
+    setSeedStatus((prev) => {
+      const newStatus = { ...prev };
+      Object.keys(newStatus).forEach(key => {
+        if (newStatus[key].status === SEED_PACK_STATUS.COMMITED) {
+          newStatus[key] = {
+            ...newStatus[key],
+            status: SEED_PACK_STATUS.NORMAL,
+            count: 0
+          };
+        }
+      });
+      return newStatus;
+    });
+    
+    // Refresh pending requests when dialog is closed
+    await loadPendingRequests();
+  }, [revealCleanup, loadPendingRequests]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -377,6 +405,8 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
             setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
           }}
           onBuy={onBuy}
+          buyingSeedId={buyingSeedId}
+          isAnyBuying={buyingSeedId !== null}
         ></BuySeeds>
       )}
       {pageIndex === ID_SEED_SHOP_PAGES.ROLL_CHANCES && (

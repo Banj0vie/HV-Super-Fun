@@ -5,7 +5,7 @@ import BaseDivider from "../../../components/dividers/BaseDivider";
 import BuySeedBox from "../../../components/boxes/BuySeedBox";
 import BaseButton from "../../../components/buttons/BaseButton";
 
-const BuySeeds = ({ menuId, onBack, onBuy }) => {
+const BuySeeds = ({ menuId, onBack, onBuy, buyingSeedId, isAnyBuying }) => {
   const [seedPack, setSeedPack] = useState({});
 
   useEffect(() => {
@@ -25,6 +25,8 @@ const BuySeeds = ({ menuId, onBack, onBuy }) => {
             onBuy={() => {
               onBuy(item);
             }}
+            isBuying={buyingSeedId === menuId}
+            isDisabled={isAnyBuying}
           ></BuySeedBox>
         ))}
       {seedPack && seedPack.tip && <BaseDivider></BaseDivider>}
@@ -35,6 +37,7 @@ const BuySeeds = ({ menuId, onBack, onBuy }) => {
         className="h-4rem"
         label="Back"
         onClick={onBack}
+        disabled={isAnyBuying}
       ></BaseButton>
     </div>
   );
