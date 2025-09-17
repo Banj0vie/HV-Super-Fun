@@ -326,11 +326,11 @@ const Farm = () => {
 
     // Sort seeds by quality (best first): LEGENDARY > EPIC > RARE > UNCOMMON > COMMON
     const qualityOrder = {
-      ID_SEED_TYPE_LEGENDARY: 5,
-      ID_SEED_TYPE_EPIC: 4,
-      ID_SEED_TYPE_RARE: 3,
-      ID_SEED_TYPE_UNCOMMON: 2,
-      ID_SEED_TYPE_COMMON: 1,
+      ID_RARE_TYPE_LEGENDARY: 5,
+      ID_RARE_TYPE_EPIC: 4,
+      ID_RARE_TYPE_RARE: 3,
+      ID_RARE_TYPE_UNCOMMON: 2,
+      ID_RARE_TYPE_COMMON: 1,
     };
 
     const sortedSeeds = currentSeeds

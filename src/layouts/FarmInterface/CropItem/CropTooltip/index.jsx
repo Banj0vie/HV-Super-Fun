@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom";
 import "./style.css";
 import { ONE_SEED_HEIGHT, SEED_CATEGORIES, SEED_PACK_LIST, GROW_STATUS } from "../../../../constants/item_seed";
-import { ALL_ITEMS } from "../../../../constants/item_all";
+import { ALL_ITEMS } from "../../../../constants/item_data";
 import BaseDivider from "../../../../components/dividers/BaseDivider";
 import GrowStatusBox from "../../../../components/boxes/GrowStatusBox";
 import { useWeb3 } from "../../../../contexts/Web3Context";

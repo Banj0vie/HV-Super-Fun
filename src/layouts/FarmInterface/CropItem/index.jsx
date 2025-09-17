@@ -11,7 +11,7 @@ import {
   FARM_PLOTS_PER_SIDE,
 } from "../../../constants/scene_farm";
 import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
-import { ALL_ITEMS } from "../../../constants/item_all";
+import { ALL_ITEMS } from "../../../constants/item_data";
 import CropTooltip from "./CropTooltip";
 
 const CropItem = ({

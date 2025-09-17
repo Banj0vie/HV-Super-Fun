@@ -4,7 +4,7 @@ import {
   ONE_SEED_HEIGHT,
   SEED_CATEGORIES,
 } from "../../../constants/item_seed";
-import { ALL_ITEMS } from "../../../constants/item_all";
+import { ALL_ITEMS } from "../../../constants/item_data";
 
 const PickSeedItemBox = ({ seedId, count = 1, onClick }) => {
   const selectedSeed = ALL_ITEMS[seedId];

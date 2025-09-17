@@ -5,7 +5,7 @@ import {
   ONE_SEED_HEIGHT,
   SEED_CATEGORIES,
 } from "../../../constants/item_seed";
-import { ALL_ITEMS } from "../../../constants/item_all";
+import { ALL_ITEMS } from "../../../constants/item_data";
 import { getRandomSeedEntry } from "../../../utils/basic";
 import { ID_SEEDS } from "../../../constants/app_ids";
 
