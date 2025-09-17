@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./style.css";
 import BaseInput from "../BaseInput";
 import BaseButton from "../../buttons/BaseButton";
-import { ALL_ITEM_TREE } from "../../../constants/item_all";
+import { ALL_ITEM_TREE } from "../../../constants/item_data";
 import CardView from "../../boxes/CardView";
 import BaseCheckBox from "../BaseCheckBox";
 
