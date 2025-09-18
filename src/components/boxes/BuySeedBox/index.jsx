@@ -2,7 +2,7 @@ import React from "react";
 import "./style.css";
 import BaseButton from "../../buttons/BaseButton";
 
-const BuySeedBox = ({ item, onBuy }) => {
+const BuySeedBox = ({ item, onBuy, isBuying = false, isDisabled = false }) => {
   return (
     <div className="buy-seed-box">
       <div className="buy-seed-box-wrapper">
@@ -16,8 +16,9 @@ const BuySeedBox = ({ item, onBuy }) => {
         <div className="buy-seed-button-wrapper">
           <BaseButton
             className="h-full"
-            label="Buy"
+            label={isBuying ? "Buying..." : "Buy"}
             onClick={onBuy}
+            disabled={isDisabled || isBuying}
           ></BaseButton>
         </div>
       </div>

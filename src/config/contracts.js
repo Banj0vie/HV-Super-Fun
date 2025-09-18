@@ -9,7 +9,7 @@ export const CONTRACT_ADDRESSES = {
     ITEMS_1155: "0xe8aD7B318C0CcAA72aa34De6A03BfBef451b1ec4",
     PLAYER_STORE: "0xCF25Eb2A7c36cf6F196d13e4250c05AC2694bC9A",
     RNG_HUB: "0xa47E0e674AD31280411d3f44969D98C76be283b8",
-    BANKER: "0x10a94C79C7acBD5B2EBFE61Bce79779911EAd5a9",
+    BANKER: "0x8Dbe88538728bEF02a829f9fcED8F3314f88B09E",
     FARMING: "0x5822aC3e36F94227DAe366D6AB30FB5723041E66",
     VENDOR: "0x48b2555A93E702F481f6318B5Edf308CC4E0e0e0",
     SAGE: "0xc3Aa094e95e536303b5904094d70107B25f32f1e",
@@ -83,7 +83,8 @@ export const CONTRACT_ABIS = {
     "function lockGameToken(address user, uint256 amount)",
     "function unlockGameToken()",
     "function lockedGameToken(address) view returns (uint256)",
-    "function lastUnlockTime(address) view returns (uint64)"
+    "function lastUnlockTime(address) view returns (uint64)",
+    "function getUnlockCost(uint16 level) pure returns (uint256)"
   ],
   
   DEX: [
@@ -96,7 +97,10 @@ export const CONTRACT_ABIS = {
     "function profileOf(address) view returns (bool exists, uint16 level, uint64 nextChestAt, uint64 nextFishAt)",
     "function xpOf(address) view returns (uint256)",
     "function addXP(address, uint256)",
-    "function usernameOf(address) view returns (string)"
+    "function usernameOf(address) view returns (string)",
+    "function top5(uint256) view returns (address)",
+    "function top5Xp(uint256) view returns (uint256)",
+    "function epochStart() view returns (uint64)"
   ],
   
   ITEMS_1155: [
@@ -146,4 +150,14 @@ export const GROWTH_TIMES = {
   EPIC: 120,
   LEGENDARY: 240
 };
+
+// Sage unlock rate constants (matching smart contract)
+export const SAGE_UNLOCK_RATES = {
+  DEFAULT: 100,    // 1% (level < 10)
+  LEVEL_10: 1000,  // 10% (level >= 10)
+  LEVEL_15: 1500   // 15% (level >= 15)
+};
+
+// Sage unlock cooldown (matching smart contract)
+export const SAGE_UNLOCK_COOLDOWN = 7 * 60 * 1000; // 7 minutes in milliseconds (testnet)
 

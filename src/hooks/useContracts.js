@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useWeb3 } from '../contexts/Web3Context';
-import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '../config/contracts';
+import { CONTRACT_ADDRESSES, CONTRACT_ABIS, SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
 
 export const useContracts = () => {
   const { provider, signer, isConnected, contractService } = useWeb3();
@@ -548,15 +548,94 @@ export const useFarming = (contracts) => {
   };
 };
 
+// Hook for getting ROI data and farm level
+export const useROIData = (contracts) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [roiData, setRoiData] = useState({
+    commons: 0,
+    uncommons: 0,
+    rares: 0,
+    epics: 0,
+    legendaries: 0
+  });
+  const [farmLevel, setFarmLevel] = useState(0);
+
+  const getROIData = useCallback(async (level = 0) => {
+    if (!contracts || !contracts.farming) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Getting ROI data for level:', level);
+      
+      // Get multipliers using contractService
+      if (!contracts.contractService) {
+        console.error('Contract service not available');
+        setError('Contract service not available');
+        return;
+      }
+      
+      const contractService = contracts.contractService;
+      const commonMult = Number(contractService.getCommonMultiplier(level));
+      const uncommonMult = Number(contractService.getUncommonMultiplier(level));
+      const rareMult = Number(contractService.getRareMultiplier(level));
+      const epicMult = Number(contractService.getEpicMultiplier(level));
+      const legendaryMult = Number(contractService.getLegendaryMultiplier(level));
+
+      console.log('Multipliers:', { commonMult, uncommonMult, rareMult, epicMult, legendaryMult });
+
+      // Base rates from contract constants (in parts per million)
+      const baseRates = {
+        commons: 273400,    // 27.34%
+        uncommons: 437600,  // 43.76%
+        rares: 218800,      // 21.88%
+        epics: 62600,       // 6.26%
+        legendaries: 7600   // 0.76%
+      };
+
+      // Calculate adjusted rates with multipliers (multipliers are scaled by 1000)
+      const adjustedRates = {
+        commons: (baseRates.commons * Number(commonMult)) / 1000000, // Convert to percentage
+        uncommons: (baseRates.uncommons * Number(uncommonMult)) / 1000000,
+        rares: (baseRates.rares * Number(rareMult)) / 1000000,
+        epics: (baseRates.epics * Number(epicMult)) / 1000000,
+        legendaries: (baseRates.legendaries * Number(legendaryMult)) / 1000000
+      };
+
+      console.log('Adjusted rates:', adjustedRates);
+      setRoiData(adjustedRates);
+      setFarmLevel(level);
+    } catch (err) {
+      console.error('Failed to get ROI data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts]);
+
+  return {
+    roiData,
+    farmLevel,
+    getROIData,
+    loading,
+    error
+  };
+};
+
 // Hook for Banker contract interactions
 export const useBanker = () => {
   const { contracts } = useContracts();
+  const { account } = useWeb3();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const stake = useCallback(async (amount) => {
-    if (!contracts.banker) {
-      setError('Banker contract not available');
+    if (!contracts.banker || !contracts.yield_token) {
+      setError('Banker or Yield token contract not available');
       return null;
     }
 
@@ -564,6 +643,20 @@ export const useBanker = () => {
     setError(null);
 
     try {
+      
+      if (!account) {
+        throw new Error('No account connected');
+      }
+      
+      // Validate amount
+      if (amount <= 0) {
+        throw new Error('Amount must be greater than 0');
+      }
+      const userBalance = await contracts.yield_token.balanceOf(account);
+      
+      if (userBalance < amount) {
+        throw new Error(`Insufficient Ready balance. You have ${ethers.formatEther(userBalance)} Ready, trying to stake ${ethers.formatEther(amount)}`);
+      }
       const tx = await contracts.banker.stake(amount);
       const receipt = await tx.wait();
       return receipt;
@@ -574,7 +667,7 @@ export const useBanker = () => {
     } finally {
       setLoading(false);
     }
-  }, [contracts.banker]);
+  }, [contracts.banker, contracts.yield_token, account]);
 
   const unstake = useCallback(async (shares) => {
     if (!contracts.banker) {
@@ -605,7 +698,6 @@ export const useBanker = () => {
       const balance = await contracts.banker.balanceOf(userAddress);
       return balance.toString();
     } catch (err) {
-      console.error('Failed to get balance:', err);
       return "0";
     }
   }, [contracts.banker]);
@@ -669,6 +761,224 @@ export const useDex = () => {
   return {
     swapETHForYield,
     getYieldAmount,
+    loading,
+    error
+  };
+};
+
+// Hook for Leaderboard data
+export const useLeaderboard = () => {
+  const { contracts } = useContracts();
+  const { account } = useWeb3();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [userScore, setUserScore] = useState(0);
+  const [epochStart, setEpochStart] = useState(0);
+
+  const fetchLeaderboardData = useCallback(async () => {
+    if (!contracts.player_store) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const leaderboardData = [];
+      
+      // Fetch top 5 players and their XP
+      for (let i = 0; i < 5; i++) {
+        const address = await contracts.player_store.top5(i);
+        
+        if (address !== "0x0000000000000000000000000000000000000000") {
+          try {
+            // Get profile data for this address
+            const username = await contracts.player_store.usernameOf(address);
+            // Get XP using xpOf function
+            const xp = await contracts.player_store.xpOf(address);
+            leaderboardData.push({
+              rank: i + 1,
+              name: username,
+              address: address,
+              score: parseFloat(xp.toString()) / 1e18
+            });
+          } catch (err) {
+            console.log(`Failed to get profile for address ${address}:`, err);
+            // Fallback with empty data
+            leaderboardData.push({
+              rank: i + 1,
+              name: "Error",
+              address: address,
+              score: 0.0
+            });
+          }
+        } else {
+          leaderboardData.push({
+            rank: i + 1,
+            name: "Empty",
+            address: "0x0000000000000000000000000000000000000000",
+            score: 0.0
+          });
+        }
+      }
+
+      // Get user's XP if connected
+      if (account && contracts.player_store) {
+        try {
+          const userXp = await contracts.player_store.xpOf(account);
+          setUserScore(parseFloat(userXp.toString()) / 1e18);
+        } catch (err) {
+          console.log('Could not fetch user XP:', err);
+          setUserScore(0);
+        }
+      }
+
+      // Get epoch start time
+      try {
+        const epochStartTime = await contracts.player_store.epochStart();
+        setEpochStart(Number(epochStartTime));
+      } catch (err) {
+        console.log('Could not fetch epoch start:', err);
+        setEpochStart(0);
+      }
+
+      setLeaderboardData(leaderboardData);
+    } catch (error) {
+      console.error('Failed to fetch leaderboard data:', error);
+      setError(error.message);
+      // Fallback to empty data
+      setLeaderboardData([
+        { rank: 1, name: "Loading...", address: "0x0000000000000000000000000000000000000000", score: 0.0 },
+        { rank: 2, name: "Loading...", address: "0x0000000000000000000000000000000000000000", score: 0.0 },
+        { rank: 3, name: "Loading...", address: "0x0000000000000000000000000000000000000000", score: 0.0 },
+        { rank: 4, name: "Loading...", address: "0x0000000000000000000000000000000000000000", score: 0.0 },
+        { rank: 5, name: "Loading...", address: "0x0000000000000000000000000000000000000000", score: 0.0 },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts.player_store, account]);
+
+  const getUserRank = useCallback(async () => {
+    if (!contracts.player_store || !account) {
+      return null;
+    }
+  }, [contracts.player_store, account]);
+
+  return {
+    leaderboardData,
+    userScore,
+    epochStart,
+    fetchLeaderboardData,
+    getUserRank,
+    loading,
+    error
+  };
+};
+
+// Hook for Sage contract interactions
+export const useSage = () => {
+  const { contracts } = useContracts();
+  const { account } = useWeb3();
+  const [sageData, setSageData] = useState({
+    lockedAmount: 0,
+    lastUnlockTime: 0,
+    unlockRate: 0,
+    unlockAmount: 0,
+    canUnlock: false,
+    nextUnlockTime: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Calculate unlock rate based on player level
+  const calculateUnlockRate = useCallback((level) => {
+    if (level >= 15) return SAGE_UNLOCK_RATES.LEVEL_15;
+    if (level >= 10) return SAGE_UNLOCK_RATES.LEVEL_10;
+    return SAGE_UNLOCK_RATES.DEFAULT;
+  }, []);
+
+  // Fetch Sage data for the connected user
+  const fetchSageData = useCallback(async () => {
+    if (!contracts.sage || !account) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Get locked amount and last unlock time
+      const [lockedAmount, lastUnlockTime] = await Promise.all([
+        contracts.sage.lockedGameToken(account),
+        contracts.sage.lastUnlockTime(account)
+      ]);
+
+      // Get player level from PlayerStore
+      let playerLevel = 0;
+      if (contracts.player_store) {
+        const profile = await contracts.player_store.profileOf(account);
+        playerLevel = profile.level;
+      }
+
+      // Calculate unlock rate and amount
+      const unlockRate = calculateUnlockRate(playerLevel);
+      const unlockAmount = (lockedAmount * BigInt(unlockRate)) / BigInt(10000);
+
+      // Check if user can unlock (cooldown check)
+      const now = Date.now();
+      const nextUnlockTime = Number(lastUnlockTime) * 1000 + SAGE_UNLOCK_COOLDOWN;
+      const canUnlock = lockedAmount > 0 && (lastUnlockTime === 0n || now >= nextUnlockTime);
+
+      setSageData({
+        lockedAmount: parseFloat(ethers.formatEther(lockedAmount)),
+        lastUnlockTime: Number(lastUnlockTime),
+        unlockRate: unlockRate / 100, // Convert to percentage
+        unlockAmount: parseFloat(ethers.formatEther(unlockAmount)),
+        canUnlock,
+        nextUnlockTime
+      });
+    } catch (err) {
+      console.error('Failed to fetch Sage data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts, account, calculateUnlockRate]);
+
+  // Unlock game tokens
+  const unlockGameTokens = useCallback(async () => {
+    if (!contracts.sage || !sageData.canUnlock) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const tx = await contracts.sage.unlockGameToken();
+      await tx.wait();
+
+      // Refresh data after successful unlock
+      await fetchSageData();
+      return tx;
+    } catch (err) {
+      console.error('Failed to unlock game tokens:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [contracts.sage, sageData.canUnlock, fetchSageData]);
+
+  // Format remaining time until next unlock
+  const getTimeUntilNextUnlock = useCallback(() => {
+    const now = Date.now();
+    const remaining = sageData.nextUnlockTime - now;
+    return Math.max(0, remaining);
+  }, [sageData.nextUnlockTime]);
+
+  return {
+    sageData,
+    fetchSageData,
+    unlockGameTokens,
+    getTimeUntilNextUnlock,
     loading,
     error
   };

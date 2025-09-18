@@ -10,7 +10,7 @@ const SeedRollingDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
       <div className="seed-gacha-wrapper">
         <div className="seed-rolling-box-wrapper">
           {(rollingInfo.revealedSeeds || []).map((seedId, idx) => (
-            <SeedRollingBox key={idx} seedPackId={seedId} delay={idx * 200} />
+            <SeedRollingBox key={idx} seedPackId={seedId} delay={idx * 2000} />
           ))}
         </div>
         <div className="seed-rolling-buttons-wrapper">

@@ -77,7 +77,6 @@ export const GameStateProvider = ({ children }) => {
         exists: profile.exists
       });
     } catch (err) {
-      console.error('Failed to load player data:', err);
       setErrors(prev => ({ ...prev, playerData: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, playerData: false }));
@@ -101,7 +100,6 @@ export const GameStateProvider = ({ children }) => {
             type: 'yield',
             balance: balance.toString()
           })).catch(err => {
-            console.warn('Failed to load yield token balance:', err);
             return { type: 'yield', balance: '0' };
           })
         );
@@ -113,8 +111,7 @@ export const GameStateProvider = ({ children }) => {
           contracts.banker.balanceOf(account).then(balance => ({
             type: 'stakedYield',
             balance: balance.toString()
-          })).catch(err => {
-            console.warn('Failed to load staked yield balance:', err);
+          })).catch(() => {
             return { type: 'stakedYield', balance: '0' };
           })
         );
@@ -206,7 +203,6 @@ export const GameStateProvider = ({ children }) => {
         maxPlots: Number(maxPlots)
       });
     } catch (err) {
-      console.error('Failed to load farming data:', err);
       setErrors(prev => ({ ...prev, farming: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, farming: false }));

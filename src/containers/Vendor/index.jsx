@@ -5,18 +5,16 @@ import VendorMenu from "./VendorMenu";
 import BuySeeds from "./BuySeeds";
 import RollChances from "./RollChances";
 import CustomSeedsDialog from "../CustomSeedsDialog";
-import { ID_CROP_CATEGORIES, ID_SEED_SHOP_PAGES } from "../../constants/app_ids";
+import { ID_SEED_SHOP_ITEMS, ID_SEED_SHOP_PAGES } from "../../constants/app_ids";
 import { SEED_PACK_STATUS } from "../../constants/item_seed";
 import SeedRollingDialog from "../SeedRollingDialog";
 import { useVendor, useFarming, useContracts } from "../../hooks/useContracts";
 import { useWeb3 } from "../../contexts/Web3Context";
-import { useNotification } from "../../contexts/NotificationContext";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const { isConnected, account } = useWeb3();
   const { contracts, isReady } = useContracts();
   const { buySeedPack, getPackPrice, checkPendingRequests, getAllPendingRequests, fulfillPendingRequest, listenForSeedsRevealed } = useVendor();
   const { getMaxPlots } = useFarming(contracts);
-  const { show } = useNotification();
   
   const [pageIndex, setPageIndex] = useState(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
   const [availablePlots, setAvailablePlots] = useState(0);
@@ -35,22 +33,22 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   
   // Memoized initial seed status to prevent unnecessary re-renders
   const initialSeedStatus = useMemo(() => ({
-    [ID_CROP_CATEGORIES.FEEBLE_SEED]: {
+    [ID_SEED_SHOP_ITEMS.FEEBLE_SEED]: {
       label: "Feeble Seeds",
       status: SEED_PACK_STATUS.NORMAL,
       count: 0,
     },
-    [ID_CROP_CATEGORIES.PICO_SEED]: {
+    [ID_SEED_SHOP_ITEMS.PICO_SEED]: {
       label: "Pico Seeds",
       status: SEED_PACK_STATUS.NORMAL,
       count: 0,
     },
-    [ID_CROP_CATEGORIES.BASIC_SEED]: {
+    [ID_SEED_SHOP_ITEMS.BASIC_SEED]: {
       label: "Basic Seeds",
       status: SEED_PACK_STATUS.NORMAL,
       count: 0,
     },
-    [ID_CROP_CATEGORIES.PREMIUM_SEED]: {
+    [ID_SEED_SHOP_ITEMS.PREMIUM_SEED]: {
       label: "Premium Seeds",
       status: SEED_PACK_STATUS.NORMAL,
       count: 0,
@@ -61,10 +59,10 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
 
   // Memoized tier mapping to prevent recreation on every render
   const tierMap = useMemo(() => ({
-    [ID_CROP_CATEGORIES.FEEBLE_SEED]: 1,
-    [ID_CROP_CATEGORIES.PICO_SEED]: 2,
-    [ID_CROP_CATEGORIES.BASIC_SEED]: 3,
-    [ID_CROP_CATEGORIES.PREMIUM_SEED]: 4,
+    [ID_SEED_SHOP_ITEMS.FEEBLE_SEED]: 1,
+    [ID_SEED_SHOP_ITEMS.PICO_SEED]: 2,
+    [ID_SEED_SHOP_ITEMS.BASIC_SEED]: 3,
+    [ID_SEED_SHOP_ITEMS.PREMIUM_SEED]: 4,
   }), []);
 
   // Load available plots - only when needed
@@ -89,7 +87,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     try {
       const hasPending = await checkPendingRequests();
       setHasPendingRequests(hasPending);
-      
+      console.log('Has pending requests:', hasPending);
       if (hasPending) {
         const allPendingReqs = await getAllPendingRequests();
         setPendingRequests(allPendingReqs);
@@ -311,7 +309,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
 
   const handleBuy = useCallback(async (item) => {
     if (!isConnected) {
-      show('Please connect your wallet first', 'warning');
+      alert('Please connect your wallet first');
       return;
     }
 
@@ -346,7 +344,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
       } else {
         throw new Error('Purchase failed');
       }
-      } catch (err) {
+    } catch (err) {
       console.error('Failed to buy seed pack:', err);
       setSeedStatus((prev) => ({
         ...prev,
@@ -355,14 +353,14 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           status: SEED_PACK_STATUS.NORMAL,
         },
       }));
-      show(`Failed to buy seed pack: ${err.message}`);
+      alert(`Failed to buy seed pack: ${err.message}`);
     } finally {
       // Reset buying state
       setBuyingSeedId(null);
     }
 
     setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
-  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests, show]);
+  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests]);
 
   const onBuy = useCallback((item) => {
     setSelectedSeedPack(item);
