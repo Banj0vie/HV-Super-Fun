@@ -21,3 +21,20 @@
 .share-code:hover {
   transform: scale(1.05);
 }
+
+.level-low-warning {
+  height: 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.register-referral-wrapper {
+  width: 90%;
+  margin: auto;
+  /* margin-top: 0.5rem; */
+  height: 5rem;
+  display: flex;
+  align-items: center;
+}

@@ -10,17 +10,26 @@ import { useNotification } from "../../contexts/NotificationContext";
 const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
   const [code, setCode] = useState("");
   const [isClaimed, setIsClaimed] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [referralCode, setReferralCode] = useState("");
   const { show } = useNotification();
+  //for test
+  const level = 4;
 
   const onClaim = () => {
     setIsClaimed(true);
   };
+
+  const onRegister = () => {
+    setIsRegistered(true);
+  };
+
   const onCopy = async () => {
-    try{
-        await navigator.clipboard.writeText("123456789");
-        show("Copied code to clipboard!");
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      show("Copied code to clipboard!");
     } catch (e) {
-        console.error("Failed to copy: ", e);
+      console.error("Failed to copy: ", e);
     }
   };
   return (
@@ -51,23 +60,52 @@ const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
         </CardView>
         <BaseDivider></BaseDivider>
         <div>Your referral code</div>
-        <CardView className="p-0">
-          <div className="text-center your-referral-code">
-            <div className="share-code">
-              <div className="">Share your referral code:</div>
-              <div className="highlight">123456789</div>
+        {level < 5 ? (
+          <CardView className="p-0">
+            <div className="level-low-warning">
+              To access the Referral system,
+              <br /> your valley must achieve Level 5.
             </div>
-            <div className="text-1.25">
-              Earn up to <span className="highlight">1%</span> of your
-              referrals' spendings!
-            </div>
-          </div>
-        </CardView>
-        <BaseButton
-          className="h-4rem"
-          label="Copy to clipboard"
-          onClick={onCopy}
-        ></BaseButton>
+          </CardView>
+        ) : (
+          <CardView className="p-0">
+            {isRegistered ? (
+              <div className="text-center your-referral-code">
+                <div className="share-code">
+                  <div className="">Share your referral code:</div>
+                  <div className="highlight">123456789</div>
+                </div>
+                <div className="text-1.25">
+                  Earn up to <span className="highlight">1%</span> of your
+                  referrals' spendings!
+                </div>
+              </div>
+            ) : (
+              <div className="register-referral-wrapper">
+                <BaseInput
+                  className="h-3rem"
+                  value={referralCode}
+                  setValue={(val) => setReferralCode(val)}
+                  placeholder="Register your code (max 32 characters)"
+                ></BaseInput>
+              </div>
+            )}
+          </CardView>
+        )}
+        {level >= 5 &&
+          (isRegistered ? (
+            <BaseButton
+              className="h-4rem"
+              label="Copy to clipboard"
+              onClick={onCopy}
+            ></BaseButton>
+          ) : (
+            <BaseButton
+              className="h-4rem"
+              label="Register"
+              onClick={onRegister}
+            ></BaseButton>
+          ))}
       </div>
     </BaseDialog>
   );

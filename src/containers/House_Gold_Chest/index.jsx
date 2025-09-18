@@ -34,7 +34,12 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
             ></LabelValueBox>
           </div>
         </CardView>
-        {!isClaimed && (
+        {isClaimed ? (
+          <CardView className="p-0 text-center">
+            <br />
+            Already Claimed!
+          </CardView>
+        ) : (
           <BaseButton
             className="h-3rem"
             label="Claim Chest"
