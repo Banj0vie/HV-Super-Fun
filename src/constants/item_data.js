@@ -730,33 +730,60 @@ export const ALL_ITEMS = {
   // Chest items
   [ID_CHEST_ITEMS.CHEST_WOOD]: {
     label: "CHEST_WOOD",
-    category: ID_ITEM_CATEGORIES.CHEST,
+    category: ID_ITEM_CATEGORIES.LOOT,
+    subCategory: ID_LOOT_CATEGORIES.CHEST,
+    type: ID_RARE_TYPE.COMMON,
+    image: "chest", // Special identifier for CSS-generated chest
+    pos: 0, // Wood chest
+    ready: 0,
+    lockedReady: 0,
   },
   [ID_CHEST_ITEMS.CHEST_BRONZE]: {
     label: "CHEST_BRONZE",
-    category: ID_ITEM_CATEGORIES.CHEST,
+    category: ID_ITEM_CATEGORIES.LOOT,
+    subCategory: ID_LOOT_CATEGORIES.CHEST,
+    type: ID_RARE_TYPE.UNCOMMON,
+    image: "chest", // Special identifier for CSS-generated chest
+    pos: 1, // Bronze chest
+    ready: 0,
+    lockedReady: 0,
   },
   [ID_CHEST_ITEMS.CHEST_SILVER]: {
     label: "CHEST_SILVER",
-    category: ID_ITEM_CATEGORIES.CHEST,
+    category: ID_ITEM_CATEGORIES.LOOT,
+    subCategory: ID_LOOT_CATEGORIES.CHEST,
+    type: ID_RARE_TYPE.RARE,
+    image: "chest", // Special identifier for CSS-generated chest
+    pos: 2, // Silver chest
+    ready: 0,
+    lockedReady: 0,
   },
   [ID_CHEST_ITEMS.CHEST_GOLD]: {
     label: "CHEST_GOLD",
-    category: ID_ITEM_CATEGORIES.CHEST,
+    category: ID_ITEM_CATEGORIES.LOOT,
+    subCategory: ID_LOOT_CATEGORIES.CHEST,
+    type: ID_RARE_TYPE.EPIC,
+    image: "chest", // Special identifier for CSS-generated chest
+    pos: 3, // Gold chest
+    ready: 0,
+    lockedReady: 0,
   },
 
   // Potion items
   [ID_POTION_ITEMS.POTION_GROWTH_ELIXIR]: {
     label: "POTION_GROWTH_ELIXIR",
     category: ID_ITEM_CATEGORIES.POTION,
+    subCategory: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
   },
   [ID_POTION_ITEMS.POTION_PESTICIDE]: {
     label: "POTION_PESTICIDE",
     category: ID_ITEM_CATEGORIES.POTION,
+    subCategory: ID_POTION_CATEGORIES.PESTICIDE,
   },
   [ID_POTION_ITEMS.POTION_FERTILIZER]: {
     label: "POTION_FERTILIZER",
     category: ID_ITEM_CATEGORIES.POTION,
+    subCategory: ID_POTION_CATEGORIES.FERTILIZER,
   },
 
   [ID_FISHING_RODS.LVL1]: {

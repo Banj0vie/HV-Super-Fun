@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./style.css";
-import ItemBigView from "../../../components/boxes/ItemBigView";
+import ItemBigView from "../../../components/boxes/ItemViewBig";
 import { ID_FISHING_RODS } from "../../../constants/app_ids";
 import LabelValueBox from "../../../components/boxes/LabelValueBox";
 import BaseButton from "../../../components/buttons/BaseButton";
