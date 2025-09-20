@@ -23,60 +23,77 @@ import { abstractTestnet } from "viem/chains";
 const AppContent = () => {
   const { isConnected, account, hasProfile, isConnecting, contractService } = useAgwEthersAndService();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [hasCheckedInitialState, setHasCheckedInitialState] = useState(false);
 
   useEffect(() => {
-    // Only stop showing loading page when we have determined the connection and profile status
-    if (!isConnecting && contractService !== null) {
+    // Initial app load: check wallet connection and profile status
+    if (isInitialLoad) {
       const timer = setTimeout(() => {
         setIsInitialLoad(false);
-      }, 500); // Small delay to ensure smooth transition
+        setHasCheckedInitialState(true);
+      }, 3000); // Initial loading time to check wallet/profile (3 seconds)
 
       return () => clearTimeout(timer);
     }
-  }, [isConnecting, contractService]);
+  }, [isInitialLoad]);
 
-  // Show loading page during initial load or while connecting
-  if (isInitialLoad || isConnecting) {
+  // Show loading page only during initial app load
+  if (isInitialLoad) {
     return <LoadingPage />;
   }
 
-  // Show AuthPage if not connected, no account, or no profile
-  if (!isConnected || !account || !hasProfile) {
+  // After initial load, show appropriate page based on connection and profile status
+  if (!isConnected || !account) {
     return <AuthPage />;
   }
 
-  // Show main app if connected
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#2F2F2F",
-        padding: "0",
-        margin: "0",
-        position: "relative",
-      }}
-    >
+  // If connected but profile status is unknown, show connect wallet page with "Connecting..." state
+  if (isConnected && account && hasProfile === null) {
+    return <AuthPage />;
+  }
+
+  // If connected but no profile, show create profile page
+  if (isConnected && account && hasProfile === false) {
+    return <AuthPage />;
+  }
+
+  // If connected and has profile, show game
+  if (isConnected && account && hasProfile) {
+    return (
       <div
         style={{
-          padding: "80px 20px 20px 20px",
-          marginLeft: "100px", // Space for the fixed menu
+          minHeight: "100vh",
+          backgroundColor: "#2F2F2F",
+          padding: "0",
+          margin: "0",
+          position: "relative",
         }}
       >
-        <Routes>
-          <Route path="/" element={<Market />} />
-          <Route path="/house" element={<House />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/farm" element={<Farm />} />
-          {/* <Route
-            path="/tavern"
-            element={
-              <div style={{ color: "white" }}>Tavern - Coming Soon!</div>
-            }
-          /> */}
-        </Routes>
+        <div
+          style={{
+            padding: "80px 20px 20px 20px",
+            marginLeft: "100px", // Space for the fixed menu
+          }}
+        >
+          <Routes>
+            <Route path="/" element={<Market />} />
+            <Route path="/house" element={<House />} />
+            <Route path="/market" element={<Market />} />
+            <Route path="/farm" element={<Farm />} />
+            {/* <Route
+              path="/tavern"
+              element={
+                <div style={{ color: "white" }}>Tavern - Coming Soon!</div>
+              }
+            /> */}
+          </Routes>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Fallback: should not reach here, but just in case
+  return <AuthPage />;
 };
 
 const App = () => {
