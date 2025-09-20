@@ -6,7 +6,6 @@ const LoadingPage = () => {
     <div className="loading-page">
       <div className="loading-content">
         <div className="loading-spinner"></div>
-        <div className="loading-text">Loading Crypto Valley...</div>
       </div>
     </div>
   );

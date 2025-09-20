@@ -5,10 +5,26 @@ import { useAgwEthersAndService } from "../../../hooks/useAgwEthersAndService";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 
 const ConnectWalletAuthBox = () => {
-  const { account, isConnected, isConnecting, error, connect } = useAgwEthersAndService();
+  const { account, isConnected, isConnecting, hasProfile, error, connect } = useAgwEthersAndService();
   const { login } = useLoginWithAbstract();
 
-  if (isConnected && account) {
+  // If connected and profile status is unknown, show "Connecting..." while checking
+  if (isConnected && account && hasProfile === null) {
+    return (
+      <div>
+        <div>Welcome to Abstract Valley!</div>
+        <p className="highlight">A farming & adventuring game on Abstract.</p>
+        <BaseButton
+          label="Connecting..."
+          className="h-4rem auth-wallet-connect-button"
+          disabled={true}
+        ></BaseButton>
+      </div>
+    );
+  }
+
+  // If connected and has profile, show continue button
+  if (isConnected && account && hasProfile === true) {
     return (
       <div>
         <div>Welcome to Abstract Valley!</div>
