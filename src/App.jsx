@@ -19,6 +19,7 @@ import Farm from "./router/farm.jsx";
 import House from "./router/house.jsx";
 import { AbstractWalletProvider } from "@abstract-foundation/agw-react";
 import { abstractTestnet } from "viem/chains";
+import Tavern from "./router/tavern.jsx";
 
 const AppContent = () => {
   const { isConnected, account, hasProfile, isConnecting, contractService } = useAgwEthersAndService();
@@ -80,6 +81,7 @@ const AppContent = () => {
             <Route path="/house" element={<House />} />
             <Route path="/market" element={<Market />} />
             <Route path="/farm" element={<Farm />} />
+            <Route path="/tavern" element={<Tavern />} />
             {/* <Route
               path="/tavern"
               element={
