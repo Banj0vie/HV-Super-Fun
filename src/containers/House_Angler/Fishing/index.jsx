@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./style.css";
 import { fishImages, fishingPanelImages } from "../../../constants/_baseimages";
 import BaseButton from "../../../components/buttons/BaseButton";
-import LootReceivedDialog from "../../LootReceivedDialog";
+import LootReceivedDialog from "../../Global_LootReceivedDialog";
 import { ID_LOOTS } from "../../../constants/app_ids";
 
 const TESTING_ITEMS = [
