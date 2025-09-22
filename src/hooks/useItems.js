@@ -84,10 +84,6 @@ export const useItems = () => {
               } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
                 subCategory = ID_POTION_CATEGORIES.PESTICIDE;
               }
-            } else {
-              // Fallback for unknown items
-              category = ID_ITEM_CATEGORIES.LOOT;
-              subCategory = ID_LOOT_CATEGORIES.MISC;
             }
             
             // Get proper label from constants
@@ -180,9 +176,7 @@ export const useItems = () => {
             
             // Handle loot subcategories
             if (node.id === ID_LOOT_CATEGORIES.CHEST ||
-                node.id === ID_LOOT_CATEGORIES.BAIT ||
-                node.id === ID_LOOT_CATEGORIES.FISH ||
-                node.id === ID_LOOT_CATEGORIES.MISC) {
+                node.id === ID_LOOT_CATEGORIES.BAIT) {
               return item.subCategory === node.id;
             }
             
@@ -328,28 +322,6 @@ export const useItems = () => {
                   { id: ID_LOOTS.BAIT_I, label: "Bait I" },
                   { id: ID_LOOTS.BAIT_II, label: "Bait II" },
                   { id: ID_LOOTS.BAIT_III, label: "Bait III" }
-                ]
-              },
-              {
-                id: ID_LOOT_CATEGORIES.FISH,
-                label: "Fish",
-                children: [
-                  { id: ID_LOOTS.ANCHOVY, label: "Anchovy" },
-                  { id: ID_LOOTS.SARDINE, label: "Sardine" },
-                  { id: ID_LOOTS.HERRING, label: "Herring" },
-                  { id: ID_LOOTS.SMALL_TROUT, label: "Small Trout" },
-                  { id: ID_LOOTS.YELLOW_PERCH, label: "Yellow Perch" },
-                  { id: ID_LOOTS.SALMON, label: "Salmon" },
-                  { id: ID_LOOTS.ORANGE_ROUGHY, label: "Orange Roughy" },
-                  { id: ID_LOOTS.CATFISH, label: "Catfish" },
-                  { id: ID_LOOTS.SMALL_SHARK, label: "Small Shark" },
-                ]
-              },
-              {
-                id: ID_LOOT_CATEGORIES.MISC,
-                label: "Misc",
-                children: [
-                  { id: ID_LOOTS.LIFE_BUD, label: "Life Bud" },
                 ]
               }
             ]

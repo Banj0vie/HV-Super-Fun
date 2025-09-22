@@ -4,21 +4,22 @@
 export const CONTRACT_ADDRESSES = {
   // Abstract Testnet (Chain ID: 11124)
   ABSTRACT_TESTNET: {
-    GAME_REGISTRY: "0x27af55DB574397A38A2Cf7348dB256C448c410ab",
-    YIELD_TOKEN: "0x6B4F36eeE0A9e0987278997dd8533E14408c0371",
-    ITEMS_1155: "0x0C655603a5C366E94D9c1cD2B5a612257AD20A33",
-    PLAYER_STORE: "0x79bA656CE5a04A7523aBad91FAb20931343AA87E",
-    RNG_HUB: "0x2acBe8f1970ea4382479E00bBD7272B4B3F22a07",
-    BANKER: "0xBABf20C13bcF6585614Ca194af0CF6592397De4A",
-    FARMING: "0xB973d37d1cAf2cb48fDB8CA0729A4DEd9B05F71A",
-    VENDOR: "0x815C302A8C67F994C82b82A9f99f4c1f25cAfD25",
-    SAGE: "0x5C7F75D9535E2a926596Bc1Bdbb093aC65b5e747",
-    DEX: "0xB5e6DA647E021491255609D32Da285413321e4Ee",
-    GARDENER: "0x3605d31ee3ED7c219A864f1d390Df6734F462FAE",
-    FISHING: "0xDd3115AE97eE16BB8095059C891B97bFbf8c8584",
-    CHEST_OPENER: "0x53A6142B267a98B536bf22e5Dffd4D133788a5c4",
-    LEADERBOARD: "0xBbCD19950BC096c9ec5351E025011b3FdA0DFb4D",
-    POTION: "0xC79e67d1937c0a8C6860daBE3Eab3F61E5f3CAd0",
+    GAME_REGISTRY: "0xD8787E8685bff34162201DE0C67F343D22665C36",
+    YIELD_TOKEN: "0x5Ee447aAbe6D87dc4A4f0556b412Fae4d5bB102f",
+    ITEMS_1155: "0xA4DCEA0016294c763E53F8B2e1eF0D246BEafd66",
+    PLAYER_STORE: "0x98Fe697A60211f695F9dCE7436cc37d815783719",
+    RNG_HUB: "0xaec2fDA3Fd8FcE5F383Ba2310484fDcFF6cd09cB",
+    BANKER: "0xBE1d1dD6F660EB3EF7984d936937A83d5dceb0A4",
+    FARMING: "0xd468955b72002e03AA526A7D54AE62E61caB4Eb7",
+    VENDOR: "0x8c5eD824222BE3Bd00749E88054123B0DbDfD804",
+    SAGE: "0xE1ebE5Ca4e3FA7bBAAEa2a2a063bb6e5C2cc5986",
+    DEX: "0x4698f452Fc9Bce7eB0ebb2a541878F4B377EbAbd",
+    GARDENER: "0x0bD355a66793D1817e062a9fF437F13657589526",
+    FISHING: "0xc838df539939ef444A207ad2DC8C44D03AC89589",
+    CHEST_OPENER: "0x85884A51AD5828a34cC8dF507b29F4D07edA7791",
+    LEADERBOARD: "0xEA1d0D97E65bcd9913724Afbbf3E200E0b3cA0fc",
+    POTION: "0x86AE90b0cD538511bB96D0430c8CdB8d6827dd5d",
+    PRODUCE_SEEDER: "0xDD581D3269353742C8e4E316CAc5957617D5de0D",
   }
 };
 
@@ -227,10 +228,10 @@ export const CONTRACT_ABIS = {
   ],
 
   FISHING: [
-    "function craftBait1()",
+    "function craftBait1(uint256 baitCount)",
     "function craftBait2(uint256[] memory itemIds, uint256[] memory amounts)",
     "function craftBait3(uint256[] memory itemIds, uint256[] memory amounts)",
-    "function fish(uint256 baitId)",
+    "function fish(uint256 baitId, uint16 amount) returns (uint256)",
     "function setVrngSystem(address vrngSystem)",
     "function randomNumberCallback(uint256 requestId, uint256 randomNumber)",
     "function _requestRandomNumber() returns (uint256)",
@@ -241,7 +242,12 @@ export const CONTRACT_ABIS = {
     "function hasRole(bytes32 role, address account) view returns (bool)",
     "function grantRole(bytes32 role, address account)",
     "function revokeRole(bytes32 role, address account)",
-    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+    "function hasPendingRequests(address player) view returns (bool)",
+    "function getAllPendingRequests(address player) view returns (uint256[] requestIds, uint256[] baitIds, uint16[] levels, uint256[] amounts)",
+    "function getPendingRequest(address player) view returns (uint256 requestId, uint256 baitId, uint16 level, uint256 amount)",
+    "event FishingStarted(address indexed player, uint256 requestId, uint256 baitId, uint16 amount)",
+    "event FishingResults(address indexed player, uint256 requestId, uint256[] itemIds, uint256[] amounts, uint256 baitId, uint16 totalAmount)"
   ],
 
   GARDENER: [
@@ -294,6 +300,16 @@ export const CONTRACT_ABIS = {
     "function maybeReward()",
     "function lastRewardTs() view returns (uint64)",
     "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
+  ],
+
+  PRODUCE_SEEDER: [
+    "function seedAllProduce(uint256 amountEach)",
     "function ITEMS() view returns (address)",
     "function MODULE_ROLE() view returns (bytes32)",
     "function hasRole(bytes32 role, address account) view returns (bool)",

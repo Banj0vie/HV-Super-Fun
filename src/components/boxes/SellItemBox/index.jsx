@@ -18,12 +18,12 @@ const SellItemBox = ({ item, onSend, onSell }) => {
     const category = itemData.category || item.category;
     const subCategory = itemData.subCategory || item.subCategory;
     
-    // Use img tag for bait and potion items (they have specific image files)
-    if (subCategory === 'ID_LOOT_CATEGORY_BAIT' || category === 'ID_ITEM_POTION') {
+    // Use img tag for bait, potion items, and loot items (they have specific image files)
+    if (subCategory === 'ID_LOOT_CATEGORY_BAIT' || category === 'ID_ITEM_POTION' || category === 'ID_ITEM_LOOT') {
       return true;
     }
     
-    // Use CSS sprite sheet for produce items and chests
+    // Use CSS sprite sheet for produce items
     return false;
   };
   

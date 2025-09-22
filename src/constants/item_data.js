@@ -1,4 +1,4 @@
-import { baitImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
+import { baitImages, chestImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
 import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_POTIONS, ID_LOOT_CATEGORIES, ID_LOOTS, ID_FISHING_RODS } from "./app_ids";
 
 export const IMAGE_URL_CROP = "/public/images/crops/seeds.png";
@@ -729,41 +729,41 @@ export const ALL_ITEMS = {
 
   // Chest items
   [ID_CHEST_ITEMS.CHEST_WOOD]: {
-    label: "CHEST_WOOD",
+    label: "CHEST WOOD",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.COMMON,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.wood,
     pos: 0, // Wood chest
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_BRONZE]: {
-    label: "CHEST_BRONZE",
+    label: "CHEST BRONZE",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.UNCOMMON,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.bronze,
     pos: 1, // Bronze chest
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_SILVER]: {
-    label: "CHEST_SILVER",
+    label: "CHEST SILVER",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.RARE,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.silver,
     pos: 2, // Silver chest
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_GOLD]: {
-    label: "CHEST_GOLD",
+    label: "CHEST GOLD",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.EPIC,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.gold,
     pos: 3, // Gold chest
     honey: 0,
     lockedHoney: 0,
@@ -933,24 +933,6 @@ export const ALL_ITEM_TREE = [
               { id: ID_LOOTS.BAIT_I, label: "Bait I" },
               { id: ID_LOOTS.BAIT_II, label: "Bait II" },
               { id: ID_LOOTS.BAIT_III, label: "Bait III" }
-            ]
-          },
-          {
-            id: ID_LOOT_CATEGORIES.FISH, label: "Fish", children: [
-              { id: ID_LOOTS.ANCHOVY, label: "Anchovy" },
-              { id: ID_LOOTS.SARDINE, label: "Sardine" },
-              { id: ID_LOOTS.HERRING, label: "Herring" },
-              { id: ID_LOOTS.SMALL_TROUT, label: "Small Trout" },
-              { id: ID_LOOTS.YELLOW_PERCH, label: "Yellow Perch" },
-              { id: ID_LOOTS.SALMON, label: "Salmon" },
-              { id: ID_LOOTS.ORANGE_ROUGHY, label: "Orange Roughy" },
-              { id: ID_LOOTS.CATFISH, label: "Catfish" },
-              { id: ID_LOOTS.SMALL_SHARK, label: "Small Shark" },
-            ]
-          },
-          {
-            id: ID_LOOT_CATEGORIES.MISC, label: "Misc", children: [
-              { id: ID_LOOTS.LIFE_BUD, label: "Life Bud" },
             ]
           }
         ]

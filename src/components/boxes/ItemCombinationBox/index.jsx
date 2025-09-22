@@ -28,7 +28,7 @@ const ItemCombinationBox = ({
   
   // Get contract hooks (always call hooks unconditionally)
   const fishing = useFishing();
-  const potion = usePotion();
+  const { craftGrowthElixir, craftPesticide, craftFertilizer } = usePotion();
   
   // Determine item type
   const isBait = Object.values(ID_BAIT_ITEMS).includes(itemId);
@@ -155,7 +155,6 @@ const ItemCombinationBox = ({
     setIsCrafting(true);
     
     try {
-      console.log("onCraft", { isBait, isPotion, combiItems });
       if (isBait) {
         await handleBaitCraft();
       } else if (isPotion) {
@@ -183,8 +182,8 @@ const ItemCombinationBox = ({
     if (!fishing) throw new Error("Fishing contract not available");
 
     if (itemId === ID_BAIT_ITEMS.BAIT_1) {
-      // Bait1 is simple - just call the contract function
-      await fishing.craftBait1();
+      // Bait1: Use the multiplier as the bait count to craft
+      await fishing.craftBait1(multiplier);
     } else if (itemId === ID_BAIT_ITEMS.BAIT_2 || itemId === ID_BAIT_ITEMS.BAIT_3) {
       // Bait2 and Bait3 require arrays of items and amounts
       const itemIds = [];
@@ -206,14 +205,14 @@ const ItemCombinationBox = ({
   };
 
   const handlePotionCraft = async () => {
-    if (!potion) throw new Error("Potion contract not available");
+    if (!craftGrowthElixir) throw new Error("Potion contract not available");
 
     if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
-      await potion.craftGrowthElixir();
+      await craftGrowthElixir();
     } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
-      await potion.craftPesticide();
+      await craftPesticide();
     } else if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
-      await potion.craftFertilizer();
+      await craftFertilizer();
     }
   };
 
@@ -245,6 +244,25 @@ const ItemCombinationBox = ({
   useEffect(() => {
     setCropCounts({});
   }, [itemId]);
+
+  // Populate cropCounts with user's inventory data
+  useEffect(() => {
+    if (!userItems || !combiItems || !combiItems.list) return;
+    
+    const newCropCounts = {};
+    
+    // For each item in the combination, get the user's current inventory
+    combiItems.list.forEach(combi => {
+      combi.ids.forEach(cropId => {
+        const userItem = userItems.find(item => item.id.toString() === cropId.toString());
+        if (userItem && userItem.count > 0) {
+          newCropCounts[cropId.toString()] = userItem.count;
+        }
+      });
+    });
+    
+    setCropCounts(newCropCounts);
+  }, [userItems, combiItems]);
   return (
     <div className="item-combination-box">
       <ItemCombinationHeader

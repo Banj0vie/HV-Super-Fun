@@ -6,12 +6,16 @@ import { profileAssets } from "../../../constants/_baseimages";
 import ProfileView from "./ProfileView";
 import { useGameState } from "../../../contexts/GameStateContext";
 import { useAgwEthersAndService } from "../../../hooks/useAgwEthersAndService";
+import { useProduceSeeder } from "../../../hooks/useContracts";
+import { useNotification } from "../../../contexts/NotificationContext";
 import { formatNumber } from "../../../utils/basic";
 import { handleContractError } from "../../../utils/errorHandler";
 
 const ProfileBar = () => {
   const { balances, formatBalance } = useGameState();
   const { contractService, account } = useAgwEthersAndService();
+  const { seedAllProduce, produceSeederData } = useProduceSeeder();
+  const { show } = useNotification();
   
   // Persistent local state for instant display
   const [lockedHoney, setLockedHoney] = useState("0.00");
@@ -55,6 +59,28 @@ const ProfileBar = () => {
     loadlockedHoney();
   }, [contractService, account, balances?.stakedYield, formatBalance, formatBalanceForDisplay]);
 
+  // TEMPORARY: Handler for dummy seed all produce button (REMOVE IN PRODUCTION)
+  const handleSeedAllProduce = useCallback(async () => {
+    if (!account) {
+      show('Please connect your wallet first', 'warning');
+      return;
+    }
+
+    try {
+      show('Seeding all produce items...', 'info');
+      const result = await seedAllProduce(100); // Seed 10 of each item
+      
+      if (result) {
+        show('Successfully seeded all produce items!', 'success');
+      } else {
+        show('Failed to seed produce items', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to seed produce:', error);
+      show(`Failed to seed produce: ${error.message}`, 'error');
+    }
+  }, [account, seedAllProduce, show]);
+
   return (
     <div className="profile-bar">
       <img
@@ -75,6 +101,13 @@ const ProfileBar = () => {
       <ProfileButton
         icon={<img alt="Tutorial" src={profileAssets.btnTutorial} />}
         title="Tutorial"
+      />
+      {/* TEMPORARY: Dummy button for seeding all produce (REMOVE IN PRODUCTION) */}
+      <ProfileButton
+        icon={<span style={{ color: '#ff6b6b', fontSize: '16px', fontWeight: 'bold' }}>🌱</span>}
+        title="Seed All Produce (DEV)"
+        onClick={handleSeedAllProduce}
+        disabled={produceSeederData.loading}
       />
       <div className="resource-badge">
         <ProfileButton

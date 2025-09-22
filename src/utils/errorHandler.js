@@ -17,6 +17,7 @@ export const ErrorTypes = {
   COOLDOWN_ACTIVE: 'COOLDOWN_ACTIVE',
   LEVEL_REQUIREMENT: 'LEVEL_REQUIREMENT',
   CONTRACT_NOT_AVAILABLE: 'CONTRACT_NOT_AVAILABLE',
+  VRNG_ERROR: 'VRNG_ERROR',
   
   // Generic errors
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
@@ -34,6 +35,7 @@ export const ErrorMessages = {
   [ErrorTypes.COOLDOWN_ACTIVE]: 'Please wait for the cooldown period to end.',
   [ErrorTypes.LEVEL_REQUIREMENT]: 'You need to reach a higher level to perform this action.',
   [ErrorTypes.CONTRACT_NOT_AVAILABLE]: 'Contract is not available. Please try again later.',
+  [ErrorTypes.VRNG_ERROR]: 'VRNG system not properly initialized. Please contact support.',
   [ErrorTypes.UNKNOWN_ERROR]: 'An unexpected error occurred. Please try again.',
   [ErrorTypes.TRANSACTION_FAILED]: 'Transaction failed. Please try again.'
 };
@@ -65,6 +67,16 @@ export const handleContractError = (error, context = '') => {
     return {
       type: ErrorTypes.TRANSACTION_REJECTED,
       message: ErrorMessages[ErrorTypes.TRANSACTION_REJECTED],
+      originalError: error
+    };
+  }
+
+  // VRNG system initialization error
+  if (errorMessage.includes('Failed to initialize request') && 
+      (context.includes('fishing') || context.includes('Fishing'))) {
+    return {
+      type: ErrorTypes.VRNG_ERROR,
+      message: 'VRNG system not properly initialized. Please contact support.',
       originalError: error
     };
   }

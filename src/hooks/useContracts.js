@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
+import { useContractBase } from './useContractBase';
 import { SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
 import { handleContractError } from '../utils/errorHandler';
 
@@ -14,15 +15,16 @@ export const useVendor = () => {
   const [error, setError] = useState(null);
   const [vendor, setVendor] = useState(null);
   const [yieldToken, setYieldToken] = useState(null);
-  const [rngHub, setRngHub] = useState(null);
   const [agwClient, setAgwClient] = useState(null);
   const [publicClient, setPublicClient] = useState(null);
+  
+  // Use the useRngHub hook for fulfillRequest functionality
+  const { fulfillRequest: rngFulfillRequest } = useRngHub();
 
   useEffect(() => {
     if (!contractService) return;
     setVendor(contractService.getContract('VENDOR'));
     setYieldToken(contractService.getContract('YIELD_TOKEN'));
-    setRngHub(contractService.getContract('RNG_HUB'));
     setAgwClient(contractService.agwClient);
     setPublicClient(contractService.publicClient);
   }, [contractService]);
@@ -198,22 +200,13 @@ export const useVendor = () => {
   }, [vendor, account, publicClient]);
 
   const fulfillPendingRequest = useCallback(async (requestId) => {
-    if (!rngHub || !agwClient) {
-      setError('RNG Hub contract not available');
-      return null;
-    }
-
-    setLoading(true);
-    setError(null);
-
     try {
+      setLoading(true);
+      setError(null);
+      
+      // Use the useRngHub hook's fulfillRequest function
       const randomNumber = Math.floor(Math.random() * 100000);
-      const txHash = await agwClient.writeContract({
-        abi: rngHub.abi,
-        address: rngHub.address,
-        functionName: 'fulfillRequest',
-        args: [requestId, randomNumber],
-      });
+      const txHash = await rngFulfillRequest(requestId, randomNumber);
       return txHash;
     } catch (err) {
       console.error('Failed to fulfill pending request:', err);
@@ -222,7 +215,7 @@ export const useVendor = () => {
     } finally {
       setLoading(false);
     }
-  }, [rngHub, agwClient]);
+  }, [rngFulfillRequest]);
 
   const listenForSeedsRevealed = useCallback(async (requestId, onSeedsRevealed, fromBlock) => {
     if (!vendor || !publicClient || !account) {
@@ -2154,46 +2147,30 @@ export const useReferral = () => {
 
 // Hook for Fishing contract interactions
 export const useFishing = () => {
-  const { contractService } = useAgwEthersAndService();
+  const { account } = useAgwEthersAndService();
+  const { agwClient, publicClient, getContract, handleContractCall } = useContractBase(['FISHING']);
+  const fishing = getContract('FISHING');
+  
   const [fishingData, setFishingData] = useState({
     loading: false,
     error: null,
     pendingRequests: []
   });
-  const [fishing, setFishing] = useState(null);
-  const [agwClient, setAgwClient] = useState(null);
 
-  useEffect(() => {
-    if (!contractService) return;
-    setFishing(contractService.getContract('FISHING'));
-    setAgwClient(contractService.agwClient);
-  }, [contractService]);
-
-  const craftBait1 = useCallback(async () => {
+  const craftBait1 = useCallback(async (baitCount) => {
     if (!fishing || !agwClient) return;
 
-    setFishingData(prev => ({ ...prev, loading: true, error: null }));
-
-    try {
+    return handleContractCall(async () => {
       const txHash = await agwClient.writeContract({
         abi: fishing.abi,
         address: fishing.address,
         functionName: 'craftBait1',
-        args: [],
+        args: [baitCount],
       });
       
-      setFishingData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
-    } catch (err) {
-      const { message } = handleContractError(err, 'crafting bait 1');
-      setFishingData(prev => ({
-        ...prev,
-        loading: false,
-        error: message
-      }));
-      throw new Error(message);
-    }
-  }, [fishing, agwClient]);
+    }, 'crafting bait 1');
+  }, [fishing, agwClient, handleContractCall]);
 
   const craftBait2 = useCallback(async (itemIds, amounts) => {
     if (!fishing || !agwClient) return;
@@ -2247,22 +2224,32 @@ export const useFishing = () => {
     }
   }, [fishing, agwClient]);
 
-  const fish = useCallback(async (baitId) => {
+  const fish = useCallback(async (baitId, amount = 1) => {
     if (!fishing || !agwClient) return;
 
     setFishingData(prev => ({ ...prev, loading: true, error: null }));
 
     try {
+      console.log('Calling fish function with:', { baitId, amount, address: fishing.address });
+      
       const txHash = await agwClient.writeContract({
         abi: fishing.abi,
         address: fishing.address,
         functionName: 'fish',
-        args: [baitId],
+        args: [baitId, amount],
       });
       
+      console.log('Fish function successful, txHash:', txHash);
+      
       setFishingData(prev => ({ ...prev, loading: false }));
-      return { txHash, isPending: true };
+      return { 
+        txHash, 
+        baitId, 
+        amount,
+        isPending: true 
+      };
     } catch (err) {
+      console.error('Fish function failed:', err);
       const { message } = handleContractError(err, 'fishing');
       setFishingData(prev => ({
         ...prev,
@@ -2273,12 +2260,226 @@ export const useFishing = () => {
     }
   }, [fishing, agwClient]);
 
+  const listenForFishingResults = useCallback(async (requestId, onFishingResults, fromBlock) => {
+    if (!fishing || !publicClient || !account) {
+      console.error('Fishing contract, publicClient, or account not available');
+      return;
+    }
+    
+    try {
+      console.log('Setting up FishingResults listener for requestId:', requestId);
+      
+      // Use a recent block number instead of 'latest' for better reliability
+      let startBlock = fromBlock;
+      if (!startBlock || startBlock === 'latest') {
+        try {
+          const currentBlock = await publicClient.getBlockNumber();
+          startBlock = BigInt(currentBlock) - BigInt(10); // Look back 10 blocks to be safe
+          console.log('Using block', startBlock.toString(), 'as start block (current:', currentBlock.toString(), ')');
+        } catch (err) {
+          console.error('Failed to get current block number:', err);
+          startBlock = 'earliest';
+        }
+      }
+      
+      // Event handler function
+      const handleEvent = (eventData) => {
+        try {
+          console.log('FishingResults event received:', eventData);
+          
+          // Extract event data
+          const eventRequestId = eventData.args.requestId.toString();
+          const itemIds = eventData.args.itemIds.map(id => id.toString());
+          const amounts = eventData.args.amounts.map(amount => amount.toString());
+          const baitId = eventData.args.baitId.toString();
+          const totalAmount = eventData.args.totalAmount.toString();
+          
+          console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
+        
+        // Only process if this is the request we're waiting for
+        if (eventRequestId === requestId.toString()) {
+            console.log('✅ Found matching FishingResults event!');
+          if (onFishingResults) {
+              onFishingResults({ 
+                requestId: eventRequestId, 
+                itemIds, 
+                amounts,
+                baitId,
+                totalAmount
+              });
+            }
+          // Clean up the listener after processing the event
+          console.log('Cleaning up FishingResults listener after successful event');
+          unwatch();
+          }
+        } catch (err) {
+          console.error('Error processing FishingResults event:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after error');
+          unwatch();
+        }
+      };
+      
+      // Set up real-time event listener using watchContractEvent
+      console.log('Setting up watchContractEvent for FishingResults');
+      const unwatch = publicClient.watchContractEvent({
+        address: fishing.address,
+        abi: fishing.abi,
+        eventName: 'FishingResults',
+        args: {
+          player: account
+        },
+        onLogs: (logs) => {
+          console.log('Received FishingResults events via watchContractEvent:', logs);
+          logs.forEach(log => {
+            console.log('Processing log from watchContractEvent:', log);
+            handleEvent(log);
+          });
+        },
+        onError: (error) => {
+          console.error('Error in FishingResults event listener:', error);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after watchContractEvent error');
+          unwatch();
+        }
+      });
+      
+      console.log('watchContractEvent setup complete');
+      
+      // Also query for any events that might have already happened
+      const queryExistingEvents = async () => {
+        try {
+          console.log('Querying existing FishingResults events from block:', startBlock);
+          
+          // Use the contract ABI directly for event filtering
+          const logs = await publicClient.getLogs({
+            address: fishing.address,
+            event: {
+              type: 'event',
+              name: 'FishingResults',
+              inputs: [
+                { name: 'player', type: 'address', indexed: true },
+                { name: 'requestId', type: 'uint256', indexed: false },
+                { name: 'itemIds', type: 'uint256[]', indexed: false },
+                { name: 'amounts', type: 'uint256[]', indexed: false },
+                { name: 'baitId', type: 'uint256', indexed: false },
+                { name: 'totalAmount', type: 'uint16', indexed: false }
+              ]
+            },
+            args: {
+              player: account
+            },
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          });
+          
+          console.log('Found', logs.length, 'existing FishingResults events');
+          console.log('Logs:', logs);
+          
+          // Process existing events
+          for (const log of logs) {
+            try {
+              console.log('Processing log:', log);
+              
+              // The log is already decoded by getLogs, we can use it directly
+              const eventData = {
+                args: log.args,
+                eventName: log.eventName,
+                address: log.address,
+                blockNumber: log.blockNumber,
+                transactionHash: log.transactionHash
+              };
+              
+              console.log('Event data ready:', eventData);
+              handleEvent(eventData);
+            } catch (parseErr) {
+              console.error('Error processing existing event:', parseErr);
+              // Clean up the listener on error
+              console.log('Cleaning up FishingResults listener after parsing error');
+              unwatch();
+            }
+          }
+        } catch (err) {
+          console.error('Error querying existing FishingResults events:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after query error');
+          unwatch();
+        }
+      };
+      
+      // Query existing events
+      queryExistingEvents();
+      
+      // Return cleanup function
+      return () => {
+        console.log('Cleaning up FishingResults listener');
+        unwatch();
+      };
+      
+    } catch (err) {
+      console.error('Failed to set up FishingResults listener:', err);
+      return () => {}; // Return no-op cleanup function
+    }
+  }, [fishing, publicClient, account]);
+
+  const checkPendingRequests = useCallback(async () => {
+    if (!fishing || !account || !publicClient) {
+      return false;
+    }
+    try {
+      const hasPending = await publicClient.readContract({
+        address: fishing.address,
+        abi: fishing.abi,
+        functionName: 'hasPendingRequests',
+        args: [account],
+      });
+      console.log('hasPending', hasPending);
+      return hasPending;
+    } catch (err) {
+      console.error('Failed to check fishing pending requests:', err);
+      return false;
+    }
+  }, [fishing, account, publicClient]);
+
+  const getAllPendingRequests = useCallback(async () => {
+    if (!fishing || !account || !publicClient) {
+      return [];
+    }
+
+    try {
+      const [requestIds, baitIds, levels, amounts] = await publicClient.readContract({
+        address: fishing.address,
+        abi: fishing.abi,
+        functionName: 'getAllPendingRequests',
+        args: [account],
+      });
+      const pendingRequests = [];
+      
+      for (let i = 0; i < requestIds.length; i++) {
+        pendingRequests.push({
+          requestId: requestIds[i].toString(),
+          baitId: baitIds[i].toString(),
+          level: levels[i],
+          amount: amounts[i].toString()
+        });
+      }
+      
+      return pendingRequests;
+    } catch (err) {
+      console.error('Failed to get fishing pending requests:', err);
+      return [];
+    }
+  }, [fishing, account, publicClient]);
+
   return {
     fishingData,
     craftBait1,
     craftBait2,
     craftBait3,
-    fish
+    fish,
+    checkPendingRequests,
+    getAllPendingRequests,
+    listenForFishingResults
   };
 };
 
@@ -2381,6 +2582,68 @@ export const usePotion = () => {
     craftGrowthElixir,
     craftPesticide,
     craftFertilizer
+  };
+};
+
+// Hook for RNG_HUB contract interactions
+export const useRngHub = () => {
+  const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['RNG_HUB']);
+  const rngHub = getContract('RNG_HUB');
+  
+  const rngHubData = {
+    loading,
+    error
+  };
+
+  const fulfillRequest = useCallback(async (requestId, randomNumber) => {
+    if (!rngHub || !agwClient) return;
+
+    return handleContractCall(async () => {
+      const txHash = await agwClient.writeContract({
+        abi: rngHub.abi,
+        address: rngHub.address,
+        functionName: 'fulfillRequest',
+        args: [requestId, randomNumber],
+      });
+      
+      return txHash;
+    }, 'fulfilling RNG request');
+  }, [rngHub, agwClient, handleContractCall]);
+
+  return {
+    rngHubData,
+    fulfillRequest
+  };
+};
+
+// Hook for ProduceSeeder contract interactions (TEMPORARY - REMOVE IN PRODUCTION)
+export const useProduceSeeder = () => {
+  const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['PRODUCE_SEEDER']);
+  const produceSeeder = getContract('PRODUCE_SEEDER');
+  
+  const produceSeederData = {
+    loading,
+    error
+  };
+
+  const seedAllProduce = useCallback(async (amountEach = 10) => {
+    if (!produceSeeder || !agwClient) return;
+
+    return handleContractCall(async () => {
+      const txHash = await agwClient.writeContract({
+        abi: produceSeeder.abi,
+        address: produceSeeder.address,
+        functionName: 'seedAllProduce',
+        args: [amountEach],
+      });
+      
+      return { txHash, isPending: true };
+    }, 'seeding all produce');
+  }, [produceSeeder, agwClient, handleContractCall]);
+
+  return {
+    produceSeederData,
+    seedAllProduce
   };
 };
 
