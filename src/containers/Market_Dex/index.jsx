@@ -10,10 +10,12 @@ import { generateId } from "../../utils/basic";
 import { useDex } from "../../hooks/useContracts";
 import { useAgwEthersAndService } from "../../hooks/useAgwEthersAndService";
 import { useNotification } from "../../contexts/NotificationContext";
+import { useGameState } from "../../contexts/GameStateContext";
 import { ethers } from "ethers";
 const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   const { isConnected } = useAgwEthersAndService();
   const { swapETHForYield, getYieldAmount, ethBalance, readyBalance, fetchBalances, loading, error } = useDex();
+  const { loadBalances: loadGameStateBalances } = useGameState();
   
   const [isReversed, setIsReversed] = useState(false);
   const [swapInfo, setSwapInfo] = useState([]);
@@ -68,7 +70,12 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
         setEthAmount('');
         setReadyAmount('0');
         // Refresh balances after successful swap
-        await fetchBalances();
+        await Promise.all([
+          fetchBalances(), // Refresh DEX component balances
+          loadGameStateBalances() // Refresh GameStateContext balances for other components
+        ]);
+        // Close dialog after successful swap
+        onClose();
       }
     } catch (err) {
       console.error('Failed to swap:', err);

@@ -2,6 +2,7 @@
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '../config/contracts';
 import { parseAbi } from 'viem';
+import { handleContractError } from '../utils/errorHandler';
 
 class ContractService {
   constructor(publicClient, agwClient) {
@@ -48,18 +49,8 @@ class ContractService {
       throw new Error('AGW client not available for profile creation');
       
     } catch (error) {
-      console.error('Error creating profile:', error);
-      
-      // Provide more specific error messages
-      if (error.message.includes('insufficient funds')) {
-        throw new Error('Insufficient funds for transaction');
-      } else if (error.message.includes('user rejected')) {
-        throw new Error('Transaction rejected by user');
-      } else if (error.message.includes('Wrong network')) {
-        throw error;
-      } else {
-        throw new Error(`Profile creation failed: ${error.message}`);
-      }
+      const { message } = handleContractError(error, 'creating profile');
+      throw new Error(message);
     }
   }
 
@@ -183,8 +174,8 @@ class ContractService {
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error swapping ETH for Yield:', error);
-      throw error;
+      const { message } = handleContractError(error, 'swapping ETH for Yield');
+      throw new Error(message);
     }
   }
 
@@ -243,8 +234,8 @@ class ContractService {
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error unlocking yield:', error);
-      throw error;
+      const { message } = handleContractError(error, 'unlocking yield');
+      throw new Error(message);
     }
   }
 
@@ -329,22 +320,17 @@ class ContractService {
         console.warn('Could not read crop slot before planting:', readErr);
       }
 
-      // Estimate gas first
-      const gasEstimate = await farming.plant.estimateGas(seedId, plotNumber);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
       const tx = await this.agwClient.writeContract({
         abi: farming.abi,
         address: farming.address,
         functionName: 'plant',
         args: [seedId, plotNumber],
-        gasLimit: gasLimit,
       })
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error planting seed:', error);
-      throw error;
+      const { message } = handleContractError(error, 'planting seed');
+      throw new Error(message);
     }
   }
 
@@ -381,90 +367,70 @@ class ContractService {
         }
       }
 
-      // Estimate gas first
-      const gasEstimate = await farming.plantBatch.estimateGas(seedIds, plotNumbers);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
       const tx = await this.agwClient.writeContract({
         abi: farming.abi,
         address: farming.address,
         functionName: 'plantBatch',
         args: [seedIds, plotNumbers],
-        gasLimit: gasLimit,
       })
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error planting seeds batch:', error);
-      throw error;
+      const { message } = handleContractError(error, 'planting seeds batch');
+      throw new Error(message);
     }
   }
 
   async harvestCrop(slot) {
     try {
       const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvest.estimateGas(slot);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
 
       const tx = await this.agwClient.writeContract({
         abi: farming.abi,
         address: farming.address,
         functionName: 'harvest',
         args: [slot],
-        gasLimit: gasLimit,
       })
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error harvesting crop:', error);
-      throw error;
+      const { message } = handleContractError(error, 'harvesting crop');
+      throw new Error(message);
     }
   }
 
   async harvestAll() {
     try {
       const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvestAll.estimateGas();
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
 
       const tx = await this.agwClient.writeContract({
         abi: farming.abi,
         address: farming.address,
         functionName: 'harvestAll',
-        gasLimit: gasLimit,
       })
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error harvesting all crops:', error);
-      throw error;
+      const { message } = handleContractError(error, 'harvesting all crops');
+      throw new Error(message);
     }
   }
 
   async harvestMany(slots) {
     try {
       const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvestMany.estimateGas(slots);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
 
       const tx = await this.agwClient.writeContract({
         abi: farming.abi,
         address: farming.address,
         functionName: 'harvestMany',
         args: [slots],
-        gasLimit: gasLimit,
       })
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error harvesting many crops:', error);
-      throw error;
+      const { message } = handleContractError(error, 'harvesting many crops');
+      throw new Error(message);
     }
   }
 
@@ -617,8 +583,8 @@ class ContractService {
       });
       return tx;
     } catch (error) {
-      console.error('Error buying seed pack:', error);
-      throw error;
+      const { message } = handleContractError(error, 'buying seed pack');
+      throw new Error(message);
     }
   }
 
@@ -649,8 +615,8 @@ class ContractService {
       });
       return tx;
     } catch (error) {
-      console.error('Error staking:', error);
-      throw error;
+      const { message } = handleContractError(error, 'staking');
+      throw new Error(message);
     }
   }
 
@@ -665,8 +631,8 @@ class ContractService {
       });
       return tx;
     } catch (error) {
-      console.error('Error unstaking:', error);
-      throw error;
+      const { message } = handleContractError(error, 'unstaking');
+      throw new Error(message);
     }
   }
 

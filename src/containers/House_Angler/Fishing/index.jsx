@@ -3,40 +3,85 @@ import "./style.css";
 import { fishImages, fishingPanelImages } from "../../../constants/_baseimages";
 import BaseButton from "../../../components/buttons/BaseButton";
 import LootReceivedDialog from "../../LootReceivedDialog";
-import { ID_LOOTS } from "../../../constants/app_ids";
-
-const TESTING_ITEMS = [
-  {
-    id: ID_LOOTS.CATFISH,
-    count: 1,
-  },
-  {
-    id: ID_LOOTS.CATFISH,
-    count: 1,
-  },
-  {
-    id: ID_LOOTS.CATFISH,
-    count: 1,
-  },
-  {
-    id: ID_LOOTS.CATFISH,
-    count: 1,
-  },
-  {
-    id: ID_LOOTS.CATFISH,
-    count: 1,
-  },
-];
+import { ID_POTION_ITEMS, ID_CHEST_ITEMS } from "../../../constants/app_ids";
+import { useFishing } from "../../../hooks/useContracts";
+import { useItems } from "../../../hooks/useItems";
+import { useNotification } from "../../../contexts/NotificationContext";
+import { handleContractError } from "../../../utils/errorHandler";
 
 const Fishing = ({ baitId, amount, onBuyAgain }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLootReceivedDialog, setIsLootReceivedDialog] = useState(false);
   const [isBuyAgain, setIsBuyAgain] = useState(false);
-  const onReel = () => {
+  const [fishingResult, setFishingResult] = useState(null);
+  
+  const { fish } = useFishing();
+  const { all: userItems, refetch } = useItems();
+  const { show } = useNotification();
+
+  // Get fishing rewards from user's inventory (potions and chests)
+  const getFishingRewards = () => {
+    if (!userItems) return [];
+    
+    const rewards = [];
+    
+    // Add potions
+    Object.values(ID_POTION_ITEMS).forEach(potionId => {
+      const potionItem = userItems.find(item => item.id === potionId);
+      if (potionItem && potionItem.count > 0) {
+        rewards.push({
+          id: potionId,
+          count: potionItem.count
+        });
+      }
+    });
+    
+    // Add chests
+    Object.values(ID_CHEST_ITEMS).forEach(chestId => {
+      const chestItem = userItems.find(item => item.id === chestId);
+      if (chestItem && chestItem.count > 0) {
+        rewards.push({
+          id: chestId,
+          count: chestItem.count
+        });
+      }
+    });
+    
+    return rewards;
+  };
+
+  const onReel = async () => {
+    if (!baitId) {
+      show("No bait selected", "error");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLootReceivedDialog(true);
-    }, 1000);
+    
+    try {
+      // Call the contract to start fishing
+      await fish(baitId);
+      
+      // Get real fishing rewards from user's inventory
+      const rewards = getFishingRewards();
+      
+      // For now, show mock result since VRNG callback handling is complex
+      // In a real implementation, you'd listen for events or poll for results
+      setTimeout(async () => {
+        setFishingResult(rewards);
+        setIsLootReceivedDialog(true);
+        setIsLoading(false);
+        
+        // Refresh inventory to show updated item counts
+        await refetch();
+      }, 2000);
+      
+      show("Fishing started! Waiting for results...", "info");
+    } catch (error) {
+      const { message } = handleContractError(error, 'fishing');
+      show(message, "error");
+      setIsLoading(false);
+    }
   };
 
   const onCloseLootReceiveDialog = () => {
@@ -71,7 +116,7 @@ const Fishing = ({ baitId, amount, onBuyAgain }) => {
       {isLootReceivedDialog && (
         <LootReceivedDialog
           onClose={onCloseLootReceiveDialog}
-          items={TESTING_ITEMS}
+          items={fishingResult}
         ></LootReceivedDialog>
       )}
     </div>

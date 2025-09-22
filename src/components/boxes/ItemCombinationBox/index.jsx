@@ -1,40 +1,21 @@
+/* global BigInt */
 import React, { useEffect, useState } from "react";
 import "./style.css";
 import { ALL_ITEMS } from "../../../constants/item_data";
-import { ID_PRODUCE_ITEMS } from "../../../constants/app_ids";
+import { ID_BAIT_ITEMS, ID_POTION_ITEMS } from "../../../constants/app_ids";
 import ItemCombinationHeader from "./ItemCombinationHeader";
 import ItemCombinationController from "./ItemCombinationController";
 import ItemCombinationTable from "./ItemCombinationTable";
 import ItemCombinationDescription from "./ItemCombinationDescription";
 import { ITEM_COMBI } from "../../../constants/item_combination";
 import BaseButton from "../../buttons/BaseButton";
+import { useFishing } from "../../../hooks/useContracts";
+import { usePotion } from "../../../hooks/useContracts";
+import { useItems } from "../../../hooks/useItems";
+import { useNotification } from "../../../contexts/NotificationContext";
+import { handleContractError } from "../../../utils/errorHandler";
 
-// Demo inventory data - simulate your available items
-const DEMO_INVENTORY = {
-  [ID_PRODUCE_ITEMS.WHEAT]: 15,
-  [ID_PRODUCE_ITEMS.TOMATO]: 12,
-  [ID_PRODUCE_ITEMS.CARROT]: 8,
-  [ID_PRODUCE_ITEMS.CORN]: 20,
-  [ID_PRODUCE_ITEMS.PUMPKIN]: 6,
-  [ID_PRODUCE_ITEMS.CHILI]: 4,
-  [ID_PRODUCE_ITEMS.PARSNAP]: 3,
-  [ID_PRODUCE_ITEMS.CELERY]: 2,
-  [ID_PRODUCE_ITEMS.BROCCOLI]: 5,
-  [ID_PRODUCE_ITEMS.CAULIFLOWER]: 1,
-  [ID_PRODUCE_ITEMS.BERRY]: 7,
-  [ID_PRODUCE_ITEMS.GRAPES]: 3,
-  [ID_PRODUCE_ITEMS.BANANA]: 10,
-  [ID_PRODUCE_ITEMS.MANGO]: 8,
-  [ID_PRODUCE_ITEMS.AVOCADO]: 4,
-  [ID_PRODUCE_ITEMS.PINEAPPLE]: 2,
-  [ID_PRODUCE_ITEMS.BLUEBERRY]: 6,
-  [ID_PRODUCE_ITEMS.ARTICHOKE]: 1,
-  [ID_PRODUCE_ITEMS.PAPAYA]: 2,
-  [ID_PRODUCE_ITEMS.FIG]: 1,
-  [ID_PRODUCE_ITEMS.LYCHEE]: 1,
-  [ID_PRODUCE_ITEMS.LAVENDER]: 1,
-  [ID_PRODUCE_ITEMS.DRAGONFRUIT]: 0,
-};
+// This will be replaced with real inventory data from useItems hook
 
 const ItemCombinationBox = ({
   itemId,
@@ -42,10 +23,39 @@ const ItemCombinationBox = ({
   limitedController = true,
 }) => {
   const itemData = ALL_ITEMS[itemId];
-  const combiItems = ITEM_COMBI[itemId];
+  const { all: userItems, refetch } = useItems();
+  const { show } = useNotification();
+  
+  // Get contract hooks (always call hooks unconditionally)
+  const fishing = useFishing();
+  const potion = usePotion();
+  
+  // Determine item type
+  const isBait = Object.values(ID_BAIT_ITEMS).includes(itemId);
+  const isPotion = Object.values(ID_POTION_ITEMS).includes(itemId);
+
+  // Get recipe requirements from contract data instead of hardcoded ITEM_COMBI
+  const getRecipeRequirements = () => {
+    if (!itemId) return null;
+    
+    // For now, use ITEM_COMBI as fallback, but this should eventually come from contract
+    const combiItems = ITEM_COMBI[itemId];
+    if (!combiItems) return null;
+    
+    return combiItems;
+  };
+
+  const combiItems = getRecipeRequirements();
 
   const [multiplier, setMultiplier] = useState(1);
   const [cropCounts, setCropCounts] = useState({});
+  const [isCrafting, setIsCrafting] = useState(false);
+
+  // Convert userItems to inventory format for compatibility
+  const inventory = (userItems || []).reduce((acc, item) => {
+    acc[item.id] = item.count || 0;
+    return acc;
+  }, {});
   const onLeftToLimited = () => {
     setMultiplier(1);
   };
@@ -88,7 +98,7 @@ const ItemCombinationBox = ({
     
     // Check if we have enough items in inventory
     const currentCount = cropCounts[cropId] || 0;
-    if (currentCount >= DEMO_INVENTORY[cropId]) {
+    if (currentCount >= (inventory[cropId] || 0)) {
       return; // Not enough items in inventory
     }
     
@@ -101,38 +111,126 @@ const ItemCombinationBox = ({
   const onAutofill = () => {
     if (combiItems.simple) return; // Don't autofill for simple items
     
-    const newCropCounts = {};
+    const newCropCounts = { ...cropCounts }; // Start with existing counts
     
-    // For each combination group, distribute the count among the items
+    // For each combination group, try to fill up to the required amount
     combiItems.list.forEach((combi) => {
-      const availableItems = combi.ids.filter(cropId => DEMO_INVENTORY[cropId] > 0);
+      const availableItems = combi.ids.filter(cropId => (inventory[cropId] || 0) > 0);
       
       if (availableItems.length === 0) return; // No available items
       
-      const itemCount = availableItems.length;
       // Apply multiplier to the count
-      const totalCount = combi.count * multiplier;
-      const countPerItem = Math.floor(totalCount / itemCount);
-      const remainder = totalCount % itemCount;
+      const totalRequired = combi.count * multiplier;
       
-      // Distribute the count evenly among available items in the group
-      availableItems.forEach((cropId, index) => {
-        const baseCount = countPerItem + (index < remainder ? 1 : 0);
-        // Don't exceed what's available in inventory
-        newCropCounts[cropId] = Math.min(baseCount, DEMO_INVENTORY[cropId]);
+      // Calculate how much we already have from this group
+      const currentTotal = combi.ids.reduce((sum, id) => sum + (newCropCounts[id] || 0), 0);
+      const stillNeeded = Math.max(0, totalRequired - currentTotal);
+      
+      if (stillNeeded <= 0) return; // Already have enough
+      
+      // Distribute the remaining needed amount among available items
+      let remainingToAllocate = stillNeeded;
+      const sortedByAvailability = availableItems.sort((a, b) => (inventory[b] || 0) - (inventory[a] || 0));
+      
+      sortedByAvailability.forEach((cropId, index) => {
+        if (remainingToAllocate <= 0) return;
+        
+        const currentCount = newCropCounts[cropId] || 0;
+        const maxCanTake = (inventory[cropId] || 0) - currentCount;
+        
+        if (maxCanTake <= 0) return;
+        
+        const toTake = Math.min(remainingToAllocate, maxCanTake);
+        newCropCounts[cropId] = currentCount + toTake;
+        remainingToAllocate -= toTake;
       });
     });
     
     setCropCounts(newCropCounts);
   };
 
-  const onCraft = () => {};
+  const onCraft = async () => {
+    if (isCrafting) return;
+    
+    setIsCrafting(true);
+    
+    try {
+      console.log("onCraft", { isBait, isPotion, combiItems });
+      if (isBait) {
+        await handleBaitCraft();
+      } else if (isPotion) {
+        await handlePotionCraft();
+      } else {
+        show("Unknown item type", "error");
+      }
+      
+      // Reset form after successful craft
+      setCropCounts({});
+      setMultiplier(1);
+      show("Successfully crafted!", "success");
+      
+      // Refresh inventory to show updated item counts
+      await refetch();
+    } catch (error) {
+      const { message } = handleContractError(error, 'crafting');
+      show(message, "error");
+    } finally {
+      setIsCrafting(false);
+    }
+  };
+
+  const handleBaitCraft = async () => {
+    if (!fishing) throw new Error("Fishing contract not available");
+
+    if (itemId === ID_BAIT_ITEMS.BAIT_1) {
+      // Bait1 is simple - just call the contract function
+      await fishing.craftBait1();
+    } else if (itemId === ID_BAIT_ITEMS.BAIT_2 || itemId === ID_BAIT_ITEMS.BAIT_3) {
+      // Bait2 and Bait3 require arrays of items and amounts
+      const itemIds = [];
+      const amounts = [];
+      
+      Object.entries(cropCounts).forEach(([cropId, count]) => {
+        if (count > 0) {
+          itemIds.push(BigInt(cropId));
+          amounts.push(count);
+        }
+      });
+      
+      if (itemId === ID_BAIT_ITEMS.BAIT_2) {
+        await fishing.craftBait2(itemIds, amounts);
+      } else {
+        await fishing.craftBait3(itemIds, amounts);
+      }
+    }
+  };
+
+  const handlePotionCraft = async () => {
+    if (!potion) throw new Error("Potion contract not available");
+
+    if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
+      await potion.craftGrowthElixir();
+    } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
+      await potion.craftPesticide();
+    } else if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
+      await potion.craftFertilizer();
+    }
+  };
 
   // Check if craft button should be disabled
   const isCraftDisabled = () => {
-    if (combiItems.simple) return false; // Simple items don't need validation
+    if (!combiItems) return true;
     
-    // Check each combination group
+    if (combiItems.simple) {
+      // For simple items, check if user has enough inventory
+      return combiItems.list.some((combi) => {
+        const required = combi.count * multiplier;
+        const available = inventory[combi.ids[0]] || 0;
+        return available < required;
+      });
+    }
+    
+    // For complex items, check each combination group
     return combiItems.list.some((combi) => {
       let totalCombiCount = 0;
       combi.ids.forEach((cropId) => {
@@ -162,13 +260,14 @@ const ItemCombinationBox = ({
         onLeftToLimited={onLeftToLimited}
         onRightToLimited={onRightToLimited}
       ></ItemCombinationController>
-      <ItemCombinationTable
-        itemId={itemId}
-        multiplier={multiplier}
-        cropCounts={cropCounts}
-        onCountDown={onCropCountDown}
-        onCountUp={onCropCountUp}
-      ></ItemCombinationTable>
+        <ItemCombinationTable
+          itemId={itemId}
+          multiplier={multiplier}
+          cropCounts={cropCounts}
+          onCountDown={onCropCountDown}
+          onCountUp={onCropCountUp}
+          inventory={inventory}
+        ></ItemCombinationTable>
       <ItemCombinationDescription itemId={itemId}></ItemCombinationDescription>
       <div className="button-wrapper">
         {!combiItems.simple && (
@@ -180,9 +279,9 @@ const ItemCombinationBox = ({
         )}
         <BaseButton 
           className="" 
-          label="Craft" 
+          label={isCrafting ? "Crafting..." : "Craft"} 
           onClick={onCraft}
-          disabled={isCraftDisabled()}
+          disabled={isCraftDisabled() || isCrafting}
         ></BaseButton>
       </div>
     </div>

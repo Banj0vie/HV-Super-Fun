@@ -4,21 +4,21 @@
 export const CONTRACT_ADDRESSES = {
   // Abstract Testnet (Chain ID: 11124)
   ABSTRACT_TESTNET: {
-    GAME_REGISTRY: "0x6e9E9AE1D9244CA2FAD9f60c1725fEeE89E7F773", 
-    YIELD_TOKEN: "0xAf7C34AA7698b21e63602cb9316a28089529b0b5",   
-    ITEMS_1155: "0xA47F3DEEE416B5612ee9aaE9ECD83598857bE266",    
-    PLAYER_STORE: "0x24139dE3205f20178552A2c6dB12C648646aD2A2",  
-    RNG_HUB: "0x3b290C1386fC924D3574a05a33fCA91da0333309",       
-    BANKER: "0x8176108a63170461c54BFDF0a1767839afdA9786",        
-    FARMING: "0xC0074e112703e3465fc4D4EF7EeE266DB9E483E7",       
-    VENDOR: "0xcf6a6a39eaf3A386b4A5E6B8F9C448482a46Ce69",        
-    SAGE: "0x1D5ab9cd019aa218c2135e7E0FAAdA452561b806",
-    DEX: "0xE83FbD852883e46403E7983dc330f142B6C029C3",
-    GARDENER: "0x86F5dd38b3b7d04AEC6368F42190EAC00a3A1001",      
-    FISHING: "0xc5586e10343Ae74F15E84767195279b0182D13b6",       
-    CHEST_OPENER: "0x421EaE5C77Ff474B5CDaA2C2abb68537006c66b2",  
-    LEADERBOARD: "0xCC92D8746418852e0F3e805C11565456285D8D14",   
-  
+    GAME_REGISTRY: "0x27af55DB574397A38A2Cf7348dB256C448c410ab",
+    YIELD_TOKEN: "0x6B4F36eeE0A9e0987278997dd8533E14408c0371",
+    ITEMS_1155: "0x0C655603a5C366E94D9c1cD2B5a612257AD20A33",
+    PLAYER_STORE: "0x79bA656CE5a04A7523aBad91FAb20931343AA87E",
+    RNG_HUB: "0x2acBe8f1970ea4382479E00bBD7272B4B3F22a07",
+    BANKER: "0xBABf20C13bcF6585614Ca194af0CF6592397De4A",
+    FARMING: "0xB973d37d1cAf2cb48fDB8CA0729A4DEd9B05F71A",
+    VENDOR: "0x815C302A8C67F994C82b82A9f99f4c1f25cAfD25",
+    SAGE: "0x5C7F75D9535E2a926596Bc1Bdbb093aC65b5e747",
+    DEX: "0xB5e6DA647E021491255609D32Da285413321e4Ee",
+    GARDENER: "0x3605d31ee3ED7c219A864f1d390Df6734F462FAE",
+    FISHING: "0xDd3115AE97eE16BB8095059C891B97bFbf8c8584",
+    CHEST_OPENER: "0x53A6142B267a98B536bf22e5Dffd4D133788a5c4",
+    LEADERBOARD: "0xBbCD19950BC096c9ec5351E025011b3FdA0DFb4D",
+    POTION: "0xC79e67d1937c0a8C6860daBE3Eab3F61E5f3CAd0",
   }
 };
 
@@ -50,7 +50,12 @@ export const CONTRACT_ABIS = {
     "function setGameToken(address)",
     "function setPlayerStore(address)",
     "function setXGameTokenVault(address)",
-    "function setRngHub(address)"
+    "function setRngHub(address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
   ],
 
   VENDOR: [
@@ -64,6 +69,18 @@ export const CONTRACT_ABIS = {
     "function setFeeBpsToVault(uint16 bps)",
     "function setVrngSystem(address vrngSystem)",
     "function randomNumberCallback(uint256 requestId, uint256 randomNumber)",
+    "function _requestRandomNumber() returns (uint256)",
+    "function _onRandomNumberFulfilled(uint256 requestId, uint256 randomNumber)",
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function Y() view returns (address)",
+    "function X_VAULT() view returns (address)",
+    "function rarityPpm(uint256) view returns (uint32)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
     "event SeedPack(address indexed player, uint8 tier, uint256 requestId)",
     "event SeedsRevealed(address indexed player, uint256 requestId, uint256[] seedIds, uint8 tier, uint256 count)"
   ],
@@ -85,8 +102,15 @@ export const CONTRACT_ABIS = {
     "function tRare() view returns (uint32)",
     "function tEpic() view returns (uint32)",
     "function tLegendary() view returns (uint32)",
-    "event Planted(address indexed user, uint256 indexed seedId, uint8 plotIndex, uint64 readyAt)",
-    "event Harvested(address indexed user, uint8 plotIndex, uint256 productId, uint256 amount)"
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function GAME_TOKEN() view returns (address)",
+    "function sage() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
   ],
 
   BANKER: [
@@ -99,6 +123,14 @@ export const CONTRACT_ABIS = {
     "function name() view returns (string)",
     "function symbol() view returns (string)",
     "function decimals() view returns (uint8)",
+    "function R() view returns (address)",
+    "function Y() view returns (address)",
+    "function tokenBalance() view returns (uint256)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
     "event FeeDeposited(address indexed depositor, uint256 amount)"
   ],
 
@@ -109,12 +141,20 @@ export const CONTRACT_ABIS = {
     "function lockedGameToken(address) view returns (uint256)",
     "function lastUnlockTime(address) view returns (uint64)",
     "function lastUnlockTimeHarvest(address) view returns (uint64)",
-    "function getUnlockCost(uint16 level) pure returns (uint256)"
+    "function getUnlockCost(uint16 level) pure returns (uint256)",
+    "function R() view returns (address)",
+    "function Y() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
   ],
 
   DEX: [
     "function depositNativeForGameToken(uint256 amount)",
-    "function RATE_PER_ETH() view returns (uint256)"
+    "function RATE_PER_ETH() view returns (uint256)",
+    "function GAME_TOKEN() view returns (address)"
   ],
 
   PLAYER_STORE: [
@@ -136,13 +176,19 @@ export const CONTRACT_ABIS = {
     "function getEpochTop5Player(uint64 epoch, uint256 position) view returns (address, uint256)",
     "function advanceEpochIfNeeded()",
     "function gameEpoch() view returns (uint64)",
-    // Referral system functions
     "function registerMyReferralCode(bytes32 myCode)",
     "function getMyReferralCode(address user) view returns (bytes32)",
     "function getSponsor(address user) view returns (address)",
     "function referralBpsByLevel(uint16) view returns (uint16)",
     "function setGameToken(address token)",
-    "function setReferralBpsForLevel(uint16 level, uint16 bps)"
+    "function setReferralBpsForLevel(uint16 level, uint16 bps)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+    "function leaderboardHook() view returns (address)",
+    "function Y() view returns (address)"
   ],
 
   ITEMS_1155: [
@@ -151,7 +197,11 @@ export const CONTRACT_ABIS = {
     "function setApprovalForAll(address, bool)",
     "function isApprovedForAll(address, address) view returns (bool)",
     "function safeTransferFrom(address, address, uint256, uint256, bytes)",
-    "function safeBatchTransferFrom(address, address, uint256[], uint256[], bytes)"
+    "function safeBatchTransferFrom(address, address, uint256[], uint256[], bytes)",
+    "function mint(address to, uint256 id, uint256 amount)",
+    "function burn(address from, uint256 id, uint256 amount)",
+    "function supportsInterface(bytes4 interfaceId) view returns (bool)",
+    "function uri(uint256) view returns (string)"
   ],
 
   YIELD_TOKEN: [
@@ -161,62 +211,96 @@ export const CONTRACT_ABIS = {
     "function approve(address, uint256) returns (bool)",
     "function allowance(address, address) view returns (uint256)",
     "function mint(address, uint256)",
-    "function burn(address, uint256)"
+    "function burn(address, uint256)",
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function decimals() view returns (uint8)",
+    "function totalSupply() view returns (uint256)"
   ],
 
   RNG_HUB: [
-    "function fulfillRequest(uint256 requestId, uint256 randomNumber)"
+    "function fulfillRequest(uint256 requestId, uint256 randomNumber)",
+    "function requestRandomNumberWithTraceId(uint256 traceId) returns (uint256)",
+    "function setNextRequestId(uint256 requestId)",
+    "function nextRequestId() view returns (uint256)",
+    "function requests(uint256) view returns (uint256 traceId, uint256 randomNumber, address callback, bool isFulfilled)"
   ],
 
-  // LEADERBOARD: [
-  //   "function maybeReward()",
-  //   "function lastRewardTs() view returns (uint64)"
-  // ],
-
-  // CHEST_OPENER: [
-  //   "function claimDailyChest()",
-  //   "function openChest(uint256 chestId)",
-  //   "function setVrngSystem(address vrngSystem)"
-  // ],
-
-  // FISHING: [
-  //   "function craftBait1(uint256 produceId, uint256 amount)",
-  //   "function craftBait2(uint256 produceId, uint256 amount)",
-  //   "function craftBait3(uint256 produceId, uint256 amount)",
-  //   "function fish(uint256 baitId)",
-  //   "function setVrngSystem(address vrngSystem)"
-  // ],
+  FISHING: [
+    "function craftBait1()",
+    "function craftBait2(uint256[] memory itemIds, uint256[] memory amounts)",
+    "function craftBait3(uint256[] memory itemIds, uint256[] memory amounts)",
+    "function fish(uint256 baitId)",
+    "function setVrngSystem(address vrngSystem)",
+    "function randomNumberCallback(uint256 requestId, uint256 randomNumber)",
+    "function _requestRandomNumber() returns (uint256)",
+    "function _onRandomNumberFulfilled(uint256 requestId, uint256 randomNumber)",
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
+  ],
 
   GARDENER: [
     "function levelUp(uint16 targetLevel)",
     "function priceForLevel(uint16) view returns (uint256)",
     "function maxLevel() view returns (uint16)",
     "function setPrice(uint16 level, uint256 price)",
-    "function setMaxLevel(uint16 m)"
+    "function setMaxLevel(uint16 m)",
+    "function R() view returns (address)",
+    "function Y() view returns (address)",
+    "function YE() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
   ],
 
   CHEST_OPENER: [
     "function claimDailyChest()",
     "function openChest(uint256 chestId)",
-    "function setVrngSystem(address vrngSystem)"
+    "function setVrngSystem(address vrngSystem)",
+    "function randomNumberCallback(uint256 requestId, uint256 randomNumber)",
+    "function _requestRandomNumber() returns (uint256)",
+    "function _onRandomNumberFulfilled(uint256 requestId, uint256 randomNumber)",
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function loot(uint256, uint256) view returns (uint256)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
   ],
 
-  // P2P_MARKET: [
-  //   "function list(uint256 id, uint256 amount, uint256 pricePer) returns (uint256 lid)",
-  //   "function purchase(uint256 lid, uint256 amount)",
-  //   "function cancel(uint256 lid)",
-  //   "function listings(uint256) view returns (address seller, uint256 id, uint256 amount, uint256 pricePer, bool active)",
-  //   "function nextId() view returns (uint256)",
-  //   "event Listed(uint256 indexed lid, address indexed seller, uint256 id, uint256 amount, uint256 pricePer)",
-  //   "event Purchased(uint256 indexed lid, address indexed buyer, uint256 amount)",
-  //   "event Canceled(uint256 indexed lid)"
-  // ],
+  POTION: [
+    "function craftGrowthElixir()",
+    "function craftPesticide()",
+    "function craftFertilizer()",
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
+  ],
 
-  // POTION: [
-  //   "function craftGrowthElixir(uint256 produceId, uint256 amount)",
-  //   "function craftPesticide(uint256 produceId, uint256 amount)",
-  //   "function craftFertilizer(uint256 produceId, uint256 amount)"
-  // ]
+  LEADERBOARD: [
+    "function maybeReward()",
+    "function lastRewardTs() view returns (uint64)",
+    "function R() view returns (address)",
+    "function ITEMS() view returns (address)",
+    "function MODULE_ROLE() view returns (bytes32)",
+    "function hasRole(bytes32 role, address account) view returns (bool)",
+    "function grantRole(bytes32 role, address account)",
+    "function revokeRole(bytes32 role, address account)",
+    "function DEFAULT_ADMIN_ROLE() view returns (bytes32)"
+  ]
 };
 
 // Seed pack tiers and prices (matching smart contract constants)
@@ -237,4 +321,3 @@ export const SAGE_UNLOCK_RATES = {
 // =================TIME GLITCH=================
 // export const SAGE_UNLOCK_COOLDOWN = 7 * 24 * 60 * 60 * 1000;
 export const SAGE_UNLOCK_COOLDOWN = 7 * 60 * 1000;
-

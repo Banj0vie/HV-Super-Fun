@@ -2,70 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
-import { CONTRACT_ADDRESSES, CONTRACT_ABIS, SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
+import { SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
+import { handleContractError } from '../utils/errorHandler';
 
-export const useContracts = () => {
-  const { provider, signer, isConnected, contractService } = useAgwEthersAndService();
-  const [contracts, setContracts] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Initialize contracts when provider/signer changes
-  useEffect(() => {
-    if (provider && signer && isConnected) {
-      const initializeContracts = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          
-          // Get contract addresses for current network
-          const addresses = CONTRACT_ADDRESSES.ABSTRACT_TESTNET; // Default to testnet
-          
-          const contractInstances = {};
-          
-          // Initialize each contract
-          Object.keys(CONTRACT_ABIS).forEach(contractName => {
-            const address = addresses[contractName.toUpperCase()];
-            if (address && address !== "0x0000000000000000000000000000000000000000") {
-              const contract = new ethers.Contract(address, CONTRACT_ABIS[contractName], signer);
-              // Map contract names to lowercase for consistent access
-              contractInstances[contractName.toLowerCase()] = contract;
-            } else {
-              console.warn(`Skipping ${contractName}: no address or zero address`);
-            }
-          });
-
-          // Add contract service to the contracts object
-          if (contractService) {
-            contractInstances.contractService = contractService;
-          }
-
-          // Debug: Log which contracts were initialized
-          console.log('Initialized contracts:', Object.keys(contractInstances));
-
-          setContracts(contractInstances);
-        } catch (err) {
-          console.error('Failed to initialize contracts:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      initializeContracts();
-    } else {
-      setContracts({});
-    }
-  }, [provider, signer, isConnected, contractService]);
-
-  return {
-    contracts,
-    loading,
-    error,
-    isReady: Object.keys(contracts).length > 0 && isConnected
-  };
-};
 
 // Hook for Vendor contract interactions
 export const useVendor = () => {
@@ -550,8 +490,6 @@ export const useFarming = () => {
         functionName: 'crops',
         args: [userAddress, plotIndex],
       });
-      
-      console.log('🚀 getCrop result:', { userAddress, plotIndex, crop });
       
       // Handle case where crop is undefined or doesn't have expected structure
       if (!crop) {
@@ -1459,7 +1397,7 @@ export const useSage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sage, agwClient, sageData.canUnlockWage, fetchSageData]);
+  }, [sage, agwClient, sageData, fetchSageData]);
 
   // Format remaining time until next wage unlock
   const getTimeUntilNextWageUnlock = useCallback(() => {
@@ -1804,15 +1742,16 @@ export const useChestOpener = () => {
 
       // Refresh data after successful claim
       await fetchChestData();
+      setChestData(prev => ({ ...prev, loading: false, error: null }));
       return txHash;
     } catch (err) {
-      console.error('Failed to claim daily chest:', err);
+      const { message } = handleContractError(err, 'claiming daily chest');
       setChestData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
-      throw err;
+      throw new Error(message);
     }
   }, [chestOpener, account, agwClient, fetchChestData]);
 
@@ -1829,15 +1768,16 @@ export const useChestOpener = () => {
         args: [chestId],
       });
 
+      setChestData(prev => ({ ...prev, loading: false, error: null }));
       return txHash;
     } catch (err) {
-      console.error('Failed to open chest:', err);
+      const { message } = handleContractError(err, 'opening chest');
       setChestData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
-      throw err;
+      throw new Error(message);
     }
   }, [chestOpener, account, agwClient]);
 
@@ -2071,6 +2011,238 @@ export const useReferral = () => {
     registerReferralCode,
     createProfileWithReferral,
     fetchReferralData
+  };
+};
+
+// Hook for Fishing contract interactions
+export const useFishing = () => {
+  const { contractService } = useAgwEthersAndService();
+  const [fishingData, setFishingData] = useState({
+    loading: false,
+    error: null,
+    pendingRequests: []
+  });
+  const [fishing, setFishing] = useState(null);
+  const [agwClient, setAgwClient] = useState(null);
+
+  useEffect(() => {
+    if (!contractService) return;
+    setFishing(contractService.getContract('FISHING'));
+    setAgwClient(contractService.agwClient);
+  }, [contractService]);
+
+  const craftBait1 = useCallback(async () => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait1',
+        args: [],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting bait 1');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  const craftBait2 = useCallback(async (itemIds, amounts) => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait2',
+        args: [itemIds, amounts],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting bait 2');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  const craftBait3 = useCallback(async (itemIds, amounts) => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait3',
+        args: [itemIds, amounts],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting bait 3');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  const fish = useCallback(async (baitId) => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'fish',
+        args: [baitId],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'fishing');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  return {
+    fishingData,
+    craftBait1,
+    craftBait2,
+    craftBait3,
+    fish
+  };
+};
+
+// Hook for Potion contract interactions
+export const usePotion = () => {
+  const { contractService } = useAgwEthersAndService();
+  const [potionData, setPotionData] = useState({
+    loading: false,
+    error: null
+  });
+  const [potion, setPotion] = useState(null);
+  const [agwClient, setAgwClient] = useState(null);
+
+  useEffect(() => {
+    if (!contractService) return;
+    setPotion(contractService.getContract('POTION'));
+    setAgwClient(contractService.agwClient);
+  }, [contractService]);
+
+  const craftGrowthElixir = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftGrowthElixir',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting growth elixir');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftPesticide = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftPesticide',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting pesticide');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftFertilizer = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftFertilizer',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting fertilizer');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  return {
+    potionData,
+    craftGrowthElixir,
+    craftPesticide,
+    craftFertilizer
   };
 };
 

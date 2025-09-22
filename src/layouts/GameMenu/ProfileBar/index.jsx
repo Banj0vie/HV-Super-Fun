@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./style.css";
 import Avatar from "./Avatar";
 import ProfileButton from "../../../components/buttons/ProfileButton";
 import { profileAssets } from "../../../constants/_baseimages";
 import ProfileView from "./ProfileView";
-import { useProfile } from "../../../contexts/ProfileContext";
 import { useGameState } from "../../../contexts/GameStateContext";
 import { useAgwEthersAndService } from "../../../hooks/useAgwEthersAndService";
 import { formatNumber } from "../../../utils/basic";
+import { handleContractError } from "../../../utils/errorHandler";
 
 const ProfileBar = () => {
   const { balances, formatBalance } = useGameState();
@@ -18,11 +18,11 @@ const ProfileBar = () => {
   const [readyBalance, setReadyBalance] = useState("0.00");
 
   // Format balance helper
-  const formatBalanceForDisplay = (balance) => {
+  const formatBalanceForDisplay = useCallback((balance) => {
     if (!balance) return "0.00";
     const formatted = formatBalance(balance);
     return formatNumber(formatted);
-  };
+  }, [formatBalance]);
 
   // Update ready balance whenever GameState balances change
   useEffect(() => {
@@ -30,7 +30,7 @@ const ProfileBar = () => {
       const formatted = formatBalanceForDisplay(balances.yield);
       setReadyBalance(formatted);
     }
-  }, [balances?.yield, formatBalance]);
+  }, [balances.yield, formatBalance, formatBalanceForDisplay]);
 
   // Load locked ready balance and update when needed
   useEffect(() => {
@@ -41,7 +41,8 @@ const ProfileBar = () => {
           const formatted = formatBalanceForDisplay(lockedReadyAmount.toString());
           setLockedReady(formatted);
         } catch (error) {
-          console.error("Failed to load locked ready:", error);
+          const { message } = handleContractError(error, 'loading locked ready');
+          console.error("Failed to load locked ready:", message);
           // Fallback to staked yield if Sage contract fails
           if (balances?.stakedYield) {
             const formatted = formatBalanceForDisplay(balances.stakedYield);
@@ -52,7 +53,7 @@ const ProfileBar = () => {
     };
 
     loadLockedReady();
-  }, [contractService, account, balances?.stakedYield, formatBalance]);
+  }, [contractService, account, balances.stakedYield, formatBalance, formatBalanceForDisplay]);
 
   return (
     <div className="profile-bar">

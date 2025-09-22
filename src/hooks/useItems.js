@@ -51,74 +51,72 @@ export const useItems = () => {
           functionName: 'balanceOfBatch',
           args: [addresses, itemIdStrings],
         });
-        // Filter out items with zero balance and map to item objects
+        // Include ALL items (even with 0 balance) for crafting interface
         const userItems = [];
         balances.forEach((balance, index) => {
           // Convert balance to number for comparison
           const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
-          if (balanceNum > 0) {
-            const itemId = allItemIds[index];
-            const itemData = ALL_ITEMS[itemId];
+          const itemId = allItemIds[index];
+          const itemData = ALL_ITEMS[itemId];
+          
+          if (itemData) {
+            // Item exists in ALL_ITEMS, use its data
+            userItems.push({
+              id: itemId,
+              count: balanceNum,
+              ...itemData
+            });
+          } else {
+            // Item doesn't exist in ALL_ITEMS, create proper category structure
+            let category, subCategory;
             
-            if (itemData) {
-              // Item exists in ALL_ITEMS, use its data
-              userItems.push({
-                id: itemId,
-                count: balanceNum,
-                ...itemData
-              });
+            // Determine category and subcategory based on item ID or label
+            if (Object.values(ID_CHEST_ITEMS).includes(itemId)) {
+              category = ID_ITEM_CATEGORIES.LOOT;
+              subCategory = ID_LOOT_CATEGORIES.CHEST;
+            } else if (Object.values(ID_POTION_ITEMS).includes(itemId)) {
+              category = ID_ITEM_CATEGORIES.POTION;
+              // Determine potion subcategory based on the specific potion
+              if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
+                subCategory = ID_POTION_CATEGORIES.FERTILIZER;
+              } else if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
+                subCategory = ID_POTION_CATEGORIES.GROWTH_ELIXIR;
+              } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
+                subCategory = ID_POTION_CATEGORIES.PESTICIDE;
+              }
             } else {
-              // Item doesn't exist in ALL_ITEMS, create proper category structure
-              let category, subCategory;
-              
-              // Determine category and subcategory based on item ID or label
-              if (Object.values(ID_CHEST_ITEMS).includes(itemId)) {
-                category = ID_ITEM_CATEGORIES.LOOT;
-                subCategory = ID_LOOT_CATEGORIES.CHEST;
-              } else if (Object.values(ID_POTION_ITEMS).includes(itemId)) {
-                category = ID_ITEM_CATEGORIES.POTION;
-                // Determine potion subcategory based on the specific potion
-                if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
-                  subCategory = ID_POTION_CATEGORIES.FERTILIZER;
-                } else if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
-                  subCategory = ID_POTION_CATEGORIES.GROWTH_ELIXIR;
-                } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
-                  subCategory = ID_POTION_CATEGORIES.PESTICIDE;
-                }
-              } else {
-                // Fallback for unknown items
-                category = ID_ITEM_CATEGORIES.LOOT;
-                subCategory = ID_LOOT_CATEGORIES.MISC;
-              }
-              
-              // Get proper label from constants
-              let label = itemId.toString();
-              if (Object.values(ID_CHEST_ITEMS).includes(itemId)) {
-                // Find the chest label from ID_CHEST_ITEMS
-                const chestEntry = Object.entries(ID_CHEST_ITEMS).find(([key, value]) => value === itemId);
-                if (chestEntry) {
-                  label = chestEntry[0]; // Use the key as label (e.g., "CHEST_WOOD")
-                }
-              } else if (Object.values(ID_POTION_ITEMS).includes(itemId)) {
-                // Find the potion label from ID_POTION_ITEMS
-                const potionEntry = Object.entries(ID_POTION_ITEMS).find(([key, value]) => value === itemId);
-                if (potionEntry) {
-                  label = potionEntry[0]; // Use the key as label (e.g., "POTION_FERTILIZER")
-                }
-              }
-              
-              // Create item data with proper categories
-              userItems.push({
-                id: itemId,
-                count: balanceNum,
-                category,
-                subCategory,
-                label,
-                type: ID_RARE_TYPE.COMMON,
-                image: IMAGE_URL_CROP,
-                pos: 0
-              });
+              // Fallback for unknown items
+              category = ID_ITEM_CATEGORIES.LOOT;
+              subCategory = ID_LOOT_CATEGORIES.MISC;
             }
+            
+            // Get proper label from constants
+            let label = itemId.toString();
+            if (Object.values(ID_CHEST_ITEMS).includes(itemId)) {
+              // Find the chest label from ID_CHEST_ITEMS
+              const chestEntry = Object.entries(ID_CHEST_ITEMS).find(([key, value]) => value === itemId);
+              if (chestEntry) {
+                label = chestEntry[0]; // Use the key as label (e.g., "CHEST_WOOD")
+              }
+            } else if (Object.values(ID_POTION_ITEMS).includes(itemId)) {
+              // Find the potion label from ID_POTION_ITEMS
+              const potionEntry = Object.entries(ID_POTION_ITEMS).find(([key, value]) => value === itemId);
+              if (potionEntry) {
+                label = potionEntry[0]; // Use the key as label (e.g., "POTION_FERTILIZER")
+              }
+            }
+            
+            // Create item data with proper categories
+            userItems.push({
+              id: itemId,
+              count: balanceNum,
+              category,
+              subCategory,
+              label,
+              type: ID_RARE_TYPE.COMMON,
+              image: IMAGE_URL_CROP,
+              pos: 0
+            });
           }
         });
         setItems(userItems);
@@ -142,7 +140,7 @@ export const useItems = () => {
           // This is a category node - recursively process children
           const processedChildren = createTreeWithItems(node.children, userItems);
           
-          // Add items property to category nodes (exclude seeds)
+          // Add items property to category nodes (exclude seeds, include all items even with 0 count for crafting)
           const categoryItems = userItems.filter(item => {
             if (node.id === ID_ITEM_CATEGORIES.CROP) {
               // Only include produce items, exclude seeds
@@ -382,48 +380,43 @@ export const useItems = () => {
     all: items,
     loading,
     error,
-    refetch: () => {
+    refetch: async () => {
       if (items1155 && account && isReady && publicClient) {
-        const fetchItems = async () => {
-          setLoading(true);
-          setError(null);
+        setLoading(true);
+        setError(null);
 
-          try {
-            const addresses = new Array(allItemIds.length).fill(account);
-            const itemIdStrings = allItemIds.map(id => id.toString());
-            const balances = await publicClient.readContract({
-              address: items1155.address,
-              abi: items1155.abi,
-              functionName: 'balanceOfBatch',
-              args: [addresses, itemIdStrings],
-            });
-            
-            const userItems = [];
-            balances.forEach((balance, index) => {
-              // Convert balance to number for comparison
-              const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
-              if (balanceNum > 0) {
-                const itemId = allItemIds[index];
-                const itemData = ALL_ITEMS[itemId];
-                if (itemData) {
-                  userItems.push({
-                    id: itemId,
-                    count: balanceNum,
-                    ...itemData
-                  });
-                }
-              }
-            });
+        try {
+          const addresses = new Array(allItemIds.length).fill(account);
+          const itemIdStrings = allItemIds.map(id => id.toString());
+          const balances = await publicClient.readContract({
+            address: items1155.address,
+            abi: items1155.abi,
+            functionName: 'balanceOfBatch',
+            args: [addresses, itemIdStrings],
+          });
+          
+          const userItems = [];
+          balances.forEach((balance, index) => {
+            // Convert balance to number for comparison
+            const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
+            const itemId = allItemIds[index];
+            const itemData = ALL_ITEMS[itemId];
+            if (itemData) {
+              userItems.push({
+                id: itemId,
+                count: balanceNum,
+                ...itemData
+              });
+            }
+          });
 
-            setItems(userItems);
-          } catch (err) {
-            console.error('Failed to refetch items:', err);
-            setError(err.message);
-          } finally {
-            setLoading(false);
-          }
-        };
-        fetchItems();
+          setItems(userItems);
+        } catch (err) {
+          console.error('Failed to refetch items:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
       }
     }
   };

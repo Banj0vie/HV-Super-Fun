@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
+import { handleContractError } from '../utils/errorHandler';
 
 const ProfileContext = createContext();
 
@@ -42,7 +43,8 @@ export const ProfileProvider = ({ children }) => {
 
         setLastUpdated(Date.now());
       } catch (error) {
-        console.error('Failed to load profile data:', error);
+        const { message } = handleContractError(error, 'loading profile data');
+        console.error('Failed to load profile data:', message);
       } finally {
         setIsLoading(false);
       }

@@ -4,6 +4,7 @@ import BaseDialog from "../BaseDialog";
 import BaseButton from "../../components/buttons/BaseButton";
 import { formatAddress } from "../../utils/basic";
 import { useAgwEthersAndService } from "../../hooks/useAgwEthersAndService";
+import { handleContractError } from "../../utils/errorHandler";
 
 const WalletDialog = ({onClose}) => {
   const { account, disconnect } = useAgwEthersAndService();
@@ -13,7 +14,8 @@ const WalletDialog = ({onClose}) => {
       disconnect();
       onClose();
     } catch (error) {
-      console.error('Failed to disconnect wallet:', error);
+      const { message } = handleContractError(error, 'disconnecting wallet');
+      console.error('Failed to disconnect wallet:', message);
       onClose();
     }
   };

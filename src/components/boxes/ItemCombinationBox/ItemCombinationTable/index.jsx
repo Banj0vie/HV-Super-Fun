@@ -11,6 +11,7 @@ const ItemCombinationTable = ({
   cropCounts,
   onCountDown,
   onCountUp,
+  inventory = {},
 }) => {
   const data = ITEM_COMBI[itemId];
   return (
@@ -32,12 +33,18 @@ const ItemCombinationTable = ({
             </div>
             <div
               className={`combi-row-right ${
-                combi.count < 6 ? "success" : "error"
+                data.simple 
+                  ? (inventory[combi.ids[0]] || 0) >= combi.count * multiplier ? "success" : "error"
+                  : (() => {
+                      // For multiple items, check if we have enough of any combination
+                      const totalAvailable = combi.ids.reduce((sum, id) => sum + (inventory[id] || 0), 0);
+                      return totalAvailable >= combi.count * multiplier ? "success" : "error";
+                    })()
               }`}
             >
               {data.simple
-                ? `x${combi.count * multiplier} (${6})`
-                : `Any x${combi.count * multiplier}`}
+                ? `x${combi.count * multiplier} (${inventory[combi.ids[0]] || 0})`
+                : `Any x${combi.count * multiplier} (${combi.ids.map(id => inventory[id] || 0).join(', ')})`}
             </div>
           </div>
         ))}

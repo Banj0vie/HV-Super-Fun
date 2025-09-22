@@ -354,7 +354,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           status: SEED_PACK_STATUS.NORMAL,
         },
       }));
-      show(`Failed to buy seed pack: ${err.message}`);
+      show(`Failed to buy seed pack: ${err.message}`, 'error');
     } finally {
       // Reset buying state
       setBuyingSeedId(null);

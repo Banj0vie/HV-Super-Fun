@@ -64,6 +64,7 @@ const StartFishing = ({ onBack, onStart }) => {
         <ConfirmBaitAmountDialog
           onClose={() => setIsConfirmDialog(false)}
           onConfirm={onConfirmBaitAmount}
+          baitId={selectedBaitId}
         ></ConfirmBaitAmountDialog>
       )}
     </div>

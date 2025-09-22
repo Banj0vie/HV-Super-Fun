@@ -23,6 +23,7 @@ const CropItem = ({
   cropArray,
   isDisabled = false,
   maxPlots = 15,
+  selectedIndexes = [], // Add selectedIndexes prop to sync with parent state
 }) => {
   const [highlighted, setHighlighted] = useState(false);
   const [growthProgress, setGrowthProgress] = useState(0);
@@ -32,23 +33,14 @@ const CropItem = ({
   const rootRef = useRef(null);
   const [portalContainer, setPortalContainer] = useState(null);
 
-  // Debug logging for crop data
-  if (data && data.seedId && data.seedId !== "0") {
-    console.log(`🌱 CropItem ${index} data:`, {
-      seedId: data.seedId,
-      growStatus: data.growStatus,
-      plantedAt: data.plantedAt,
-      growthTime: data.growthTime,
-      isDisabled,
-      maxPlots
-    });
-  }
-
   useEffect(() => {
     if (isPlanting) {
       setHighlighted(false);
+    } else {
+      // Sync local highlighted state with parent selectedIndexes
+      setHighlighted(selectedIndexes.includes(index));
     }
-  }, [isPlanting]);
+  }, [isPlanting, selectedIndexes, index]);
 
   // Update growth progress
   useEffect(() => {
@@ -219,11 +211,8 @@ const CropItem = ({
           if (isPlanting && data.seedId) {
             return; // Don't allow planting on already planted plots
           }
-          // Allow clicking empty plots when planting, and planted plots when harvesting
-          if (!isPlanting) {
-            setHighlighted(!highlighted);
-          }
           // Pass parameters in correct order: (isShift, index)
+          // Don't update local highlighted state here - let parent handle it
           if (e.shiftKey) {
             onClick(true, index);
           } else {

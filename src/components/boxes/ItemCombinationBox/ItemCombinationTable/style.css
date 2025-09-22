@@ -31,3 +31,11 @@
 .item-combination-table .wrapper .combi-row-right {
   font-size: 1.25rem;
 }
+
+.item-combination-table .wrapper .combi-row-right.error {
+  color: #ff3b30;
+}
+
+.item-combination-table .wrapper .combi-row-right.success {
+  color: #2ecc71;
+}

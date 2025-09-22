@@ -10,10 +10,12 @@ import { SEED_PACK_STATUS } from "../../constants/item_seed";
 import SeedRollingDialog from "../SeedRollingDialog";
 import { useVendor, useFarming } from "../../hooks/useContracts";
 import { useAgwEthersAndService } from "../../hooks/useAgwEthersAndService";
+import { useNotification } from "../../contexts/NotificationContext";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const { isConnected, account, contractService } = useAgwEthersAndService();
   const { buySeedPack, getPackPrice, checkPendingRequests, getAllPendingRequests, fulfillPendingRequest, listenForSeedsRevealed } = useVendor();
   const { getMaxPlots } = useFarming();
+  const { show } = useNotification();
   
   const [pageIndex, setPageIndex] = useState(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
   const [availablePlots, setAvailablePlots] = useState(0);
@@ -224,7 +226,8 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
             isComplete: true,
             isFallback: false // This is real data, not fallback
           }));
-          
+          console.log('============================');
+          console.log(revealedSeeds.seedIds);
           // Keep the dialog open to show results - don't hide it immediately
           // User will close it manually via onClose/onBack buttons
           setIsRevealing(false);
@@ -352,14 +355,14 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           status: SEED_PACK_STATUS.NORMAL,
         },
       }));
-      alert(`Failed to buy seed pack: ${err.message}`);
+      show(`Failed to buy seed pack: ${err.message}`, 'error');
     } finally {
       // Reset buying state
       setBuyingSeedId(null);
     }
 
     setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
-  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests]);
+  }, [isConnected, selectedSeed, tierMap, buySeedPack, loadPendingRequests, show]);
 
   const onBuy = useCallback((item) => {
     setSelectedSeedPack(item);
