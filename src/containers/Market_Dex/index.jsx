@@ -14,39 +14,39 @@ import { useGameState } from "../../contexts/GameStateContext";
 import { ethers } from "ethers";
 const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   const { isConnected } = useAgwEthersAndService();
-  const { swapETHForYield, getYieldAmount, ethBalance, readyBalance, fetchBalances, loading, error } = useDex();
+  const { swapETHForYield, getYieldAmount, ethBalance, honeyBalance, fetchBalances, loading, error } = useDex();
   const { loadBalances: loadGameStateBalances } = useGameState();
   
   const [isReversed, setIsReversed] = useState(false);
   const [swapInfo, setSwapInfo] = useState([]);
   const [ethAmount, setEthAmount] = useState('');
-  const [readyAmount, setReadyAmount] = useState('0');
+  const [honeyAmount, setHoneyAmount] = useState('0');
   const [isCalculating, setIsCalculating] = useState(false);
   const { show: showNotification } = useNotification();
 
   // Calculate yield amount when ETH amount changes
   useEffect(() => {
-    const calculateReady = async () => {
+    const calculateHoney = async () => {
       if (!ethAmount || !isConnected) {
-        setReadyAmount('0');
+        setHoneyAmount('0');
         return;
       }
       
       try {
         setIsCalculating(true);
         const ethWei = ethers.parseEther(ethAmount);
-        const readyAmount = await getYieldAmount(ethWei);
-        console.log("🚀 ~ calculateReady ~ ethAmount:", readyAmount)
-        setReadyAmount(ethers.formatEther(readyAmount));
+        const honeyAmount = await getYieldAmount(ethWei);
+        console.log("🚀 ~ calculateHoney ~ ethAmount:", honeyAmount)
+        setHoneyAmount(ethers.formatEther(honeyAmount));
       } catch (err) {
-        console.error('Failed to calculate ready:', err);
-        setReadyAmount('0');
+        console.error('Failed to calculate honey:', err);
+        setHoneyAmount('0');
       } finally {
         setIsCalculating(false);
       }
     };
 
-    const timeoutId = setTimeout(calculateReady, 500); // Debounce
+    const timeoutId = setTimeout(calculateHoney, 500); // Debounce
     return () => clearTimeout(timeoutId);
   }, [ethAmount, isConnected, getYieldAmount]);
 
@@ -66,9 +66,9 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
       const result = await swapETHForYield(ethWei);
       
       if (result) {
-        showNotification('Swap successful! Check your Ready token balance.', 'success');
+        showNotification('Swap successful! Check your Honey token balance.', 'success');
         setEthAmount('');
-        setReadyAmount('0');
+        setHoneyAmount('0');
         // Refresh balances after successful swap
         await Promise.all([
           fetchBalances(), // Refresh DEX component balances
@@ -87,17 +87,17 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
     setEthAmount(balance);
   };
 
-  const handleReadyBalanceClick = (balance) => {
-    setReadyAmount(balance);
+  const handleHoneyBalanceClick = (balance) => {
+    setHoneyAmount(balance);
   };
 
   useEffect(() => {
     setSwapInfo([
       { label: "Slippage", value: "0.5%" },
       { label: "Price Impact", value: "0.39%" },
-      { label: "Minimum Received", value: isCalculating ? "Calculating..." : readyAmount },
+      { label: "Minimum Received", value: isCalculating ? "Calculating..." : honeyAmount },
     ]);
-  }, [readyAmount, isCalculating]);
+  }, [honeyAmount, isCalculating]);
 
   return (
     <BaseDialog className="dex-wrapper" title={label} onClose={onClose} header={header}>
@@ -108,7 +108,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
           style={{ flexDirection: isReversed ? "column-reverse" : "column" }}
         >
           <TokenInputRow 
-            token={"ETH"} 
+            token={"ABS-ETH"} 
             balance={ethBalance} 
             value={ethAmount}
             onChange={setEthAmount}
@@ -121,10 +121,10 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
             }}
           ></ExchangeButton>
           <TokenInputRow 
-            token={"Ready"} 
-            balance={isCalculating ? "Calculating..." : readyBalance}
-            value={readyAmount}
-            onBalanceClick={handleReadyBalanceClick}
+            token={"Honey"} 
+            balance={isCalculating ? "Calculating..." : honeyBalance}
+            value={honeyAmount}
+            onBalanceClick={handleHoneyBalanceClick}
             readOnly={true}
             disabled={true}
           />
