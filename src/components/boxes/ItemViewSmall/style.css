@@ -13,6 +13,12 @@
   justify-content: center;
 }
 
+.item-small-view .icon .crop-icon {
+  background: url(/public/images/crops/bigger_plants.png);
+  width: 64px;
+  height: 64px;
+}
+
 .item-small-view .label {
   -o-border-image: var(--profile-btn-bg) 6 repeat;
   border-image: var(--profile-btn-bg) 6 fill repeat;
@@ -21,20 +27,20 @@
   height: 32px;
   margin-top: -8px;
   text-align: center;
-  display:flex;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .item-small-view .count {
-    position: absolute;
-    right: 7%;
-    top: 6%;
-    background-color: #0006;
-    border-radius: 5px;
-    font-size: 1.25rem;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 5px;
-    padding-right: 5px;
+  position: absolute;
+  right: 7%;
+  top: 6%;
+  background-color: #0006;
+  border-radius: 5px;
+  font-size: 1.25rem;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
 }

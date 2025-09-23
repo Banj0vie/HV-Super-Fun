@@ -7,11 +7,13 @@ import ProfileView from "./ProfileView";
 import { useGameState } from "../../../contexts/GameStateContext";
 import { useAgwEthersAndService } from "../../../hooks/useAgwEthersAndService";
 import { formatNumber } from "../../../utils/basic";
+import InventoryDialog from "../../../containers/Menu_Inventory";
 
 const ProfileBar = () => {
   const { balances, formatBalance } = useGameState();
   const { contractService, account } = useAgwEthersAndService();
-  
+  const [isInventoryDialog, setIsInventoryDialog] = useState(false);
+
   // Persistent local state for instant display
   const [lockedHoney, setLockedHoney] = useState("0.00");
   const [honeyBalance, setHoneyBalance] = useState("0.00");
@@ -29,7 +31,7 @@ const ProfileBar = () => {
       const formatted = formatBalanceForDisplay(balances.yield);
       setHoneyBalance(formatted);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [balances?.yield, formatBalance]);
 
   // Load locked honey balance and update when needed
@@ -37,8 +39,12 @@ const ProfileBar = () => {
     const loadlockedHoney = async () => {
       if (contractService && account) {
         try {
-          const lockedHoneyAmount = await contractService.getLockedGameToken(account);
-          const formatted = formatBalanceForDisplay(lockedHoneyAmount.toString());
+          const lockedHoneyAmount = await contractService.getLockedGameToken(
+            account
+          );
+          const formatted = formatBalanceForDisplay(
+            lockedHoneyAmount.toString()
+          );
           setLockedHoney(formatted);
         } catch (error) {
           console.error("Failed to load locked ready:", error);
@@ -52,7 +58,7 @@ const ProfileBar = () => {
     };
 
     loadlockedHoney();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractService, account, balances?.stakedYield, formatBalance]);
 
   return (
@@ -71,6 +77,7 @@ const ProfileBar = () => {
       <ProfileButton
         icon={<img alt="Inventory" src={profileAssets.btnInventory} />}
         title="Inventory"
+        onClick={() => setIsInventoryDialog(true)}
       />
       <ProfileButton
         icon={<img alt="Tutorial" src={profileAssets.btnTutorial} />}
@@ -93,6 +100,7 @@ const ProfileBar = () => {
           title="Honey Balance"
         />
       </div>
+      {isInventoryDialog && <InventoryDialog onClose={() => setIsInventoryDialog(false)}></InventoryDialog>}
     </div>
   );
 };
