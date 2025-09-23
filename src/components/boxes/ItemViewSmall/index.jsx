@@ -2,13 +2,25 @@ import React from "react";
 import "./style.css";
 import CardView from "../CardView";
 import { ALL_ITEMS } from "../../../constants/item_data";
-import { TYPE_LABEL_COLOR } from "../../../constants/item_seed";
+import {
+  ONE_SEED_HEIGHT,
+  TYPE_LABEL_COLOR,
+} from "../../../constants/item_seed";
 
 const ItemSmallView = ({ itemId, count }) => {
   return (
     <div className="item-small-view">
       <CardView className="icon">
-        <img src={ALL_ITEMS[itemId].image} alt="icon"></img>
+        {ALL_ITEMS[itemId].pos === undefined ? (
+          <img src={ALL_ITEMS[itemId].image} alt="icon"></img>
+        ) : (
+          <div
+            className="crop-icon"
+            style={{
+              backgroundPositionY: -ALL_ITEMS[itemId]?.pos * ONE_SEED_HEIGHT,
+            }}
+          ></div>
+        )}
       </CardView>
       <div
         className="label"

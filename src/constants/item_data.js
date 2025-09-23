@@ -1,4 +1,4 @@
-import { baitImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
+import { baitImages, chestImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
 import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_POTIONS, ID_LOOT_CATEGORIES, ID_LOOTS, ID_FISHING_RODS } from "./app_ids";
 
 export const IMAGE_URL_CROP = "/public/images/crops/seeds.png";
@@ -687,7 +687,6 @@ export const ALL_ITEMS = {
     subCategory: ID_LOOT_CATEGORIES.BAIT,
     type: ID_RARE_TYPE.COMMON,
     image: baitImages.bait1,
-    pos: -1, // -1 means base image
     honey: 0,
     lockedHoney: 0,
   },
@@ -697,7 +696,6 @@ export const ALL_ITEMS = {
     subCategory: ID_LOOT_CATEGORIES.BAIT,
     type: ID_RARE_TYPE.UNCOMMON,
     image: baitImages.bait2,
-    pos: -1,
     honey: 0,
     lockedHoney: 0,
   },
@@ -707,7 +705,6 @@ export const ALL_ITEMS = {
     subCategory: ID_LOOT_CATEGORIES.BAIT,
     type: ID_RARE_TYPE.RARE,
     image: baitImages.bait3,
-    pos: -1,
     honey: 0,
     lockedHoney: 0,
   },
@@ -733,7 +730,7 @@ export const ALL_ITEMS = {
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.COMMON,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.wood, // Special identifier for CSS-generated chest
     pos: 0, // Wood chest
     honey: 0,
     lockedHoney: 0,
@@ -743,7 +740,7 @@ export const ALL_ITEMS = {
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.UNCOMMON,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.bronze, // Special identifier for CSS-generated chest
     pos: 1, // Bronze chest
     honey: 0,
     lockedHoney: 0,
@@ -753,7 +750,7 @@ export const ALL_ITEMS = {
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.RARE,
-    image: "chest", // Special identifier for CSS-generated chest
+    image: chestImages.silver, // Special identifier for CSS-generated chest
     pos: 2, // Silver chest
     honey: 0,
     lockedHoney: 0,
@@ -762,8 +759,8 @@ export const ALL_ITEMS = {
     label: "CHEST_GOLD",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
-    type: ID_RARE_TYPE.EPIC,
-    image: "chest", // Special identifier for CSS-generated chest
+    type: ID_RARE_TYPE.LEGENDARY,
+    image: chestImages.gold, // Special identifier for CSS-generated chest
     pos: 3, // Gold chest
     honey: 0,
     lockedHoney: 0,
@@ -776,7 +773,6 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
     type: ID_RARE_TYPE.COMMON,
     image: potionImages.growthElixir,
-    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 75,
@@ -787,7 +783,6 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.PESTICIDE,
     type: ID_RARE_TYPE.UNCOMMON,
     image: potionImages.pesticide,
-    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 250,
@@ -798,7 +793,6 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.FERTILIZER,
     type: ID_RARE_TYPE.RARE,
     image: potionImages.fertilizer,
-    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 2000,
@@ -808,31 +802,26 @@ export const ALL_ITEMS = {
     label: "Fishing Rod 1",
     type: ID_RARE_TYPE.COMMON,
     image: fishingRodImages.lvl5,
-    pos: -1,
   },
   [ID_FISHING_RODS.LVL2]: {
     label: "Fishing Rod 2",
     type: ID_RARE_TYPE.UNCOMMON,
     image: fishingRodImages.lvl5,
-    pos: -1,
   },
   [ID_FISHING_RODS.LVL3]: {
     label: "Fishing Rod 3",
     type: ID_RARE_TYPE.RARE,
     image: fishingRodImages.lvl5,
-    pos: -1,
   },
   [ID_FISHING_RODS.LVL4]: {
     label: "Fishing Rod 4",
     type: ID_RARE_TYPE.EPIC,
     image: fishingRodImages.lvl5,
-    pos: -1,
   },
   [ID_FISHING_RODS.LVL5]: {
     label: "Fishing Rod 5",
     type: ID_RARE_TYPE.LEGENDARY,
     image: fishingRodImages.lvl5,
-    pos: -1,
   },
 };
 

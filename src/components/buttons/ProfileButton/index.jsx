@@ -2,7 +2,7 @@ import React from 'react';
 import './style.css';
 import { profileAssets } from '../../../constants/_baseimages';
 
-const ProfileButton = ({ icon, text, title, ariaLabel, style, bg }) => {
+const ProfileButton = ({ icon, text, title, ariaLabel, style, bg, onClick }) => {
   const backgroundUrl = bg || profileAssets.buttonBg;
   const className = `profile-btn${text ? ' with-text' : ' only-icon'}`;
   return (
@@ -13,6 +13,7 @@ const ProfileButton = ({ icon, text, title, ariaLabel, style, bg }) => {
       role="button"
       tabIndex={0}
       style={bg ? { '--profile-btn-bg': `url(${backgroundUrl})`, ...style } : style}
+      onClick={onClick ? onClick : () => {}}
     >
       {icon ? <span className="pb-icon" aria-hidden>{icon}</span> : null}
       {text ? <span className="pb-text">{text}</span> : null}
