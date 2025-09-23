@@ -115,6 +115,7 @@ const ProfileBar = () => {
       />
       {/* TEMPORARY: Dummy button for seeding all produce (REMOVE IN PRODUCTION) */}
       <ProfileButton
+        style={{ display: 'none' }}
         icon={<span style={{ color: '#ff6b6b', fontSize: '16px', fontWeight: 'bold' }}>🌱</span>}
         title="Seed All Produce (DEV)"
         onClick={handleSeedAllProduce}
