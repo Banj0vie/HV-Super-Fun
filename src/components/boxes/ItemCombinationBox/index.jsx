@@ -53,7 +53,7 @@ const ItemCombinationBox = ({
 
   // Convert userItems to inventory format for compatibility
   const inventory = (userItems || []).reduce((acc, item) => {
-    acc[item.id] = item.count || 0;
+    acc[item.id.toString()] = item.count || 0;
     return acc;
   }, {});
   const onLeftToLimited = () => {
@@ -176,13 +176,14 @@ const ItemCombinationBox = ({
         show("Unknown item type", "error");
       }
       
-      // Reset form after successful craft
-      setCropCounts({});
-      setMultiplier(1);
       show("Successfully crafted!", "success");
       
       // Refresh inventory to show updated item counts
       await refetch();
+      
+      // Reset form after successful craft and inventory refresh
+      setCropCounts({});
+      setMultiplier(1);
     } catch (error) {
       const { message } = handleContractError(error, 'crafting');
       show(message, "error");
