@@ -21,6 +21,29 @@ const TreeInput = ({ onBack, onSelect }) => {
     onSelectRef.current(Array.from(checked));
   }, [checked]);
 
+  // Auto-select all items when component loads
+  useEffect(() => {
+    if (itemsTree && itemsTree.length > 0 && !loading && checked.size === 0) {
+      const allItemIds = new Set();
+      
+      const walk = (n) => {
+        // Add items from category nodes that have items arrays
+        if (n.items && n.items.length > 0) {
+          n.items.forEach(item => allItemIds.add(item.id));
+        }
+        // Add leaf nodes that have count (user owns these items)
+        else if (!n.children && n.count !== undefined && n.count > 0) {
+          allItemIds.add(n.id);
+        }
+        // Recursively process children
+        if (n.children) n.children.forEach((c) => walk(c));
+      };
+      
+      itemsTree.forEach(walk);
+      setChecked(allItemIds);
+    }
+  }, [itemsTree, loading, checked.size]);
+
   const toggleExpand = (id) => {
     setExpanded((s) => {
       const next = new Set(s);
@@ -79,7 +102,25 @@ const TreeInput = ({ onBack, onSelect }) => {
   const onReset = () => {
     setSearch("");
     setExpanded(new Set());
-    setChecked(new Set());
+    
+    // Select all items instead of clearing
+    if (itemsTree && itemsTree.length > 0) {
+      const allItemIds = new Set();
+      
+      const walk = (n) => {
+        if (n.items && n.items.length > 0) {
+          n.items.forEach(item => allItemIds.add(item.id));
+        } else if (!n.children && n.count !== undefined && n.count > 0) {
+          allItemIds.add(n.id);
+        }
+        if (n.children) n.children.forEach((c) => walk(c));
+      };
+      
+      itemsTree.forEach(walk);
+      setChecked(allItemIds);
+    } else {
+      setChecked(new Set());
+    }
   };
 
 
@@ -197,7 +238,6 @@ const TreeInput = ({ onBack, onSelect }) => {
         setValue={(v) => setSearch(v)}
         placeholder="Search Filters"
       />
-
       <div className="tree-list">{filtered.map((n) => renderNode(n))}</div>
 
       <div className="tree-actions">

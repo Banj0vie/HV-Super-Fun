@@ -23,9 +23,9 @@ import Tavern from "./router/tavern.jsx";
 import Valley from "./router/valley.jsx";
 
 const AppContent = () => {
-  const { isConnected, account, hasProfile, isConnecting, contractService } = useAgwEthersAndService();
+  const { isConnected, account, hasProfile } = useAgwEthersAndService();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [hasCheckedInitialState, setHasCheckedInitialState] = useState(false);
+  const [, setHasCheckedInitialState] = useState(false);
 
   useEffect(() => {
     // Initial app load: check wallet connection and profile status

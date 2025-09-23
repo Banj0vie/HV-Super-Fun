@@ -60,9 +60,26 @@ export const formatDuration = (timestampMs) => {
 
 // For the test
 export const getRandomSeedEntry = () => {
-  const entries = Object.entries(ALL_ITEMS);
-  const randomIndex = Math.floor(Math.random() * entries.length);
-  const [key, seed] = entries[randomIndex];
+  // Only select from seed items, not all items
+  const seedEntries = Object.entries(ALL_ITEMS).filter(([key, item]) => {
+    // Check if this item is a seed by looking at the category or checking if it's in ID_SEEDS
+    return item.category === 'ID_ITEM_CROP' && item.subCategory && item.subCategory.includes('SEED');
+  });
+  
+  if (seedEntries.length === 0) {
+    // Fallback: return a default seed entry
+    return {
+      id: 'POTATO_SEED',
+      label: 'POTATO',
+      pos: 1,
+      type: 'ID_RARE_TYPE_COMMON',
+      category: 'ID_ITEM_CROP',
+      subCategory: 'ID_CROP_PICO_SEED'
+    };
+  }
+  
+  const randomIndex = Math.floor(Math.random() * seedEntries.length);
+  const [key, seed] = seedEntries[randomIndex];
   return { id: key, ...seed };
 };
 

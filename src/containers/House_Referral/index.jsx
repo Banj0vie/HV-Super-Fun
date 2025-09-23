@@ -76,7 +76,7 @@ const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
         // Convert bytes32 to string for display
         const codeString = ethers.decodeBytes32String(myReferralCode);
         await navigator.clipboard.writeText(codeString);
-        show("Copied code to clipboard!");
+        show("Copied code to clipboard!", 'success');
       } else {
         show("No referral code to copy", 'warning');
       }

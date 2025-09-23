@@ -7,6 +7,7 @@ import BaseButton from "../../components/buttons/BaseButton";
 import { formatDuration } from "../../utils/basic";
 import { useChestOpener } from "../../hooks/useContracts";
 import { useNotification } from "../../contexts/NotificationContext";
+import { handleContractError } from "../../utils/errorHandler";
 
 const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
   const { 
@@ -15,6 +16,7 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
     currentLevel, 
     claimDailyChest, 
     getTimeUntilNextChest, 
+    fetchChestData,
     loading, 
     error 
   } = useChestOpener();
@@ -49,14 +51,15 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
       
       if (tx) {
         show(`Successfully claimed ${chestType} chest!`, 'success');
-        // Refresh data after successful claim
+        // Refresh chest data after successful claim
+        await fetchChestData();
         setRemainedTime(getTimeUntilNextChest());
       } else {
         show('Failed to claim chest', 'error');
       }
     } catch (err) {
-      console.error('Claim chest error:', err);
-      show(`Claim failed: ${err.message}`, 'error');
+      const { message } = handleContractError(err, 'claiming daily chest');
+      show(message, 'error');
     } finally {
       setIsClaiming(false);
     }

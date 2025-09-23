@@ -2,6 +2,7 @@
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES, CONTRACT_ABIS } from '../config/contracts';
 import { parseAbi } from 'viem';
+import { handleContractError } from '../utils/errorHandler';
 
 class ContractService {
   constructor(publicClient, agwClient) {
@@ -48,18 +49,8 @@ class ContractService {
       throw new Error('AGW client not available for profile creation');
       
     } catch (error) {
-      console.error('Error creating profile:', error);
-      
-      // Provide more specific error messages
-      if (error.message.includes('insufficient funds')) {
-        throw new Error('Insufficient funds for transaction');
-      } else if (error.message.includes('user rejected')) {
-        throw new Error('Transaction rejected by user');
-      } else if (error.message.includes('Wrong network')) {
-        throw error;
-      } else {
-        throw new Error(`Profile creation failed: ${error.message}`);
-      }
+      const { message } = handleContractError(error, 'creating profile');
+      throw new Error(message);
     }
   }
 
@@ -183,8 +174,8 @@ class ContractService {
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error swapping ETH for Yield:', error);
-      throw error;
+      const { message } = handleContractError(error, 'swapping ETH for Yield');
+      throw new Error(message);
     }
   }
 
@@ -243,8 +234,8 @@ class ContractService {
       await tx.wait();
       return tx;
     } catch (error) {
-      console.error('Error unlocking yield:', error);
-      throw error;
+      const { message } = handleContractError(error, 'unlocking yield');
+      throw new Error(message);
     }
   }
 
@@ -297,190 +288,6 @@ class ContractService {
       return growthTime;
     } catch (error) {
       console.error('Error getting growth time:', error);
-      throw error;
-    }
-  }
-
-  async plantSeed(seedId, plotNumber) {
-    try {
-      const farming = this.getContract('FARMING');
-      
-      // Check if user has the seed item first
-      const items = this.getContract('ITEMS_1155');
-      const userAddress = await this.signer.getAddress();
-      const balance = await this.publicClient.readContract({
-        address: items.address,
-        abi: items.abi,
-        functionName: 'balanceOf',
-        args: [userAddress, seedId],
-      })
-      if (balance === 0n) {
-        throw new Error(`You don't have seed with ID ${seedId}`);
-      }
-
-      // Check that the plot is empty
-      try {
-        const existing = await farming.crops(userAddress, plotNumber);
-        if (existing && (existing.seedId ?? 0n) !== 0n) {
-          throw new Error(`Plot ${plotNumber} is already occupied`);
-        }
-      } catch (readErr) {
-        // If reading crops fails, continue and let the tx revert rather than blocking
-        console.warn('Could not read crop slot before planting:', readErr);
-      }
-
-      // Estimate gas first
-      const gasEstimate = await farming.plant.estimateGas(seedId, plotNumber);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
-      const tx = await this.agwClient.writeContract({
-        abi: farming.abi,
-        address: farming.address,
-        functionName: 'plant',
-        args: [seedId, plotNumber],
-        gasLimit: gasLimit,
-      })
-      await tx.wait();
-      return tx;
-    } catch (error) {
-      console.error('Error planting seed:', error);
-      throw error;
-    }
-  }
-
-  async plantSeedsBatch(seedIds, plotNumbers) {
-    try {
-      const farming = this.getContract('FARMING');
-      const userAddress = await this.signer.getAddress();
-      
-      // Validate inputs
-      if (seedIds.length !== plotNumbers.length) {
-        throw new Error('Seed IDs and plot numbers arrays must have the same length');
-      }
-
-      // Check if user has all the seed items first
-      const items = this.getContract('ITEMS_1155');
-      for (const seedId of seedIds) {
-        const balance = await this.publicClient.readContract({
-          address: items.address,
-          abi: items.abi,
-          functionName: 'balanceOf',
-          args: [userAddress, seedId],
-        })
-        if (balance === 0n) {
-          throw new Error(`You don't have seed with ID ${seedId}`);
-        }
-      }
-
-      // Check current crops to avoid conflicts
-      const currentCrops = await this.getUserCrops(userAddress);
-      for (let i = 0; i < plotNumbers.length; i++) {
-        const plotNumber = plotNumbers[i];
-        if (plotNumber < currentCrops.length && currentCrops[plotNumber].seedId !== 0n) {
-          throw new Error(`Plot ${plotNumber} is already occupied`);
-        }
-      }
-
-      // Estimate gas first
-      const gasEstimate = await farming.plantBatch.estimateGas(seedIds, plotNumbers);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
-      const tx = await this.agwClient.writeContract({
-        abi: farming.abi,
-        address: farming.address,
-        functionName: 'plantBatch',
-        args: [seedIds, plotNumbers],
-        gasLimit: gasLimit,
-      })
-      await tx.wait();
-      return tx;
-    } catch (error) {
-      console.error('Error planting seeds batch:', error);
-      throw error;
-    }
-  }
-
-  async harvestCrop(slot) {
-    try {
-      const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvest.estimateGas(slot);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
-      const tx = await this.agwClient.writeContract({
-        abi: farming.abi,
-        address: farming.address,
-        functionName: 'harvest',
-        args: [slot],
-        gasLimit: gasLimit,
-      })
-      await tx.wait();
-      return tx;
-    } catch (error) {
-      console.error('Error harvesting crop:', error);
-      throw error;
-    }
-  }
-
-  async harvestAll() {
-    try {
-      const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvestAll.estimateGas();
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
-      const tx = await this.agwClient.writeContract({
-        abi: farming.abi,
-        address: farming.address,
-        functionName: 'harvestAll',
-        gasLimit: gasLimit,
-      })
-      await tx.wait();
-      return tx;
-    } catch (error) {
-      console.error('Error harvesting all crops:', error);
-      throw error;
-    }
-  }
-
-  async harvestMany(slots) {
-    try {
-      const farming = this.getContract('FARMING');
-      
-      // Estimate gas first
-      const gasEstimate = await farming.harvestMany.estimateGas(slots);
-      const gasLimit = gasEstimate * 120n / 100n; // Add 20% buffer
-
-      const tx = await this.agwClient.writeContract({
-        abi: farming.abi,
-        address: farming.address,
-        functionName: 'harvestMany',
-        args: [slots],
-        gasLimit: gasLimit,
-      })
-      await tx.wait();
-      return tx;
-    } catch (error) {
-      console.error('Error harvesting many crops:', error);
-      throw error;
-    }
-  }
-
-  // Items functions
-  async getItemBalance(address, itemId) {
-    try {
-      const items = this.getContract('ITEMS_1155');
-      const balance = await this.publicClient.readContract({
-        address: items.address,
-        abi: items.abi,
-        functionName: 'balanceOf',
-        args: [address, itemId],
-      })
-      return balance;
-    } catch (error) {
-      console.error('Error getting item balance:', error);
       throw error;
     }
   }
@@ -605,71 +412,6 @@ class ContractService {
     }
   }
 
-  // Additional farming methods
-  async buySeedPack(tier, count) {
-    try {
-      const vendor = this.getContract('VENDOR');
-      const tx = await this.agwClient.writeContract({
-        abi: vendor.abi,
-        address: vendor.address,
-        functionName: 'buySeedPack',
-        args: [tier, count],
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error buying seed pack:', error);
-      throw error;
-    }
-  }
-
-  async fulfillRequest(requestId, randomNumber) {
-    try {
-      const rngHub = this.getContract('RNG_HUB');
-      const tx = await this.agwClient.writeContract({
-        abi: rngHub.abi,
-        address: rngHub.address,
-        functionName: 'fulfillRequest',
-        args: [requestId, randomNumber],
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error fulfilling request:', error);
-      throw error;
-    }
-  }
-
-  async stake(amount) {
-    try {
-      const banker = this.getContract('BANKER');
-      const tx = await this.agwClient.writeContract({
-        abi: banker.abi,
-        address: banker.address,
-        functionName: 'stake',
-        args: [amount],
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error staking:', error);
-      throw error;
-    }
-  }
-
-  async unstake(shares) {
-    try {
-      const banker = this.getContract('BANKER');
-      const tx = await this.agwClient.writeContract({
-        abi: banker.abi,
-        address: banker.address,
-        functionName: 'unstake',
-        args: [shares],
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error unstaking:', error);
-      throw error;
-    }
-  }
-
   async getStakedBalance(address) {
     try {
       const banker = this.getContract('BANKER');
@@ -682,36 +424,6 @@ class ContractService {
       return balance;
     } catch (error) {
       console.error('Error getting staked balance:', error);
-      throw error;
-    }
-  }
-
-  async unlockWeeklyHarvest() {
-    try {
-      const sage = this.getContract('SAGE');
-      const tx = await this.agwClient.writeContract({
-        abi: sage.abi,
-        address: sage.address,
-        functionName: 'unlockWeeklyHarvest',
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error unlocking weekly harvest:', error);
-      throw error;
-    }
-  }
-
-  async unlockWeeklyWage() {
-    try {
-      const sage = this.getContract('SAGE');
-      const tx = await this.agwClient.writeContract({
-        abi: sage.abi,
-        address: sage.address,
-        functionName: 'unlockWeeklyWage',
-      });
-      return tx;
-    } catch (error) {
-      console.error('Error unlocking weekly wage:', error);
       throw error;
     }
   }

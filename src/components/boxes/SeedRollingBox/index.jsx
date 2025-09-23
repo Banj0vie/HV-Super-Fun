@@ -28,6 +28,16 @@ const convertSeedIdToSeedData = (seedId) => {
     }
   }
   
+  // If not found in ID_SEEDS, try to find directly in ALL_ITEMS
+  for (const [itemKey, itemData] of Object.entries(ALL_ITEMS)) {
+    if (itemData.id && itemData.id.toString() === seedIdStr) {
+      // Check if this is a seed item
+      if (itemData.category === 'ID_ITEM_CROP' && itemData.subCategory && itemData.subCategory.includes('SEED')) {
+        return { id: itemKey, ...itemData };
+      }
+    }
+  }
+  
   return null;
 };
 
@@ -36,11 +46,14 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
   const [selectedSeed, setSelectedSeed] = useState({});
   
   useEffect(() => {
+    console.log('SeedRollingBox received seedPackId:', seedPackId, 'type:', typeof seedPackId);
+    
     // If seedPackId is 0 or falsy, show rolling animation
     if (!seedPackId || seedPackId === 0 || seedPackId === "0") {
       const timer = setTimeout(() => {
         setIsRolling(false);
         const randomSeed = getRandomSeedEntry();
+        console.log('Using random seed fallback:', randomSeed);
         setSelectedSeed(randomSeed);
       }, 3000 + delay); // stop after 3s
 
@@ -48,11 +61,13 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
     } else {
       // If we have a real seedId, convert it and show immediately
       const seedData = convertSeedIdToSeedData(seedPackId);
+      console.log('Converted seed data:', seedData);
       if (seedData) {
         setIsRolling(false);
         setSelectedSeed(seedData);
       } else {
         // Fallback to random if conversion fails
+        console.log('Conversion failed, using random seed fallback');
         setIsRolling(false);
         const randomSeed = getRandomSeedEntry();
         setSelectedSeed(randomSeed);

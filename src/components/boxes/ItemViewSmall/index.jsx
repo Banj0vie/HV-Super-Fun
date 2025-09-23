@@ -8,6 +8,8 @@ import {
 } from "../../../constants/item_seed";
 
 const ItemSmallView = ({ itemId, count }) => {
+  const item = ALL_ITEMS[itemId];
+
   return (
     <div className="item-small-view">
       <CardView className="icon">
@@ -24,9 +26,9 @@ const ItemSmallView = ({ itemId, count }) => {
       </CardView>
       <div
         className="label"
-        style={{ color: TYPE_LABEL_COLOR[ALL_ITEMS[itemId].type].color }}
+        style={{ color: TYPE_LABEL_COLOR[item.type].color }}
       >
-        {ALL_ITEMS[itemId].label}
+        {item.label}
       </div>
       <div className="count">x{count}</div>
     </div>

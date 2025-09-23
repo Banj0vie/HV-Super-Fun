@@ -5,7 +5,7 @@ import { useAgwEthersAndService } from "../../../hooks/useAgwEthersAndService";
 import { useLoginWithAbstract } from "@abstract-foundation/agw-react";
 
 const ConnectWalletAuthBox = () => {
-  const { account, isConnected, isConnecting, hasProfile, error, connect } = useAgwEthersAndService();
+  const { account, isConnected, isConnecting, hasProfile, error } = useAgwEthersAndService();
   const { login } = useLoginWithAbstract();
 
   // If connected and profile status is unknown, show "Connecting..." while checking

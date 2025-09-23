@@ -14,6 +14,7 @@ import { useFarming } from "../hooks/useContracts";
 import { useAgwEthersAndService } from "../hooks/useAgwEthersAndService";
 import { useNotification } from "../contexts/NotificationContext";
 import { CropItemArrayClass } from "../models/crop";
+import { handleContractError } from "../utils/errorHandler";
 const Farm = () => {
   const { width, height } = FARM_VIEWPORT;
   const hotspots = FARM_HOTSPOTS;
@@ -48,16 +49,8 @@ const Farm = () => {
   const [userCropsLoaded, setUserCropsLoaded] = useState(false);
   const [usedSeedsInPreview, setUsedSeedsInPreview] = useState({}); // Track seeds used in preview
 
-  // Arrays are always 30 plots (15 per side), but maxPlots determines which are enabled
-
-  // Debug maxPlots changes
-  useEffect(() => {
-console.log("🚀 maxPlots changed to:", maxPlots);
-  }, [maxPlots]);
-
   // Force re-render when crop array changes
   useEffect(() => {
-    console.log("🌱 Crop array changed, forcing re-render");
     setPreviewUpdateKey(prev => prev + 1);
   }, [cropArray]);
 
@@ -69,7 +62,8 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         const growthTime = await getGrowthTime(seedId);
         return growthTime;
       } catch (error) {
-        console.error("Failed to get growth time from contract:", error);
+        const { message } = handleContractError(error, 'getting growth time');
+        console.error("Failed to get growth time from contract:", message);
         return 60; // Default fallback
       }
     },
@@ -154,6 +148,9 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         setPreviewUpdateKey(prev => prev + 1);
         console.log("🔄 Forced re-render after crop loading");
         
+        // Clear any stale selection state when loading crops
+        setSelectedIndexes([]);
+        
         // Debug: Log how many crops are actually planted
         const plantedCrops = newCropArray.arrays.filter(crop => crop && crop.seedId && crop.seedId !== "0");
         console.log(`🌱 Found ${plantedCrops.length} planted crops after refresh`);
@@ -170,7 +167,8 @@ console.log("🚀 maxPlots changed to:", maxPlots);
           }))
         });
       } catch (error) {
-        console.error("Failed to load crops from contract:", error);
+        const { message } = handleContractError(error, 'loading crops');
+        console.error("Failed to load crops from contract:", message);
         const emptyArray = new CropItemArrayClass(30);
         setCropArray(emptyArray);
         setPreviewCropArray(emptyArray);
@@ -224,14 +222,16 @@ console.log("🚀 maxPlots changed to:", maxPlots);
             }
           }
         } catch (error) {
-          console.error("Failed to get max plots:", error);
+          const { message } = handleContractError(error, 'getting max plots');
+          console.error("Failed to get max plots:", message);
           console.log("Using default max plots due to error");
           setMaxPlots(15); // Default fallback for level 0
         }
 
         await loadCropsFromContract(account);
       } catch (error) {
-        console.error("Failed to load user data:", error);
+        const { message } = handleContractError(error, 'loading user data');
+        console.error("Failed to load user data:", message);
       }
     };
 
@@ -241,24 +241,30 @@ console.log("🚀 maxPlots changed to:", maxPlots);
   // Growth timer effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setCropArray((prevCropArray) => {
-        const newCropArray = new CropItemArrayClass(30);
-        newCropArray.copyFrom(prevCropArray);
-        newCropArray.updateGrowth();
-        return newCropArray;
-      });
+      // Only update growth when not in farm menu to prevent flickering during harvest selection
+      if (!isFarmMenu) {
+        setCropArray((prevCropArray) => {
+          const newCropArray = new CropItemArrayClass(30);
+          newCropArray.copyFrom(prevCropArray);
+          newCropArray.updateGrowth();
+          return newCropArray;
+        });
+      }
 
-      setPreviewCropArray((prevPreviewCropArray) => {
-        const newPreviewCropArray = new CropItemArrayClass(30);
-        newPreviewCropArray.copyFrom(prevPreviewCropArray);
-        newPreviewCropArray.updateGrowth();
-        return newPreviewCropArray;
-      });
+      // Always update preview array growth, but only if we're in farm menu
+      if (isFarmMenu) {
+        setPreviewCropArray((prevPreviewCropArray) => {
+          const newPreviewCropArray = new CropItemArrayClass(30);
+          newPreviewCropArray.copyFrom(prevPreviewCropArray);
+          newPreviewCropArray.updateGrowth();
+          return newPreviewCropArray;
+        });
+      }
     }, 1000); // Update every second
 
     setGrowthTimer(interval);
     return () => clearInterval(interval);
-  }, []);
+  }, [isFarmMenu]); // Add isFarmMenu as dependency
 
   const startPlanting = () => {
     // Check if userCrops are loaded before allowing planting mode
@@ -337,22 +343,8 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         });
       }
     }
-    
-    console.log(`Found ${emptyPlots} empty plots:`, emptyPlotNumbers);
-    console.log(`Found ${occupiedPlots.length} occupied plots:`, occupiedPlots);
-    
-    if (emptyPlots === 0) {
-      console.log('No empty plots available');
-      alert('All your farming plots are already planted!');
-      return;
-    }
-    
-
-    console.log(`Found ${emptyPlots} empty plots:`, emptyPlotNumbers);
-    console.log(`Found ${occupiedPlots.length} occupied plots:`, occupiedPlots);
 
     if (emptyPlots === 0) {
-      console.log("No empty plots available");
       show("All your farming plots are already planted!", "info");
       return;
     }
@@ -516,17 +508,29 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         await new Promise(resolve => setTimeout(resolve, 1000));
         await loadCropsFromContract(userAddress);
         console.log("✅ Crops refreshed after harvest all");
+        
+        // Force a re-render by updating the preview update key
+        setPreviewUpdateKey(prev => prev + 1);
+        console.log("🔄 Forced re-render after harvest all");
       }
 
       show(`✅ Successfully harvested ${readySlots.length} crops!`, "success");
+      // Clear any selection state after harvest all
+      setSelectedIndexes([]);
       setIsFarmMenu(false);
       setIsPlanting(true);
+      
+      // Sync main crop array with latest growth data
+      setCropArray((prevCropArray) => {
+        const newCropArray = new CropItemArrayClass(30);
+        newCropArray.copyFrom(prevCropArray);
+        newCropArray.updateGrowth();
+        return newCropArray;
+      });
     } catch (error) {
-      console.error("Failed during Harvest All:", error);
-      show(
-        `❌ Failed to harvest crops: ${error?.message || "Unknown"}`,
-        "error"
-      );
+      const { message } = handleContractError(error, 'harvesting all crops');
+      console.error("Failed during Harvest All:", message);
+      show(`❌ ${message}`, "error");
     }
   };
 
@@ -641,6 +645,33 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         }
       }
 
+      // Update the main crop array immediately with planted crops before closing menu
+      setCropArray((prevCropArray) => {
+        const newCropArray = new CropItemArrayClass(30);
+        newCropArray.copyFrom(prevCropArray);
+        
+        // Copy newly planted crops from preview to main array
+        for (let i = 0; i < cropsToPlant.length; i++) {
+          const cropToPlant = cropsToPlant[i];
+          const previewItem = previewCropArray.getItem(cropToPlant.plotNumber);
+          if (previewItem && previewItem.seedId) {
+            const mainItem = newCropArray.getItem(cropToPlant.plotNumber);
+            if (mainItem) {
+              mainItem.seedId = previewItem.seedId;
+              mainItem.plantedAt = previewItem.plantedAt;
+              mainItem.growthTime = previewItem.growthTime;
+              mainItem.growStatus = 1; // Mark as growing
+            }
+          }
+        }
+        
+        console.log("🔄 Main crop array updated with newly planted crops");
+        return newCropArray;
+      });
+
+      // Reset any selection state after successful planting
+      setSelectedIndexes([]);
+
       // Reload crops and seeds concurrently to reduce total wait time
       if (userAddress) {
         console.log("🔄 Reloading crops and seeds concurrently...");
@@ -675,11 +706,15 @@ console.log("🚀 maxPlots changed to:", maxPlots);
       // Reset used seeds tracking after successful planting
       setUsedSeedsInPreview({});
 
-      console.log("Planting complete - closing farm menu");
-      setIsFarmMenu(false);
+      // Reset planting state and close farm menu
+      setIsPlanting(true); // Keep in planting mode for next time
+      setIsFarmMenu(false); // Close the farm menu to show planted items
+      
+      console.log("Planting complete - farm menu closed, planted items should be visible");
     } catch (error) {
-      console.error("Failed to plant crops:", error);
-      show(`❌ Failed to plant crops: ${error?.message || "Unknown"}`, "error");
+      const { message } = handleContractError(error, 'planting crops');
+      console.error("Failed to plant crops:", message);
+      show(`❌ ${message}`, "error");
     }
   };
 
@@ -772,24 +807,34 @@ console.log("🚀 maxPlots changed to:", maxPlots);
         await new Promise(resolve => setTimeout(resolve, 1000));
         await loadCropsFromContract(userAddress);
         console.log("✅ Crops refreshed after harvest");
+        
+        // Force a re-render by updating the preview update key
+        setPreviewUpdateKey(prev => prev + 1);
+        console.log("🔄 Forced re-render after harvest");
       }
 
       if (successCount > 0) {
         show(`✅ Successfully harvested ${successCount} crops!`, "success");
+        // Clear selection state after successful harvest
+        setSelectedIndexes([]);
+        setIsFarmMenu(false);
+        setIsPlanting(true);
+        
+        // Sync main crop array with latest growth data
+        setCropArray((prevCropArray) => {
+          const newCropArray = new CropItemArrayClass(30);
+          newCropArray.copyFrom(prevCropArray);
+          newCropArray.updateGrowth();
+          return newCropArray;
+        });
       } else {
         show("❌ Failed to harvest crops. Please try again.", "error");
         return;
       }
-
-      setSelectedIndexes([]);
-      setIsFarmMenu(false);
-      setIsPlanting(true);
     } catch (error) {
-      console.error("Failed to harvest crops:", error);
-      show(
-        `❌ Failed to harvest crops: ${error?.message || "Unknown"}`,
-        "error"
-      );
+      const { message } = handleContractError(error, 'harvesting crops');
+      console.error("Failed to harvest crops:", message);
+      show(`❌ ${message}`, "error");
     }
   };
 
@@ -799,6 +844,14 @@ console.log("🚀 maxPlots changed to:", maxPlots);
     setIsPlanting(true);
     // Reset used seeds tracking when canceling
     setUsedSeedsInPreview({});
+    
+    // Sync main crop array with latest growth data from preview
+    setCropArray((prevCropArray) => {
+      const newCropArray = new CropItemArrayClass(30);
+      newCropArray.copyFrom(prevCropArray);
+      newCropArray.updateGrowth();
+      return newCropArray;
+    });
   };
 
   const onClickCrop = (isShift, index) => {
@@ -963,15 +1016,8 @@ console.log("🚀 maxPlots changed to:", maxPlots);
           isPlanting={isPlanting}
           maxPlots={maxPlots}
           totalPlots={30}
-          userCropsLoaded={userCropsLoaded}
+          selectedIndexes={selectedIndexes}
         />
-        {/* Debug info */}
-        {console.log("🚀 FarmInterface props:", {
-          maxPlots,
-          userCropsLoaded,
-          isFarmMenu,
-          isPlanting
-        })}
       </PanZoomViewport>
       {isFarmMenu && (
         <FarmMenu

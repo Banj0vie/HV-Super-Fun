@@ -2,70 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
-import { CONTRACT_ADDRESSES, CONTRACT_ABIS, SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
+import { useContractBase } from './useContractBase';
+import { SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
+import { handleContractError } from '../utils/errorHandler';
 
-export const useContracts = () => {
-  const { provider, signer, isConnected, contractService } = useAgwEthersAndService();
-  const [contracts, setContracts] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Initialize contracts when provider/signer changes
-  useEffect(() => {
-    if (provider && signer && isConnected) {
-      const initializeContracts = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          
-          // Get contract addresses for current network
-          const addresses = CONTRACT_ADDRESSES.ABSTRACT_TESTNET; // Default to testnet
-          
-          const contractInstances = {};
-          
-          // Initialize each contract
-          Object.keys(CONTRACT_ABIS).forEach(contractName => {
-            const address = addresses[contractName.toUpperCase()];
-            if (address && address !== "0x0000000000000000000000000000000000000000") {
-              const contract = new ethers.Contract(address, CONTRACT_ABIS[contractName], signer);
-              // Map contract names to lowercase for consistent access
-              contractInstances[contractName.toLowerCase()] = contract;
-            } else {
-              console.warn(`Skipping ${contractName}: no address or zero address`);
-            }
-          });
-
-          // Add contract service to the contracts object
-          if (contractService) {
-            contractInstances.contractService = contractService;
-          }
-
-          // Debug: Log which contracts were initialized
-          console.log('Initialized contracts:', Object.keys(contractInstances));
-
-          setContracts(contractInstances);
-        } catch (err) {
-          console.error('Failed to initialize contracts:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      initializeContracts();
-    } else {
-      setContracts({});
-    }
-  }, [provider, signer, isConnected, contractService]);
-
-  return {
-    contracts,
-    loading,
-    error,
-    isReady: Object.keys(contracts).length > 0 && isConnected
-  };
-};
 
 // Hook for Vendor contract interactions
 export const useVendor = () => {
@@ -74,15 +15,16 @@ export const useVendor = () => {
   const [error, setError] = useState(null);
   const [vendor, setVendor] = useState(null);
   const [yieldToken, setYieldToken] = useState(null);
-  const [rngHub, setRngHub] = useState(null);
   const [agwClient, setAgwClient] = useState(null);
   const [publicClient, setPublicClient] = useState(null);
+  
+  // Use the useRngHub hook for fulfillRequest functionality
+  const { fulfillRequest: rngFulfillRequest } = useRngHub();
 
   useEffect(() => {
     if (!contractService) return;
     setVendor(contractService.getContract('VENDOR'));
     setYieldToken(contractService.getContract('YIELD_TOKEN'));
-    setRngHub(contractService.getContract('RNG_HUB'));
     setAgwClient(contractService.agwClient);
     setPublicClient(contractService.publicClient);
   }, [contractService]);
@@ -258,22 +200,13 @@ export const useVendor = () => {
   }, [vendor, account, publicClient]);
 
   const fulfillPendingRequest = useCallback(async (requestId) => {
-    if (!rngHub || !agwClient) {
-      setError('RNG Hub contract not available');
-      return null;
-    }
-
-    setLoading(true);
-    setError(null);
-
     try {
+      setLoading(true);
+      setError(null);
+      
+      // Use the useRngHub hook's fulfillRequest function
       const randomNumber = Math.floor(Math.random() * 100000);
-      const txHash = await agwClient.writeContract({
-        abi: rngHub.abi,
-        address: rngHub.address,
-        functionName: 'fulfillRequest',
-        args: [requestId, randomNumber],
-      });
+      const txHash = await rngFulfillRequest(requestId, randomNumber);
       return txHash;
     } catch (err) {
       console.error('Failed to fulfill pending request:', err);
@@ -282,28 +215,166 @@ export const useVendor = () => {
     } finally {
       setLoading(false);
     }
-  }, [rngHub, agwClient]);
+  }, [rngFulfillRequest]);
 
   const listenForSeedsRevealed = useCallback(async (requestId, onSeedsRevealed, fromBlock) => {
-    if (!vendor || !publicClient) {
-      console.error('Vendor contract not available');
+    if (!vendor || !publicClient || !account) {
+      console.error('Vendor contract, publicClient, or account not available');
       return;
     }
+    
     try {
-      // Note: Event listening with viem publicClient is different from ethers
-      // This is a simplified version - you may need to implement proper event listening
-      // based on your specific requirements
-      console.log('Event listening setup for SeedsRevealed event');
+      console.log('Setting up SeedsRevealed listener for requestId:', requestId);
       
-      // For now, return a no-op cleanup function
-      // You'll need to implement proper event listening with viem
+      // Use a recent block number instead of 'latest' for better reliability
+      let startBlock = fromBlock;
+      if (!startBlock || startBlock === 'latest') {
+        try {
+          const currentBlock = await publicClient.getBlockNumber();
+          startBlock = BigInt(currentBlock) - BigInt(10); // Look back 10 blocks to be safe
+          console.log('Using block', startBlock.toString(), 'as start block (current:', currentBlock.toString(), ')');
+        } catch (err) {
+          console.error('Failed to get current block number:', err);
+          startBlock = 'earliest';
+        }
+      }
+      
+      // Event handler function
+      const handleEvent = (eventData) => {
+        try {
+          console.log('SeedsRevealed event received:', eventData);
+          
+          // Extract event data
+          const eventRequestId = eventData.args.requestId.toString();
+          const seedIds = eventData.args.seedIds.map(id => id.toString());
+          const tier = eventData.args.tier;
+          const count = eventData.args.count.toString();
+          
+          console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
+        
+        // Only process if this is the request we're waiting for
+        if (eventRequestId === requestId.toString()) {
+            console.log('✅ Found matching SeedsRevealed event!');
+          if (onSeedsRevealed) {
+              onSeedsRevealed({ 
+                requestId: eventRequestId, 
+                seedIds, 
+                tier, 
+                count 
+              });
+            }
+          // Clean up the listener after processing the event
+          console.log('Cleaning up SeedsRevealed listener after successful event');
+          unwatch();
+          }
+        } catch (err) {
+          console.error('Error processing SeedsRevealed event:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up SeedsRevealed listener after error');
+          unwatch();
+        }
+      };
+      
+      // Set up real-time event listener using watchContractEvent
+      console.log('Setting up watchContractEvent for SeedsRevealed');
+      const unwatch = publicClient.watchContractEvent({
+        address: vendor.address,
+        abi: vendor.abi,
+        eventName: 'SeedsRevealed',
+        args: {
+          player: account
+        },
+        onLogs: (logs) => {
+          console.log('Received SeedsRevealed events via watchContractEvent:', logs);
+          logs.forEach(log => {
+            console.log('Processing log from watchContractEvent:', log);
+            handleEvent(log);
+          });
+        },
+        onError: (error) => {
+          console.error('Error in SeedsRevealed event listener:', error);
+          // Clean up the listener on error
+          console.log('Cleaning up SeedsRevealed listener after watchContractEvent error');
+          unwatch();
+        }
+      });
+      
+      console.log('watchContractEvent setup complete');
+      
+      // Also query for any events that might have already happened
+      const queryExistingEvents = async () => {
+        try {
+          console.log('Querying existing SeedsRevealed events from block:', startBlock);
+          
+          // Use the contract ABI directly for event filtering
+          const logs = await publicClient.getLogs({
+            address: vendor.address,
+            event: {
+              type: 'event',
+              name: 'SeedsRevealed',
+              inputs: [
+                { name: 'player', type: 'address', indexed: true },
+                { name: 'requestId', type: 'uint256', indexed: false },
+                { name: 'seedIds', type: 'uint256[]', indexed: false },
+                { name: 'tier', type: 'uint8', indexed: false },
+                { name: 'count', type: 'uint256', indexed: false }
+              ]
+            },
+            args: {
+              player: account
+            },
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          });
+          
+          console.log('Found', logs.length, 'existing SeedsRevealed events');
+          console.log('Logs:', logs);
+          
+          // Process existing events
+          for (const log of logs) {
+            try {
+              console.log('Processing log:', log);
+              
+              // The log is already decoded by getLogs, we can use it directly
+              const eventData = {
+                args: log.args,
+                eventName: log.eventName,
+                address: log.address,
+                blockNumber: log.blockNumber,
+                transactionHash: log.transactionHash
+              };
+              
+              console.log('Event data ready:', eventData);
+              handleEvent(eventData);
+            } catch (parseErr) {
+              console.error('Error processing existing event:', parseErr);
+              // Clean up the listener on error
+              console.log('Cleaning up SeedsRevealed listener after parsing error');
+              unwatch();
+            }
+          }
+        } catch (err) {
+          console.error('Error querying existing SeedsRevealed events:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up SeedsRevealed listener after query error');
+          unwatch();
+        }
+      };
+      
+      // Query existing events
+      queryExistingEvents();
+      
+      // Return cleanup function
       return () => {
         console.log('Cleaning up SeedsRevealed listener');
+        unwatch();
       };
+      
     } catch (err) {
       console.error('Failed to set up SeedsRevealed listener:', err);
+      return () => {}; // Return no-op cleanup function
     }
-  }, [vendor, publicClient]);
+  }, [vendor, publicClient, account]);
 
   return {
     buySeedPack,
@@ -551,8 +622,6 @@ export const useFarming = () => {
         args: [userAddress, plotIndex],
       });
       
-      console.log('🚀 getCrop result:', { userAddress, plotIndex, crop });
-      
       // Handle case where crop is undefined or doesn't have expected structure
       if (!crop) {
         console.warn('Crop is undefined for plot:', plotIndex);
@@ -572,9 +641,9 @@ export const useFarming = () => {
       
       // Handle case where crop is an object
       if (crop.seedId !== undefined && crop.endTime !== undefined) {
-        return {
-          seedId: crop.seedId.toString(),
-          endTime: Number(crop.endTime)
+      return {
+        seedId: crop.seedId.toString(),
+        endTime: Number(crop.endTime)
         };
       }
       
@@ -1459,7 +1528,7 @@ export const useSage = () => {
     } finally {
       setLoading(false);
     }
-  }, [sage, agwClient, sageData.canUnlockWage, fetchSageData]);
+  }, [sage, agwClient, sageData, fetchSageData]);
 
   // Format remaining time until next wage unlock
   const getTimeUntilNextWageUnlock = useCallback(() => {
@@ -1804,15 +1873,16 @@ export const useChestOpener = () => {
 
       // Refresh data after successful claim
       await fetchChestData();
+      setChestData(prev => ({ ...prev, loading: false, error: null }));
       return txHash;
     } catch (err) {
-      console.error('Failed to claim daily chest:', err);
+      const { message } = handleContractError(err, 'claiming daily chest');
       setChestData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
-      throw err;
+      throw new Error(message);
     }
   }, [chestOpener, account, agwClient, fetchChestData]);
 
@@ -1829,15 +1899,16 @@ export const useChestOpener = () => {
         args: [chestId],
       });
 
+      setChestData(prev => ({ ...prev, loading: false, error: null }));
       return txHash;
     } catch (err) {
-      console.error('Failed to open chest:', err);
+      const { message } = handleContractError(err, 'opening chest');
       setChestData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
-      throw err;
+      throw new Error(message);
     }
   }, [chestOpener, account, agwClient]);
 
@@ -2071,6 +2142,510 @@ export const useReferral = () => {
     registerReferralCode,
     createProfileWithReferral,
     fetchReferralData
+  };
+};
+
+// Hook for Fishing contract interactions
+export const useFishing = () => {
+  const { account } = useAgwEthersAndService();
+  const { agwClient, publicClient, getContract, handleContractCall, executeWrite } = useContractBase(['FISHING']);
+  const fishing = getContract('FISHING');
+  
+  const [fishingData, setFishingData] = useState({
+    loading: false,
+    error: null,
+    pendingRequests: []
+  });
+
+  const craftBait1 = useCallback(async (baitCount) => {
+    if (!fishing || !agwClient) return;
+
+    return handleContractCall(async () => {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait1',
+        args: [baitCount],
+      });
+      
+      return { txHash, isPending: true };
+    }, 'crafting bait 1');
+  }, [fishing, agwClient, handleContractCall]);
+
+  const craftBait2 = useCallback(async (itemIds, amounts) => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait2',
+        args: [itemIds, amounts],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting bait 2');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  const craftBait3 = useCallback(async (itemIds, amounts) => {
+    if (!fishing || !agwClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'craftBait3',
+        args: [itemIds, amounts],
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting bait 3');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient]);
+
+  const fish = useCallback(async (baitId, amount = 1) => {
+    if (!fishing || !agwClient || !publicClient) return;
+
+    setFishingData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      console.log('Calling fish function with:', { baitId, amount, address: fishing.address });
+      
+      const result = await executeWrite({
+        abi: fishing.abi,
+        address: fishing.address,
+        functionName: 'fish',
+        args: [baitId, amount],
+        confirmations: 3,
+        pollingInterval: 1000,
+        timeout: 120000
+      });
+      
+      setFishingData(prev => ({ ...prev, loading: false }));
+      return { 
+        txHash: result.txHash, 
+        receipt: result.receipt,
+        baitId, 
+        amount,
+        isPending: false 
+      };
+    } catch (err) {
+      console.error('Fish function failed:', err);
+      const { message } = handleContractError(err, 'fishing');
+      setFishingData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [fishing, agwClient, publicClient, executeWrite]);
+
+  const listenForFishingResults = useCallback(async (requestId, onFishingResults, fromBlock) => {
+    if (!fishing || !publicClient || !account) {
+      console.error('Fishing contract, publicClient, or account not available');
+      return;
+    }
+    
+    try {
+      console.log('Setting up FishingResults listener for requestId:', requestId);
+      
+      // Use a recent block number instead of 'latest' for better reliability
+      let startBlock = fromBlock;
+      if (!startBlock || startBlock === 'latest') {
+        try {
+          const currentBlock = await publicClient.getBlockNumber();
+          startBlock = BigInt(currentBlock) - BigInt(10); // Look back 10 blocks to be safe
+          console.log('Using block', startBlock.toString(), 'as start block (current:', currentBlock.toString(), ')');
+        } catch (err) {
+          console.error('Failed to get current block number:', err);
+          startBlock = 'earliest';
+        }
+      }
+      
+      // Event handler function
+      const handleEvent = (eventData) => {
+        try {
+          console.log('FishingResults event received:', eventData);
+          
+          // Extract event data
+          const eventRequestId = eventData.args.requestId.toString();
+          const itemIds = eventData.args.itemIds.map(id => id.toString());
+          const amounts = eventData.args.amounts.map(amount => amount.toString());
+          const baitId = eventData.args.baitId.toString();
+          const totalAmount = eventData.args.totalAmount.toString();
+          
+          console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
+        
+        // Only process if this is the request we're waiting for
+        if (eventRequestId === requestId.toString()) {
+            console.log('✅ Found matching FishingResults event!');
+          if (onFishingResults) {
+              onFishingResults({ 
+                requestId: eventRequestId, 
+                itemIds, 
+                amounts,
+                baitId,
+                totalAmount
+              });
+            }
+          // Clean up the listener after processing the event
+          console.log('Cleaning up FishingResults listener after successful event');
+          unwatch();
+          }
+        } catch (err) {
+          console.error('Error processing FishingResults event:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after error');
+          unwatch();
+        }
+      };
+      
+      // Set up real-time event listener using watchContractEvent
+      console.log('Setting up watchContractEvent for FishingResults');
+      const unwatch = publicClient.watchContractEvent({
+        address: fishing.address,
+        abi: fishing.abi,
+        eventName: 'FishingResults',
+        args: {
+          player: account
+        },
+        onLogs: (logs) => {
+          console.log('Received FishingResults events via watchContractEvent:', logs);
+          logs.forEach(log => {
+            console.log('Processing log from watchContractEvent:', log);
+            handleEvent(log);
+          });
+        },
+        onError: (error) => {
+          console.error('Error in FishingResults event listener:', error);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after watchContractEvent error');
+          unwatch();
+        }
+      });
+      
+      console.log('watchContractEvent setup complete');
+      
+      // Also query for any events that might have already happened
+      const queryExistingEvents = async () => {
+        try {
+          console.log('Querying existing FishingResults events from block:', startBlock);
+          
+          // Use the contract ABI directly for event filtering
+          const logs = await publicClient.getLogs({
+            address: fishing.address,
+            event: {
+              type: 'event',
+              name: 'FishingResults',
+              inputs: [
+                { name: 'player', type: 'address', indexed: true },
+                { name: 'requestId', type: 'uint256', indexed: false },
+                { name: 'itemIds', type: 'uint256[]', indexed: false },
+                { name: 'amounts', type: 'uint256[]', indexed: false },
+                { name: 'baitId', type: 'uint256', indexed: false },
+                { name: 'totalAmount', type: 'uint16', indexed: false }
+              ]
+            },
+            args: {
+              player: account
+            },
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          });
+          
+          console.log('Found', logs.length, 'existing FishingResults events');
+          console.log('Logs:', logs);
+          
+          // Process existing events
+          for (const log of logs) {
+            try {
+              console.log('Processing log:', log);
+              
+              // The log is already decoded by getLogs, we can use it directly
+              const eventData = {
+                args: log.args,
+                eventName: log.eventName,
+                address: log.address,
+                blockNumber: log.blockNumber,
+                transactionHash: log.transactionHash
+              };
+              
+              console.log('Event data ready:', eventData);
+              handleEvent(eventData);
+            } catch (parseErr) {
+              console.error('Error processing existing event:', parseErr);
+              // Clean up the listener on error
+              console.log('Cleaning up FishingResults listener after parsing error');
+              unwatch();
+            }
+          }
+        } catch (err) {
+          console.error('Error querying existing FishingResults events:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up FishingResults listener after query error');
+          unwatch();
+        }
+      };
+      
+      // Query existing events
+      queryExistingEvents();
+      
+      // Return cleanup function
+      return () => {
+        console.log('Cleaning up FishingResults listener');
+        unwatch();
+      };
+      
+    } catch (err) {
+      console.error('Failed to set up FishingResults listener:', err);
+      return () => {}; // Return no-op cleanup function
+    }
+  }, [fishing, publicClient, account]);
+
+  const checkPendingRequests = useCallback(async () => {
+    if (!fishing || !account || !publicClient) {
+      return false;
+    }
+    try {
+      const hasPending = await publicClient.readContract({
+        address: fishing.address,
+        abi: fishing.abi,
+        functionName: 'hasPendingRequests',
+        args: [account],
+      });
+      console.log('hasPending', hasPending);
+      return hasPending;
+    } catch (err) {
+      console.error('Failed to check fishing pending requests:', err);
+      return false;
+    }
+  }, [fishing, account, publicClient]);
+
+  const getAllPendingRequests = useCallback(async () => {
+    if (!fishing || !account || !publicClient) {
+      return [];
+    }
+
+    try {
+      const [requestIds, baitIds, levels, amounts] = await publicClient.readContract({
+        address: fishing.address,
+        abi: fishing.abi,
+        functionName: 'getAllPendingRequests',
+        args: [account],
+      });
+      const pendingRequests = [];
+      
+      for (let i = 0; i < requestIds.length; i++) {
+        pendingRequests.push({
+          requestId: requestIds[i].toString(),
+          baitId: baitIds[i].toString(),
+          level: levels[i],
+          amount: amounts[i].toString()
+        });
+      }
+      
+      return pendingRequests;
+    } catch (err) {
+      console.error('Failed to get fishing pending requests:', err);
+      return [];
+    }
+  }, [fishing, account, publicClient]);
+
+  return {
+    fishingData,
+    craftBait1,
+    craftBait2,
+    craftBait3,
+    fish,
+    checkPendingRequests,
+    getAllPendingRequests,
+    listenForFishingResults
+  };
+};
+
+// Hook for Potion contract interactions
+export const usePotion = () => {
+  const { contractService } = useAgwEthersAndService();
+  const [potionData, setPotionData] = useState({
+    loading: false,
+    error: null
+  });
+  const [potion, setPotion] = useState(null);
+  const [agwClient, setAgwClient] = useState(null);
+
+  useEffect(() => {
+    if (!contractService) return;
+    setPotion(contractService.getContract('POTION'));
+    setAgwClient(contractService.agwClient);
+  }, [contractService]);
+
+  const craftGrowthElixir = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftGrowthElixir',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting growth elixir');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftPesticide = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftPesticide',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting pesticide');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftFertilizer = useCallback(async () => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftFertilizer',
+        args: [],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting fertilizer');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  return {
+    potionData,
+    craftGrowthElixir,
+    craftPesticide,
+    craftFertilizer
+  };
+};
+
+// Hook for RNG_HUB contract interactions
+export const useRngHub = () => {
+  const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['RNG_HUB']);
+  const rngHub = getContract('RNG_HUB');
+  
+  const rngHubData = {
+    loading,
+    error
+  };
+
+  const fulfillRequest = useCallback(async (requestId, randomNumber) => {
+    if (!rngHub || !agwClient) return;
+
+    return handleContractCall(async () => {
+      const txHash = await agwClient.writeContract({
+        abi: rngHub.abi,
+        address: rngHub.address,
+        functionName: 'fulfillRequest',
+        args: [requestId, randomNumber],
+      });
+      
+      return txHash;
+    }, 'fulfilling RNG request');
+  }, [rngHub, agwClient, handleContractCall]);
+
+  return {
+    rngHubData,
+    fulfillRequest
+  };
+};
+
+// Hook for ProduceSeeder contract interactions (TEMPORARY - REMOVE IN PRODUCTION)
+export const useProduceSeeder = () => {
+  const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['PRODUCE_SEEDER']);
+  const produceSeeder = getContract('PRODUCE_SEEDER');
+  
+  const produceSeederData = {
+    loading,
+    error
+  };
+
+  const seedAllProduce = useCallback(async (amountEach = 10) => {
+    if (!produceSeeder || !agwClient) return;
+
+    return handleContractCall(async () => {
+      const txHash = await agwClient.writeContract({
+        abi: produceSeeder.abi,
+        address: produceSeeder.address,
+        functionName: 'seedAllProduce',
+        args: [amountEach],
+      });
+      
+      return { txHash, isPending: true };
+    }, 'seeding all produce');
+  }, [produceSeeder, agwClient, handleContractCall]);
+
+  return {
+    produceSeederData,
+    seedAllProduce
   };
 };
 

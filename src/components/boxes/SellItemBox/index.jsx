@@ -13,9 +13,27 @@ const SellItemBox = ({ item, onSend, onSell }) => {
   const itemLabel = itemData.label || item.label || 'Unknown Item';
   const itemPos = itemData.pos || 0;
   
-  // Determine which sprite sheet to use based on item type
-  const getImageClass = () => {
+  // Determine if this item should use img tag or CSS sprite sheet
+  const shouldUseImageTag = () => {
     const category = itemData.category || item.category;
+    const subCategory = itemData.subCategory || item.subCategory;
+    
+    // Use img tag for bait, potion items, and loot items (they have specific image files)
+    if (subCategory === 'ID_LOOT_CATEGORY_BAIT' || category === 'ID_ITEM_POTION' || category === 'ID_ITEM_LOOT') {
+      return true;
+    }
+    
+    // Use CSS sprite sheet for produce items
+    return false;
+  };
+  
+  // Get the image source for items that use img tags
+  const getImageSrc = () => {
+    return itemData.image || item.image || '/public/images/crops/seeds.png';
+  };
+  
+  // Get CSS class for items that use sprite sheets
+  const getImageClass = () => {
     const subCategory = itemData.subCategory || item.subCategory;
     const image = itemData.image || item.image;
     
@@ -24,10 +42,7 @@ const SellItemBox = ({ item, onSend, onSell }) => {
       return 'item-icon item-icon-chest';
     }
     
-    // Use different CSS classes for different item types
-    if (category === 'ID_ITEM_POTION') {
-      return 'item-icon item-icon-bigger-plants';
-    }
+    // Default to seeds for produce items
     return 'item-icon item-icon-seeds';
   };
   
@@ -35,16 +50,24 @@ const SellItemBox = ({ item, onSend, onSell }) => {
     <div className="sell-item-box">
       {/* Item Icon */}
       <div className="item-icon-wrapper">
-        <div
-          className={getImageClass()}
-          style={{ 
-            backgroundPositionY: 0 - itemPos * ONE_SEED_HEIGHT,
-            // Add chest-specific styling
-            ...(itemData.image === 'chest' ? {
-              '--chest-type': itemPos
-            } : {})
-          }}
-        ></div>
+        {shouldUseImageTag() ? (
+          <img 
+            src={getImageSrc()} 
+            alt={itemLabel}
+            className="item-icon"
+          />
+        ) : (
+          <div
+            className={getImageClass()}
+            style={{ 
+              backgroundPositionY: 0 - itemPos * ONE_SEED_HEIGHT,
+              // Add chest-specific styling
+              ...(itemData.image === 'chest' ? {
+                '--chest-type': itemPos
+              } : {})
+            }}
+          ></div>
+        )}
       </div>
 
       {/* Item Name and Quantity */}

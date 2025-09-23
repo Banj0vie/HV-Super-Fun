@@ -726,42 +726,38 @@ export const ALL_ITEMS = {
 
   // Chest items
   [ID_CHEST_ITEMS.CHEST_WOOD]: {
-    label: "CHEST_WOOD",
+    label: "CHEST WOOD",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.COMMON,
-    image: chestImages.wood, // Special identifier for CSS-generated chest
-    pos: 0, // Wood chest
+    image: chestImages.wood,
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_BRONZE]: {
-    label: "CHEST_BRONZE",
+    label: "CHEST BRONZE",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.UNCOMMON,
-    image: chestImages.bronze, // Special identifier for CSS-generated chest
-    pos: 1, // Bronze chest
+    image: chestImages.bronze,
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_SILVER]: {
-    label: "CHEST_SILVER",
+    label: "CHEST SILVER",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
     type: ID_RARE_TYPE.RARE,
-    image: chestImages.silver, // Special identifier for CSS-generated chest
-    pos: 2, // Silver chest
+    image: chestImages.silver,
     honey: 0,
     lockedHoney: 0,
   },
   [ID_CHEST_ITEMS.CHEST_GOLD]: {
-    label: "CHEST_GOLD",
+    label: "CHEST GOLD",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.CHEST,
-    type: ID_RARE_TYPE.LEGENDARY,
-    image: chestImages.gold, // Special identifier for CSS-generated chest
-    pos: 3, // Gold chest
+    type: ID_RARE_TYPE.EPIC,
+    image: chestImages.gold,
     honey: 0,
     lockedHoney: 0,
   },
@@ -922,24 +918,6 @@ export const ALL_ITEM_TREE = [
               { id: ID_LOOTS.BAIT_I, label: "Bait I" },
               { id: ID_LOOTS.BAIT_II, label: "Bait II" },
               { id: ID_LOOTS.BAIT_III, label: "Bait III" }
-            ]
-          },
-          {
-            id: ID_LOOT_CATEGORIES.FISH, label: "Fish", children: [
-              { id: ID_LOOTS.ANCHOVY, label: "Anchovy" },
-              { id: ID_LOOTS.SARDINE, label: "Sardine" },
-              { id: ID_LOOTS.HERRING, label: "Herring" },
-              { id: ID_LOOTS.SMALL_TROUT, label: "Small Trout" },
-              { id: ID_LOOTS.YELLOW_PERCH, label: "Yellow Perch" },
-              { id: ID_LOOTS.SALMON, label: "Salmon" },
-              { id: ID_LOOTS.ORANGE_ROUGHY, label: "Orange Roughy" },
-              { id: ID_LOOTS.CATFISH, label: "Catfish" },
-              { id: ID_LOOTS.SMALL_SHARK, label: "Small Shark" },
-            ]
-          },
-          {
-            id: ID_LOOT_CATEGORIES.MISC, label: "Misc", children: [
-              { id: ID_LOOTS.LIFE_BUD, label: "Life Bud" },
             ]
           }
         ]

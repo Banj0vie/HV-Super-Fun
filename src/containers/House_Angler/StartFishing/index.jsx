@@ -6,21 +6,46 @@ import LabelValueBox from "../../../components/boxes/LabelValueBox";
 import BaseButton from "../../../components/buttons/BaseButton";
 import SelectBaitDialog from "./SelectBaitDialog";
 import ConfirmBaitAmountDialog from "./ConfirmBaitAmountDialog";
+import { useFishing } from "../../../hooks/useContracts";
+import { useNotification } from "../../../contexts/NotificationContext";
+import { handleContractError } from "../../../utils/errorHandler";
 
 const StartFishing = ({ onBack, onStart }) => {
   const currentFishingRodId = ID_FISHING_RODS.LVL5;
   const [selectedBaitId, setSelectedBaitId] = useState(null);
   const [isBaitSelectDialog, setIsBaitSelectDialog] = useState(false);
   const [isConfirmDialog, setIsConfirmDialog] = useState(false);
+  const [isThrowingBait, setIsThrowingBait] = useState(false);
+
+  const { fish } = useFishing();
+  const { show } = useNotification();
 
   const onSelectBait = (baitId) => {
     setSelectedBaitId(baitId);
     setIsBaitSelectDialog(false);
   };
 
-  const onConfirmBaitAmount = (amount) => {
+  const onConfirmBaitAmount = async (amount) => {
+    setIsThrowingBait(true);
     setIsConfirmDialog(false);
-    onStart(selectedBaitId, amount);
+    
+    try {
+      // Call fish() function when user confirms bait amount
+      const result = await fish(selectedBaitId, amount);
+      
+      if (result && result.txHash) {
+        show("Bait thrown! Now reel in your catch!", "success");
+        // Navigate to fishing page - request ID will be loaded from pending requests
+        onStart(selectedBaitId, amount);
+      } else {
+        show("Failed to throw bait", "error");
+      }
+    } catch (error) {
+      const { message } = handleContractError(error, 'throwing bait');
+      show(message, "error");
+    } finally {
+      setIsThrowingBait(false);
+    }
   };
   return (
     <div className="start-fishing">
@@ -44,8 +69,9 @@ const StartFishing = ({ onBack, onStart }) => {
         <BaseButton label="Back" onClick={onBack}></BaseButton>
         {selectedBaitId ? (
           <BaseButton
-            label="Throw Bait"
+            label={isThrowingBait ? "Throwing..." : "Throw Bait"}
             onClick={() => setIsConfirmDialog(true)}
+            disabled={isThrowingBait}
           ></BaseButton>
         ) : (
           <BaseButton
@@ -64,6 +90,7 @@ const StartFishing = ({ onBack, onStart }) => {
         <ConfirmBaitAmountDialog
           onClose={() => setIsConfirmDialog(false)}
           onConfirm={onConfirmBaitAmount}
+          baitId={selectedBaitId}
         ></ConfirmBaitAmountDialog>
       )}
     </div>

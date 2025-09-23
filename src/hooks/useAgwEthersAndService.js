@@ -6,6 +6,7 @@ import { abstractTestnet } from 'viem/chains';
 import ContractService from '../services/contractService';
 import { useAccount, useDisconnect } from 'wagmi';
 import { createPublicClient, http } from 'viem';
+import { handleContractError } from '../utils/errorHandler';
 
 export function useAgwEthersAndService() {
     const signerClient = useGlobalWalletSignerClient();
@@ -69,7 +70,8 @@ export function useAgwEthersAndService() {
                     const has = account ? await fullSvc.hasProfile(account) : false;
                     setHasProfile(has);
                 } catch (error) {
-                    console.warn('Failed to check profile status:', error);
+                    const { message } = handleContractError(error, 'checking profile status');
+                    console.warn('Failed to check profile status:', message);
                     setHasProfile(false);
                 }
             } catch (e) {
@@ -97,7 +99,8 @@ export function useAgwEthersAndService() {
                 console.log('✅ useAgwEthersAndService: hasProfile state updated to:', has);
                 return has;
             } catch (error) {
-                console.warn('Failed to refresh profile status:', error);
+                const { message } = handleContractError(error, 'refreshing profile status');
+                console.warn('Failed to refresh profile status:', message);
                 setHasProfile(false);
                 return false;
             }

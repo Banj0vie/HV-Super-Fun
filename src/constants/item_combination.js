@@ -27,7 +27,7 @@ export const ITEM_COMBI = {
         simple: false,
         list: [
             {
-                ids: [ID_PRODUCE_ITEMS.WEAT, ID_PRODUCE_ITEMS.TOMATO, ID_PRODUCE_ITEMS.CARROT, ID_PRODUCE_ITEMS.CORN],
+                ids: [ID_PRODUCE_ITEMS.WHEAT, ID_PRODUCE_ITEMS.TOMATO, ID_PRODUCE_ITEMS.CARROT, ID_PRODUCE_ITEMS.CORN],
                 count: 8,
             },
             {

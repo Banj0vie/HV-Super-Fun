@@ -9,14 +9,14 @@ import { useItems } from "../../../hooks/useItems";
 const SellDialog = ({ onBack, onClose }) => {
   const [checkedItemIds, setCheckedItemIds] = useState([]);
   const { all: allItems, loading, error } = useItems();
-  // Filter items based on checked item IDs
+  // Filter items based on checked item IDs and only show owned items
   const filteredItems = useMemo(() => {
     if (!allItems || checkedItemIds.length === 0) {
       return [];
     }
     
     return allItems.filter(item => {
-      return checkedItemIds.includes(item.id);
+      return checkedItemIds.includes(item.id) && item.count > 0;
     });
   }, [allItems, checkedItemIds]);
 
