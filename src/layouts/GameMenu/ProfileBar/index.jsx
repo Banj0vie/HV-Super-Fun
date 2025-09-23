@@ -10,6 +10,8 @@ import { useProduceSeeder } from "../../../hooks/useContracts";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { formatNumber } from "../../../utils/basic";
 import { handleContractError } from "../../../utils/errorHandler";
+import InventoryDialog from "../../../containers/Menu_Inventory";
+import SettingsDialog from "../../../containers/Menu_Settings";
 
 const ProfileBar = () => {
   const { balances, formatBalance } = useGameState();
@@ -17,6 +19,9 @@ const ProfileBar = () => {
   const { seedAllProduce, produceSeederData } = useProduceSeeder();
   const { show } = useNotification();
   
+  const [isInventoryDialog, setIsInventoryDialog] = useState(false);
+  const [isSettingsDialog, setIsSettingsDialog] = useState(false);
+
   // Persistent local state for instant display
   const [lockedHoney, setLockedHoney] = useState("0.00");
   const [honeyBalance, setHoneyBalance] = useState("0.00");
@@ -41,8 +46,12 @@ const ProfileBar = () => {
     const loadlockedHoney = async () => {
       if (contractService && account) {
         try {
-          const lockedHoneyAmount = await contractService.getLockedGameToken(account);
-          const formatted = formatBalanceForDisplay(lockedHoneyAmount.toString());
+          const lockedHoneyAmount = await contractService.getLockedGameToken(
+            account
+          );
+          const formatted = formatBalanceForDisplay(
+            lockedHoneyAmount.toString()
+          );
           setLockedHoney(formatted);
         } catch (error) {
           const { message } = handleContractError(error, 'loading locked ready');
@@ -93,10 +102,12 @@ const ProfileBar = () => {
       <ProfileButton
         icon={<img alt="Settings" src={profileAssets.btnSettings} />}
         title="Settings"
+        onClick={() => setIsSettingsDialog(true)}
       />
       <ProfileButton
         icon={<img alt="Inventory" src={profileAssets.btnInventory} />}
         title="Inventory"
+        onClick={() => setIsInventoryDialog(true)}
       />
       <ProfileButton
         icon={<img alt="Tutorial" src={profileAssets.btnTutorial} />}
@@ -126,6 +137,16 @@ const ProfileBar = () => {
           title="Honey Balance"
         />
       </div>
+      {isInventoryDialog && (
+        <InventoryDialog
+          onClose={() => setIsInventoryDialog(false)}
+        ></InventoryDialog>
+      )}
+      {isSettingsDialog && (
+        <SettingsDialog
+          onClose={() => setIsSettingsDialog(false)}
+        ></SettingsDialog>
+      )}
     </div>
   );
 };
