@@ -11,6 +11,7 @@ import {
 import BaseButton from "../../components/buttons/BaseButton";
 import ItemSmallView from "../../components/boxes/ItemViewSmall";
 import ItemViewUsable from "../../components/boxes/ItemViewUsable";
+import { useItems } from "../../hooks/useItems";
 
 const menus = [
   { id: ID_INVENTORY_MENUS.SEEDS, label: "Seeds" },
@@ -163,6 +164,8 @@ const TESTING_ITEMS = [
 
 const InventoryDialog = ({ onClose }) => {
   const [selectedMenu, setSelectedMenu] = useState(ID_INVENTORY_MENUS.SEEDS);
+  const { all: allItems, loading, error } = useItems();
+  console.log("allItems", allItems);
   const [list, setList] = useState([]);
 
   const onUseItem = (itemId) => {
@@ -172,21 +175,21 @@ const InventoryDialog = ({ onClose }) => {
   useEffect(() => {
     switch (selectedMenu) {
       case ID_INVENTORY_MENUS.SEEDS:
-        setList(TESTING_SEEDS);
+        setList(allItems.filter(item => item.category === 'ID_ITEM_SEED' && item.count > 0));
         break;
       case ID_INVENTORY_MENUS.PRODUCE:
-        setList(TESTIING_PRODUCE);
+        setList(allItems.filter(item => item.category === 'ID_ITEM_CROP' && item.count > 0));
         break;
       case ID_INVENTORY_MENUS.FISHES:
-        setList(TESTING_FISHES);
+        setList(allItems.filter(item => item.category === 'ID_ITEM_LOOT' && item.subCategory === 'ID_LOOT_CATEGORY_BAIT' && item.count > 0));
         break;
       case ID_INVENTORY_MENUS.ITEMS:
-        setList(TESTING_ITEMS);
+        setList(allItems.filter(item => ((item.category === 'ID_ITEM_LOOT' && item.subCategory === 'ID_LOOT_CATEGORY_CHEST') || item.category === 'ID_ITEM_POTION') && item.count > 0));
         break;
       default:
         break;
     }
-  }, [selectedMenu]);
+  }, [selectedMenu, allItems]);
 
   return (
     <BaseDialog onClose={onClose} title="INVENTORY">
