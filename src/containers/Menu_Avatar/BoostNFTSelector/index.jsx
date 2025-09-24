@@ -81,7 +81,6 @@ const BoostNFTSelector = ({ onClose, onSelect, slotIndex, equippedAvatars = [] }
             ) : ownedNFTs.length === 0 ? (
               <div className="no-nfts">
                 <p>You don't own any BoostNFTs yet.</p>
-                <p>Mint some NFTs using the "Random Mint NFT" button!</p>
               </div>
             ) : (
               ownedNFTs.map((nft) => (
