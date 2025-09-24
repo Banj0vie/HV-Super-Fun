@@ -201,9 +201,9 @@ export const useVendor = () => {
 
   const fulfillPendingRequest = useCallback(async (requestId) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+    setLoading(true);
+    setError(null);
+
       // Use the useRngHub hook's fulfillRequest function
       const randomNumber = Math.floor(Math.random() * 100000);
       const txHash = await rngFulfillRequest(requestId, randomNumber);
@@ -650,8 +650,8 @@ export const useFarming = () => {
       
       // Handle case where crop is an object with new struct fields
       if (crop.seedId !== undefined && crop.endTime !== undefined) {
-        return {
-          seedId: crop.seedId.toString(),
+      return {
+        seedId: crop.seedId.toString(),
           endTime: Number(crop.endTime),
           produceMultiplierX1000: crop.produceMultiplierX1000 ? Number(crop.produceMultiplierX1000) : 1000,
           tokenMultiplierX1000: crop.tokenMultiplierX1000 ? Number(crop.tokenMultiplierX1000) : 1000
@@ -2845,6 +2845,203 @@ export const useP2PMarket = () => {
     cancel,
     batchBuy,
     send
+  };
+};
+
+// Hook for Equipment Registry contract interactions
+export const useEquipmentRegistry = () => {
+  const { account } = useAgwEthersAndService();
+  const { agwClient, publicClient, getContract, executeWrite } = useContractBase(['EQUIPMENT_REGISTRY', 'BOOST_NFT']);
+  const equipmentRegistry = getContract('EQUIPMENT_REGISTRY');
+  
+  const equipmentRegistryData = {
+    loading: false,
+    error: null
+  };
+
+  // Random mint function
+  const randomMint = useCallback(async () => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'randomMint',
+      args: [],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Get token boost for a player
+  const getTokenBoostPpm = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      return null;
+    }
+
+    return publicClient.readContract({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'getTokenBoostPpm',
+      args: [player]
+    });
+  }, [equipmentRegistry, publicClient]);
+
+  // Get avatars for a player
+  const getAvatars = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      return null;
+    }
+
+    return publicClient.readContract({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'getAvatars',
+      args: [player]
+    });
+  }, [equipmentRegistry, publicClient]);
+
+  // Set avatar in slot
+  const setAvatar = useCallback(async (slot, nft, tokenId) => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'setAvatar',
+      args: [slot, nft, tokenId],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Clear avatar from slot
+  const clearAvatar = useCallback(async (slot) => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'clearAvatar',
+      args: [slot],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Get owned BoostNFTs for a player
+  const getOwnedBoostNFTs = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      console.log('Equipment registry or public client not available');
+      return [];
+    }
+
+    try {
+      // Get the BoostNFT contract
+      const boostNFT = getContract('BOOST_NFT');
+      if (!boostNFT) {
+        throw new Error('BoostNFT contract not available');
+      }
+
+      // Get nextId to know how many NFTs exist (total supply = nextId - 1)
+      const nextId = await publicClient.readContract({
+        address: boostNFT.address,
+        abi: boostNFT.abi,
+        functionName: 'nextId'
+      });
+
+      const totalSupply = Number(nextId) - 1;
+      console.log('Total supply from nextId:', totalSupply);
+
+      const nfts = [];
+      
+      // Check each token ID to see if player owns it
+      for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
+        try {
+          const owner = await publicClient.readContract({
+            address: boostNFT.address,
+            abi: boostNFT.abi,
+            functionName: 'ownerOf',
+            args: [tokenId]
+          });
+
+          if (owner.toLowerCase() === player.toLowerCase()) {
+            const tokenURI = await publicClient.readContract({
+              address: boostNFT.address,
+              abi: boostNFT.abi,
+              functionName: 'tokenURI',
+              args: [tokenId]
+            })
+
+            const tokenData = await fetch(tokenURI);
+            const tokenDataJson = await tokenData.json();
+            
+            // Parse the token metadata
+            const name = tokenDataJson.name || `Character #${tokenId}`;
+            const image = tokenDataJson.image || '';
+            const description = tokenDataJson.description || '';
+            
+            // Extract boost values from attributes
+            let boostPpm = 0;
+            let boostPercentage = 0;
+            
+            if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
+              const boostAttribute = tokenDataJson.attributes.find(attr => 
+                attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
+              );
+              
+              if (boostAttribute) {
+                if (boostAttribute.trait_type === 'Boost (ppm)') {
+                  boostPpm = Number(boostAttribute.value);
+                  boostPercentage = boostPpm / 1000; // Convert ppm to percentage
+                } else if (boostAttribute.trait_type === 'Boost (%)') {
+                  boostPercentage = Number(boostAttribute.value);
+                  boostPpm = boostPercentage * 1000; // Convert percentage to ppm
+                }
+              }
+            }
+
+            nfts.push({
+              tokenId,
+              name,
+              image,
+              description,
+              boostPpm,
+              boostPercentage,
+              tokenURI
+            });
+          }
+        } catch (err) {
+          // Token might not exist or player doesn't own it, skip
+          console.warn(`Failed to fetch token ${tokenId}:`, err);
+        }
+      }
+      return nfts;
+    } catch (err) {
+      console.error('Failed to fetch owned BoostNFTs:', err);
+      // Return empty array instead of null for better error handling
+      return [];
+    }
+  }, [equipmentRegistry, publicClient, getContract]);
+
+  return {
+    equipmentRegistryData,
+    randomMint,
+    getTokenBoostPpm,
+    getAvatars,
+    setAvatar,
+    clearAvatar,
+    getOwnedBoostNFTs,
+    getContract
   };
 };
 

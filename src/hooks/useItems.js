@@ -42,7 +42,7 @@ export const useItems = () => {
       try {
         // Create array of user addresses (same address for all items)
         const addresses = new Array(allItemIds.length).fill(account);
-
+        
         // Convert item IDs to strings for the contract call
         const itemIdStrings = allItemIds.map(id => id.toString());
         // Fetch balances for all items at once
@@ -57,16 +57,16 @@ export const useItems = () => {
         balances.forEach((balance, index) => {
           // Convert balance to number for comparison
           const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
-          const itemId = allItemIds[index];
-          const itemData = ALL_ITEMS[itemId];
+            const itemId = allItemIds[index];
+            const itemData = ALL_ITEMS[itemId];
 
-          if (itemData) {
+            if (itemData) {
             // Item exists in ALL_ITEMS, use its data
-            userItems.push({
-              id: itemId,
-              count: balanceNum,
-              ...itemData
-            });
+              userItems.push({
+                id: itemId,
+                count: balanceNum,
+                ...itemData
+              });
           } else {
             // Item doesn't exist in ALL_ITEMS, create proper category structure
             let category, subCategory;
@@ -363,12 +363,12 @@ export const useItems = () => {
     error,
     refetch: async () => {
       if (items1155 && account && isReady && publicClient) {
-        setLoading(true);
-        setError(null);
+          setLoading(true);
+          setError(null);
 
-        try {
-          const addresses = new Array(allItemIds.length).fill(account);
-          const itemIdStrings = allItemIds.map(id => id.toString());
+          try {
+            const addresses = new Array(allItemIds.length).fill(account);
+            const itemIdStrings = allItemIds.map(id => id.toString());
           const balances = await publicClient.readContract({
             address: items1155.address,
             abi: items1155.abi,
@@ -377,20 +377,20 @@ export const useItems = () => {
           });
 
           // Include ALL items (even with 0 balance) for crafting interface
-          const userItems = [];
-          balances.forEach((balance, index) => {
-            // Convert balance to number for comparison
-            const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
-            const itemId = allItemIds[index];
-            const itemData = ALL_ITEMS[itemId];
+            const userItems = [];
+            balances.forEach((balance, index) => {
+              // Convert balance to number for comparison
+              const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
+                const itemId = allItemIds[index];
+                const itemData = ALL_ITEMS[itemId];
 
-            if (itemData) {
+                if (itemData) {
               // Item exists in ALL_ITEMS, use its data
-              userItems.push({
-                id: itemId,
-                count: balanceNum,
-                ...itemData
-              });
+                  userItems.push({
+                    id: itemId,
+                    count: balanceNum,
+                    ...itemData
+                  });
             } else {
               // Item doesn't exist in ALL_ITEMS, create proper category structure
               let category, subCategory;
@@ -449,13 +449,13 @@ export const useItems = () => {
               });
             }
           });
-          setItems(userItems);
-        } catch (err) {
-          console.error('Failed to refetch items:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
+            setItems(userItems);
+          } catch (err) {
+            console.error('Failed to refetch items:', err);
+            setError(err.message);
+          } finally {
+            setLoading(false);
+          }
       }
     }
   };
