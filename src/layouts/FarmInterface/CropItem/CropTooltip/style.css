@@ -53,7 +53,48 @@
 }
 
 .crop-tooltip .active-effect {
-    padding: 1rem;
+    padding: 0.5rem;
+    width: 100%;
+}
+
+.crop-tooltip .active-effect .effect-header {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    text-align: center;
+}
+
+.crop-tooltip .active-effect .effect-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.crop-tooltip .active-effect .effect-item {
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+    border: 1px solid;
+}
+
+.crop-tooltip .active-effect .pesticide-effect {
+    background: rgba(255, 165, 0, 0.15);
+    border-color: rgba(255, 165, 0, 0.4);
+    color: #ffa500;
+}
+
+.crop-tooltip .active-effect .fertilizer-effect {
+    background: rgba(0, 255, 0, 0.15);
+    border-color: rgba(0, 255, 0, 0.4);
+    color: #00ff00;
+}
+
+.crop-tooltip .active-effect .no-effect {
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 0.5rem;
 }
 
 @keyframes bounce-in {

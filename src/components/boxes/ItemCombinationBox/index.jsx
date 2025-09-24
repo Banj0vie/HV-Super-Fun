@@ -28,7 +28,14 @@ const ItemCombinationBox = ({
   
   // Get contract hooks (always call hooks unconditionally)
   const fishing = useFishing();
-  const { craftGrowthElixir, craftPesticide, craftFertilizer } = usePotion();
+  const { 
+    craftGrowthElixir, 
+    craftPesticide, 
+    craftFertilizer,
+    craftGrowthElixirBatch,
+    craftPesticideBatch,
+    craftFertilizerBatch
+  } = usePotion();
   
   // Determine item type
   const isBait = Object.values(ID_BAIT_ITEMS).includes(itemId);
@@ -176,7 +183,7 @@ const ItemCombinationBox = ({
         show("Unknown item type", "error");
       }
       
-      show("Successfully crafted!", "success");
+      show(`Successfully crafted ${multiplier} ${itemData?.label || 'item(s)'}!`, "success");
       
       // Refresh inventory to show updated item counts
       await refetch();
@@ -221,12 +228,25 @@ const ItemCombinationBox = ({
   const handlePotionCraft = async () => {
     if (!craftGrowthElixir) throw new Error("Potion contract not available");
 
-    if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
-      await craftGrowthElixir();
-    } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
-      await craftPesticide();
-    } else if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
-      await craftFertilizer();
+    // Use batch functions for efficiency when crafting multiple potions
+    if (multiplier === 1) {
+      // Single craft
+      if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
+        await craftGrowthElixir();
+      } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
+        await craftPesticide();
+      } else if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
+        await craftFertilizer();
+      }
+    } else {
+      // Batch craft for multiple potions
+      if (itemId === ID_POTION_ITEMS.POTION_GROWTH_ELIXIR) {
+        await craftGrowthElixirBatch(multiplier);
+      } else if (itemId === ID_POTION_ITEMS.POTION_PESTICIDE) {
+        await craftPesticideBatch(multiplier);
+      } else if (itemId === ID_POTION_ITEMS.POTION_FERTILIZER) {
+        await craftFertilizerBatch(multiplier);
+      }
     }
   };
 

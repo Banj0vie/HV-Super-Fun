@@ -40,6 +40,13 @@ export const GameStateProvider = ({ children }) => {
     maxPlots: 0
   });
 
+  // Potion usage state
+  const [potionUsageState, setPotionUsageState] = useState({
+    isActive: false,
+    potionId: null,
+    potionName: null
+  });
+
   // Loading states
   const [loading, setLoading] = useState({
     playerData: false,
@@ -47,6 +54,23 @@ export const GameStateProvider = ({ children }) => {
     items: false,
     farming: false
   });
+
+  // Potion usage functions
+  const triggerPotionUsage = useCallback((potionId, potionName) => {
+    setPotionUsageState({
+      isActive: true,
+      potionId,
+      potionName
+    });
+  }, []);
+
+  const clearPotionUsage = useCallback(() => {
+    setPotionUsageState({
+      isActive: false,
+      potionId: null,
+      potionName: null
+    });
+  }, []);
 
   // Error states
   const [errors, setErrors] = useState({
@@ -285,6 +309,7 @@ export const GameStateProvider = ({ children }) => {
     balances,
     itemBalances,
     farmingData,
+    potionUsageState,
     loading,
     errors,
 
@@ -293,6 +318,8 @@ export const GameStateProvider = ({ children }) => {
     loadPlayerData,
     loadBalances,
     loadFarmingData,
+    triggerPotionUsage,
+    clearPotionUsage,
 
     // Helpers
     formatBalance,

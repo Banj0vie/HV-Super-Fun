@@ -66,3 +66,50 @@
     transform: translateY(-16px);
   }
 }
+
+/* Potion effect indicators */
+.crop-item .potion-effects {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.crop-item .potion-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 1px solid;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.crop-item .pesticide-indicator {
+  background: rgba(255, 165, 0, 0.8);
+  border-color: rgba(255, 165, 0, 1);
+  color: #fff;
+}
+
+.crop-item .fertilizer-indicator {
+  background: rgba(0, 255, 0, 0.8);
+  border-color: rgba(0, 255, 0, 1);
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}

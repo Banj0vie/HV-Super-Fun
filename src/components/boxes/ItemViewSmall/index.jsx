@@ -12,7 +12,7 @@ const ItemSmallView = ({ itemId, count }) => {
   return (itemId ? 
     <div className="item-small-view">
       <CardView className="icon">
-        {ALL_ITEMS[itemId].pos === undefined ? (
+        {ALL_ITEMS[itemId].pos === -1 ? (
           <img src={ALL_ITEMS[itemId].image} alt="icon"></img>
         ) : (
           <div
