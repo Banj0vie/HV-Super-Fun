@@ -33,7 +33,9 @@ const Avatar = ({ src, alt = "avatar" }) => {
         if (avatarResult && Array.isArray(avatarResult) && avatarResult.length >= 2) {
           const [nfts, tokenIds] = avatarResult;
           
-          // Find the first equipped avatar (not empty)
+          // Collect all equipped avatars with their metadata
+          const equippedAvatars = [];
+          
           for (let i = 0; i < nfts.length && i < 2; i++) {
             if (nfts[i] && nfts[i] !== "0x0000000000000000000000000000000000000000" && tokenIds[i]) {
               // Get token metadata for this avatar
@@ -49,13 +51,45 @@ const Avatar = ({ src, alt = "avatar" }) => {
                 const tokenData = await fetch(tokenURI);
                 const tokenDataJson = await tokenData.json();
                 
-                if (tokenDataJson.image) {
-                  setAvatarImage(tokenDataJson.image);
-                  setLoading(false);
-                  return;
+                // Extract boost value from attributes
+                let boostValue = 0;
+                if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
+                  const boostAttribute = tokenDataJson.attributes.find(attr => 
+                    attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
+                  );
+                  
+                  if (boostAttribute) {
+                    if (boostAttribute.trait_type === 'Boost (ppm)') {
+                      boostValue = Number(boostAttribute.value);
+                    } else if (boostAttribute.trait_type === 'Boost (%)') {
+                      boostValue = Number(boostAttribute.value) * 1000; // Convert to ppm for comparison
+                    }
+                  }
                 }
+                
+                equippedAvatars.push({
+                  tokenId: tokenIds[i],
+                  image: tokenDataJson.image,
+                  boostValue: boostValue,
+                  slotIndex: i
+                });
               }
             }
+          }
+          
+          // Sort by boost value (descending), then by slot index (ascending)
+          equippedAvatars.sort((a, b) => {
+            if (b.boostValue !== a.boostValue) {
+              return b.boostValue - a.boostValue; // Higher boost first
+            }
+            return a.slotIndex - b.slotIndex; // Lower slot index first if same boost
+          });
+          
+          // Use the best avatar
+          if (equippedAvatars.length > 0 && equippedAvatars[0].image) {
+            setAvatarImage(equippedAvatars[0].image);
+            setLoading(false);
+            return;
           }
         }
         

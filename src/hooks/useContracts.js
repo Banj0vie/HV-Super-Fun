@@ -2754,7 +2754,7 @@ export const useP2PMarket = () => {
       throw new Error('P2P Market contract, AGW Client, or account not available');
     }
 
-    return executeWrite({
+    return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
       functionName: 'purchase',
@@ -2772,7 +2772,7 @@ export const useP2PMarket = () => {
     }
 
     const pricePerInWei = BigInt(pricePer) * BigInt(10 ** 18);
-    return executeWrite({
+    return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
       functionName: 'list',
@@ -2788,7 +2788,7 @@ export const useP2PMarket = () => {
     if (!p2pMarket || !agwClient || !account) {
       throw new Error('P2P Market contract, AGW Client, or account not available');
     }
-    return executeWrite({
+    return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
       functionName: 'cancel',
@@ -2809,7 +2809,7 @@ export const useP2PMarket = () => {
     const maxPricePerInWei = BigInt(maxPricePer) * BigInt(10 ** 18);
     const totalBudgetInWei = BigInt(totalBudget) * BigInt(10 ** 18);
     
-    return executeWrite({
+    return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
       functionName: 'batchBuy',
@@ -2826,7 +2826,7 @@ export const useP2PMarket = () => {
       throw new Error('P2P Market contract, AGW Client, or account not available');
     }
 
-    return executeWrite({
+    return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
       functionName: 'send',
@@ -2865,7 +2865,7 @@ export const useEquipmentRegistry = () => {
       throw new Error('Equipment Registry contract, AGW Client, or account not available');
     }
 
-    return executeWrite({
+    return await executeWrite({
       abi: equipmentRegistry.abi,
       address: equipmentRegistry.address,
       functionName: 'randomMint',
@@ -2910,7 +2910,7 @@ export const useEquipmentRegistry = () => {
       throw new Error('Equipment Registry contract, AGW Client, or account not available');
     }
 
-    return executeWrite({
+    return await executeWrite({
       abi: equipmentRegistry.abi,
       address: equipmentRegistry.address,
       functionName: 'setAvatar',
@@ -2927,7 +2927,7 @@ export const useEquipmentRegistry = () => {
       throw new Error('Equipment Registry contract, AGW Client, or account not available');
     }
 
-    return executeWrite({
+    return await executeWrite({
       abi: equipmentRegistry.abi,
       address: equipmentRegistry.address,
       functionName: 'clearAvatar',
