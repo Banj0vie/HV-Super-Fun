@@ -649,6 +649,30 @@ export const useFarming = () => {
     }
   }, [farming, publicClient]);
 
+  const previewHarvestForSeed = useCallback(async (userAddress, seedId) => {
+    if (!farming || !publicClient) {
+      return { totalGameToken: 0, lockedGameToken: 0, unlockedGameToken: 0 };
+    }
+
+    try {
+      const result = await publicClient.readContract({
+        address: farming.address,
+        abi: farming.abi,
+        functionName: 'previewHarvestForSeed',
+        args: [userAddress, seedId],
+      });
+      
+      return {
+        totalGameToken: result[0],
+        lockedGameToken: result[1], 
+        unlockedGameToken: result[2]
+      };
+    } catch (err) {
+      console.error('Failed to preview harvest for seed:', err);
+      return { totalGameToken: 0, lockedGameToken: 0, unlockedGameToken: 0 };
+    }
+  }, [farming, publicClient]);
+
   const getCrop = useCallback(async (userAddress, plotIndex) => {
     if (!farming || !publicClient) return null;
 
@@ -851,6 +875,7 @@ export const useFarming = () => {
     applyGrowthElixir,
     applyPesticide,
     applyFertilizer,
+    previewHarvestForSeed,
     loading,
     error
   };

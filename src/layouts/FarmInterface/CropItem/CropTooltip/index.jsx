@@ -6,9 +6,11 @@ import { ALL_ITEMS } from "../../../../constants/item_data";
 import BaseDivider from "../../../../components/dividers/BaseDivider";
 import GrowStatusBox from "../../../../components/boxes/GrowStatusBox";
 import { useAgwEthersAndService } from "../../../../hooks/useContractBase";
+import { useFarming } from "../../../../hooks/useContracts";
 import CropCircleIcon from "../../../../components/boxes/CropCircleIcon";
 const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgress = 0 }) => {
-  const { account, contractService } = useAgwEthersAndService();
+  const { account } = useAgwEthersAndService();
+  const { previewHarvestForSeed } = useFarming();
   const [timeLeft, setTimeLeft] = useState(0);
   const [locked, setLocked] = useState("0");
   const [unlocked, setUnlocked] = useState("0");
@@ -124,18 +126,25 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
     return () => clearInterval(i);
   }, [endTime]);
 
-  // Fetch reward preview (locked/unlocked) matching contract logic
+  // Fetch reward preview using the actual contract previewHarvestForSeed function
   useEffect(() => {
     let cancelled = false;
     const loadRewards = async () => {
       try {
-        if (!contractService || !account || !data?.seedId) return;
-        const res = await contractService.calculateHarvestRewards(data.seedId, account);
+        if (!previewHarvestForSeed || !account || !data?.seedId) return;
+        
+        const res = await previewHarvestForSeed(account, data.seedId);
+        
         if (!cancelled && res) {
-          setLocked(res.lockedAmount || "0");
-          setUnlocked(res.unlockedAmount || "0");
+          // Handle BigInt values properly
+          const lockedValue = res.lockedGameToken ? (typeof res.lockedGameToken === 'bigint' ? res.lockedGameToken.toString() : res.lockedGameToken.toString()) : "0";
+          const unlockedValue = res.unlockedGameToken ? (typeof res.unlockedGameToken === 'bigint' ? res.unlockedGameToken.toString() : res.unlockedGameToken.toString()) : "0";
+          
+          setLocked(lockedValue);
+          setUnlocked(unlockedValue);
         }
       } catch (e) {
+        console.error('Failed to load harvest rewards:', e);
         // keep zeros on error
       }
     };
@@ -143,7 +152,7 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
     return () => {
       cancelled = true;
     };
-  }, [contractService, account, data?.seedId]);
+  }, [previewHarvestForSeed, account, data?.seedId]);
 
   const formatTime = (seconds) => {
     if (!seconds || seconds <= 0) return "Ready";
