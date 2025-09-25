@@ -5,7 +5,7 @@ import { ALL_ITEMS } from "../../../constants/item_data";
 import { TYPE_LABEL_COLOR } from "../../../constants/item_seed";
 import BaseButton from "../../buttons/BaseButton";
 
-const ItemViewUsable = ({ itemId, count, onUse, usable = true }) => {
+const ItemViewUsable = ({ itemId, count, onUse, usable = true, buttonLabel = "Use", disabled = false }) => {
   return (
     <CardView className="p-0" secondary>
       <div className="item-view-usable">
@@ -27,8 +27,9 @@ const ItemViewUsable = ({ itemId, count, onUse, usable = true }) => {
         {usable && (
           <BaseButton
             className="button"
-            label="Use"
+            label={buttonLabel}
             onClick={() => onUse(itemId)}
+            disabled={disabled}
           ></BaseButton>
         )}
       </div>

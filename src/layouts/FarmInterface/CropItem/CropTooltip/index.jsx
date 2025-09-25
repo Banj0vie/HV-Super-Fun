@@ -200,7 +200,25 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
         <div className="highlight text-1.25">{(Number(unlocked) / 1e18).toFixed(2)} $HNY</div>
       </div>
       <BaseDivider/>
-      <div className="active-effect">No Active Effect</div>
+      <div className="active-effect">
+        <div className="effect-header">Active Potion Effects:</div>
+        {data?.produceMultiplierX1000 > 1000 || data?.tokenMultiplierX1000 > 1000 ? (
+          <div className="effect-list">
+            {data?.produceMultiplierX1000 > 1000 && (
+              <div className="effect-item pesticide-effect">
+                🌱 <strong>Pesticide:</strong> +{(((data.produceMultiplierX1000 - 1000) / 1000) * 100).toFixed(0)}% Produce Output
+              </div>
+            )}
+            {data?.tokenMultiplierX1000 > 1000 && (
+              <div className="effect-item fertilizer-effect">
+                💰 <strong>Fertilizer:</strong> +{(((data.tokenMultiplierX1000 - 1000) / 1000) * 100).toFixed(0)}% Token Rewards
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="no-effect">No Active Potion Effects</div>
+        )}
+      </div>
     </div>
   );
 

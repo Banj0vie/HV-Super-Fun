@@ -825,15 +825,6 @@ export const ALL_ITEMS = {
     honey: 0,
     lockedHoney: 0,
   },
-  [ID_CHEST_ITEMS.PLATINUM_CHEST]: {
-    label: "Platinum Chest",
-    category: ID_ITEM_CATEGORIES.LOOT,
-    subCategory: ID_LOOT_CATEGORIES.CHEST,
-    type: ID_RARE_TYPE.LEGENDARY,
-    image: chestImages.gold,
-    honey: 0,
-    lockedHoney: 0,
-  },
 
   // Potion items
   [ID_POTION_ITEMS.POTION_GROWTH_ELIXIR]: {
@@ -842,6 +833,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
     type: ID_RARE_TYPE.COMMON,
     image: potionImages.growthElixir,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 75,
@@ -852,6 +844,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
     type: ID_RARE_TYPE.UNCOMMON,
     image: potionImages.growthElixir_II,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 75,
@@ -862,6 +855,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.GROWTH_ELIXIR,
     type: ID_RARE_TYPE.RARE,
     image: potionImages.growthElixir_III,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 75,
@@ -872,6 +866,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.FERTILIZER,
     type: ID_RARE_TYPE.RARE,
     image: potionImages.fertilizer,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 2000,
@@ -882,6 +877,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.FERTILIZER,
     type: ID_RARE_TYPE.EPIC,
     image: potionImages.fertilizer_II,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 2000,
@@ -892,6 +888,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.FERTILIZER,
     type: ID_RARE_TYPE.LEGENDARY,
     image: potionImages.fertilizer_III,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 2000,
@@ -902,6 +899,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.PESTICIDE,
     type: ID_RARE_TYPE.UNCOMMON,
     image: potionImages.pesticide,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 250,
@@ -912,6 +910,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.PESTICIDE,
     type: ID_RARE_TYPE.RARE,
     image: potionImages.pesticide_II,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 250,
@@ -922,6 +921,7 @@ export const ALL_ITEMS = {
     subCategory: ID_POTION_CATEGORIES.PESTICIDE,
     type: ID_RARE_TYPE.EPIC,
     image: potionImages.pesticide_III,
+    pos: -1,
     honey: 0,
     lockedHoney: 0,
     exp: 250,
@@ -960,7 +960,7 @@ export const ALL_ITEM_TREE = [
     label: "All",
     children: [
       {
-        id: ID_ITEM_CATEGORIES.CROP,
+        id: ID_ITEM_CATEGORIES.PRODUCE,
         label: "Crops",
         children: [
           {
@@ -1042,7 +1042,6 @@ export const ALL_ITEM_TREE = [
               { id: ID_CHEST_ITEMS.BRONZE_CHEST, label: "Bronze Chest" },
               { id: ID_CHEST_ITEMS.SILVER_CHEST, label: "Silver Chest" },
               { id: ID_CHEST_ITEMS.GOLDEN_CHEST, label: "Golden Chest" },
-              { id: ID_CHEST_ITEMS.PLATINUM_CHEST, label: "Platinum Chest" },
             ]
           },
           {

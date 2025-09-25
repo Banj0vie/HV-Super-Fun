@@ -10,24 +10,15 @@ import { handleContractError } from '../utils/errorHandler';
 
 // Hook for Vendor contract interactions
 export const useVendor = () => {
-  const { account, contractService } = useAgwEthersAndService();
+  const { account } = useAgwEthersAndService();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [vendor, setVendor] = useState(null);
-  const [yieldToken, setYieldToken] = useState(null);
-  const [agwClient, setAgwClient] = useState(null);
-  const [publicClient, setPublicClient] = useState(null);
+  const { getContract, publicClient, executeWrite } = useContractBase(['VENDOR']);
+  const vendor = getContract('VENDOR');
+  const yieldToken = getContract('YIELD_TOKEN');
   
   // Use the useRngHub hook for fulfillRequest functionality
   const { fulfillRequest: rngFulfillRequest } = useRngHub();
-
-  useEffect(() => {
-    if (!contractService) return;
-    setVendor(contractService.getContract('VENDOR'));
-    setYieldToken(contractService.getContract('YIELD_TOKEN'));
-    setAgwClient(contractService.agwClient);
-    setPublicClient(contractService.publicClient);
-  }, [contractService]);
 
   const buySeedPack = useCallback(async (tier, count) => {
     if (!vendor || !yieldToken) {
@@ -68,16 +59,14 @@ export const useVendor = () => {
         setError(`Insufficient Yield balance. Need ${totalCost}, have ${balance.toString()}`);
         return null;
       }
-      
-      // 4. Use AGW for transaction
-      const txHash = await agwClient.writeContract({
+      const result = await executeWrite({
         abi: vendor.abi,
         address: vendor.address,
         functionName: 'buySeedPack',
         args: [tier, count],
       });
       
-      return { txHash, tier, isPending: true };
+      return { txHash: result.txHash, tier, isPending: false };
     } catch (err) {
       console.error('Failed to buy seed pack:', err);
       setError(err.message);
@@ -85,7 +74,7 @@ export const useVendor = () => {
     } finally {
       setLoading(false);
     }
-  }, [vendor, yieldToken, agwClient, publicClient, account]);
+  }, [vendor, yieldToken, account, publicClient, executeWrite]);
 
   const getPackPrice = useCallback(async (tier) => {
     if (!vendor || !publicClient) return null;
@@ -201,9 +190,9 @@ export const useVendor = () => {
 
   const fulfillPendingRequest = useCallback(async (requestId) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+    setLoading(true);
+    setError(null);
+
       // Use the useRngHub hook's fulfillRequest function
       const randomNumber = Math.floor(Math.random() * 100000);
       const txHash = await rngFulfillRequest(requestId, randomNumber);
@@ -568,14 +557,19 @@ export const useFarming = () => {
       
       console.log('Got user crops from contract:', crops);
       
-      // Convert crops to the expected format (seedId as BigInt, endTime as Number)
+      // Convert crops to the expected format with new struct fields
       const formattedCrops = crops.map((crop, index) => {
         const seedIdBig = BigInt(crop.seedId);
         const endTimeNum = Number(crop.endTime);
+        const produceMultiplier = Number(crop.produceMultiplierX1000 || 1000);
+        const tokenMultiplier = Number(crop.tokenMultiplierX1000 || 1000);
+        
         return ({
           plotNumber: index,
           seedId: seedIdBig,
           endTime: endTimeNum,
+          produceMultiplierX1000: produceMultiplier,
+          tokenMultiplierX1000: tokenMultiplier,
           isReady: seedIdBig !== 0n && endTimeNum <= Math.floor(Date.now() / 1000)
         });
       });
@@ -627,23 +621,29 @@ export const useFarming = () => {
         console.warn('Crop is undefined for plot:', plotIndex);
         return {
           seedId: "0",
-          endTime: 0
+          endTime: 0,
+          produceMultiplierX1000: 1000,
+          tokenMultiplierX1000: 1000
         };
       }
       
-      // Handle case where crop is an array (tuple format)
+      // Handle case where crop is an array (tuple format) - new struct with 4 fields
       if (Array.isArray(crop)) {
         return {
           seedId: crop[0] ? crop[0].toString() : "0",
-          endTime: crop[1] ? Number(crop[1]) : 0
+          endTime: crop[1] ? Number(crop[1]) : 0,
+          produceMultiplierX1000: crop[2] ? Number(crop[2]) : 1000,
+          tokenMultiplierX1000: crop[3] ? Number(crop[3]) : 1000
         };
       }
       
-      // Handle case where crop is an object
+      // Handle case where crop is an object with new struct fields
       if (crop.seedId !== undefined && crop.endTime !== undefined) {
       return {
         seedId: crop.seedId.toString(),
-        endTime: Number(crop.endTime)
+          endTime: Number(crop.endTime),
+          produceMultiplierX1000: crop.produceMultiplierX1000 ? Number(crop.produceMultiplierX1000) : 1000,
+          tokenMultiplierX1000: crop.tokenMultiplierX1000 ? Number(crop.tokenMultiplierX1000) : 1000
         };
       }
       
@@ -651,11 +651,19 @@ export const useFarming = () => {
       console.warn('Unexpected crop structure:', crop);
       return {
         seedId: "0",
-        endTime: 0
+        endTime: 0,
+        produceMultiplierX1000: 1000,
+        tokenMultiplierX1000: 1000
       };
     } catch (err) {
       console.error('Failed to get crop:', err);
-      return null;
+      // Return a default crop structure instead of null to prevent further errors
+      return {
+        seedId: "0",
+        endTime: 0,
+        produceMultiplierX1000: 1000,
+        tokenMultiplierX1000: 1000
+      };
     }
   }, [farming, publicClient]);
 
@@ -677,6 +685,93 @@ export const useFarming = () => {
     }
   }, [farming, publicClient]);
 
+  // Apply Growth Elixir to reduce remaining growth time
+  const applyGrowthElixir = useCallback(async (plotNumber) => {
+    if (!farming || !agwClient) {
+      setError('Farming contract not available');
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: farming.abi,
+        address: farming.address,
+        functionName: 'applyGrowthElixir',
+        args: [plotNumber],
+      });
+      
+      console.log('Growth Elixir applied successfully!');
+      return txHash;
+    } catch (err) {
+      console.error('Failed to apply Growth Elixir:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [farming, agwClient]);
+
+  // Apply Pesticide to boost produce amount
+  const applyPesticide = useCallback(async (plotNumber) => {
+    if (!farming || !agwClient) {
+      setError('Farming contract not available');
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: farming.abi,
+        address: farming.address,
+        functionName: 'applyPesticide',
+        args: [plotNumber],
+      });
+      
+      console.log('Pesticide applied successfully!');
+      return txHash;
+    } catch (err) {
+      console.error('Failed to apply Pesticide:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [farming, agwClient]);
+
+  // Apply Fertilizer to increase gameToken amount on harvest
+  const applyFertilizer = useCallback(async (plotNumber) => {
+    if (!farming || !agwClient) {
+      setError('Farming contract not available');
+      return null;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: farming.abi,
+        address: farming.address,
+        functionName: 'applyFertilizer',
+        args: [plotNumber],
+      });
+      
+      console.log('Fertilizer applied successfully!');
+      return txHash;
+    } catch (err) {
+      console.error('Failed to apply Fertilizer:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [farming, agwClient]);
+
   return {
     plant,
     plantBatch,
@@ -687,6 +782,9 @@ export const useFarming = () => {
     getMaxPlots,
     getCrop,
     getGrowthTime,
+    applyGrowthElixir,
+    applyPesticide,
+    applyFertilizer,
     loading,
     error
   };
@@ -1430,7 +1528,7 @@ export const useSage = () => {
         weeklyWageAmount = 0n;
       }
 
-      // Check cooldowns for both functions
+      // Check cooldown for both functions
       const now = Date.now();
       const nextWageUnlockTime = Number(safeLastUnlockTime) * 1000 + SAGE_UNLOCK_COOLDOWN;
       const nextHarvestUnlockTime = Number(safeLastUnlockTimeHarvest) * 1000 + SAGE_UNLOCK_COOLDOWN;
@@ -1783,6 +1881,8 @@ export const useChestOpener = () => {
   const [playerStore, setPlayerStore] = useState(null);
   const [agwClient, setAgwClient] = useState(null);
   const [publicClient, setPublicClient] = useState(null);
+  // Use the useRngHub hook for fulfillRequest functionality
+  const { fulfillRequest: rngFulfillRequest } = useRngHub();
 
   useEffect(() => {
     if (!contractService) return;
@@ -1900,7 +2000,13 @@ export const useChestOpener = () => {
       });
 
       setChestData(prev => ({ ...prev, loading: false, error: null }));
-      return txHash;
+      
+      // Return the transaction hash - the fulfillment will happen automatically via events
+      return {
+        success: true,
+        txHash: txHash,
+        message: 'Chest opening request sent successfully'
+      };
     } catch (err) {
       const { message } = handleContractError(err, 'opening chest');
       setChestData(prev => ({
@@ -1924,12 +2030,242 @@ export const useChestOpener = () => {
     fetchChestData();
   }, [fetchChestData]);
 
+  // Check for pending requests
+  const checkPendingRequests = useCallback(async () => {
+    if (!chestOpener || !account || !publicClient) {
+      return false;
+    }
+    try {
+      const hasPending = await publicClient.readContract({
+        address: chestOpener.address,
+        abi: chestOpener.abi,
+        functionName: 'hasPendingRequests',
+        args: [account],
+      });
+      return hasPending;
+    } catch (err) {
+      console.error('Failed to check chest pending requests:', err);
+      return false;
+    }
+  }, [chestOpener, account, publicClient]);
+
+  // Get all pending requests
+  const getAllPendingRequests = useCallback(async () => {
+    if (!chestOpener || !account || !publicClient) {
+      return [];
+    }
+
+    try {
+      const [requestIds, chestIds] = await publicClient.readContract({
+        address: chestOpener.address,
+        abi: chestOpener.abi,
+        functionName: 'getAllPendingRequests',
+        args: [account],
+      });
+      const pendingRequests = [];
+      
+      for (let i = 0; i < requestIds.length; i++) {
+        pendingRequests.push({
+          requestId: requestIds[i].toString(),
+          chestId: chestIds[i].toString()
+        });
+      }
+      
+      return pendingRequests;
+    } catch (err) {
+      console.error('Failed to get chest pending requests:', err);
+      return [];
+    }
+  }, [chestOpener, account, publicClient]);
+
+  // Fulfill pending request (reveal chest)
+  const fulfillPendingRequest = useCallback(async (requestId) => {
+    try {
+      setChestData(prev => ({ ...prev, loading: true, error: null }));
+
+      const randomNumber = Math.floor(Math.random() * 100000);
+      const txHash = await rngFulfillRequest(requestId, randomNumber);
+      
+      setChestData(prev => ({ ...prev, loading: false }));
+      return txHash;
+    } catch (err) {
+      console.error('Failed to fulfill pending chest request:', err);
+      setChestData(prev => ({
+        ...prev,
+        loading: false,
+        error: err.message
+      }));
+      throw err;
+    }
+  }, [rngFulfillRequest]);
+
+  // Listen for chest opening results
+  const listenForChestResults = useCallback(async (requestId, onChestResults, fromBlock) => {
+    if (!chestOpener || !publicClient || !account) {
+      console.error('Chest opener contract, publicClient, or account not available');
+      return;
+    }
+    
+    try {
+      console.log('Setting up ChestResults listener for requestId:', requestId);
+      
+      // Use a recent block number instead of 'latest' for better reliability
+      let startBlock = fromBlock;
+      if (!startBlock || startBlock === 'latest') {
+        try {
+          const currentBlock = await publicClient.getBlockNumber();
+          startBlock = BigInt(currentBlock) - BigInt(10); // Look back 10 blocks to be safe
+          console.log('Using block', startBlock.toString(), 'as start block (current:', currentBlock.toString(), ')');
+        } catch (err) {
+          console.error('Failed to get current block number:', err);
+          startBlock = 'earliest';
+        }
+      }
+      
+      // Event handler function
+      const handleEvent = (eventData) => {
+        try {
+          console.log('ChestResults event received:', eventData);
+          
+          // Extract event data
+          const eventRequestId = eventData.args.requestId.toString();
+          const chestType = eventData.args.chestType.toString();
+          const rewardId = eventData.args.rewardId.toString();
+          
+          console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
+        
+        // Only process if this is the request we're waiting for
+        if (eventRequestId === requestId.toString()) {
+            console.log('✅ Found matching ChestResults event!');
+          if (onChestResults) {
+              onChestResults({ 
+                requestId: eventRequestId, 
+                chestType,
+                rewardId
+              });
+            }
+          // Clean up the listener after processing the event
+          console.log('Cleaning up ChestResults listener after successful event');
+          unwatch();
+          }
+        } catch (err) {
+          console.error('Error processing ChestResults event:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up ChestResults listener after error');
+          unwatch();
+        }
+      };
+      
+      // Set up real-time event listener using watchContractEvent
+      console.log('Setting up watchContractEvent for ChestResults');
+      const unwatch = publicClient.watchContractEvent({
+        address: chestOpener.address,
+        abi: chestOpener.abi,
+        eventName: 'ChestResults', // We need to add this event to the contract
+        args: {
+          player: account
+        },
+        onLogs: (logs) => {
+          console.log('Received ChestResults events via watchContractEvent:', logs);
+          logs.forEach(log => {
+            console.log('Processing log from watchContractEvent:', log);
+            handleEvent(log);
+          });
+        },
+        onError: (error) => {
+          console.error('Error in ChestResults event listener:', error);
+          // Clean up the listener on error
+          console.log('Cleaning up ChestResults listener after watchContractEvent error');
+          unwatch();
+        }
+      });
+      
+      console.log('watchContractEvent setup complete');
+      
+      const queryExistingEvents = async () => {
+        try {
+          console.log(
+            `Querying existing ChestResults events from block ${startBlock} to latest for player ${account}`
+          );
+          
+          const logs = await publicClient.getLogs({
+            address: chestOpener.address,
+            event: {
+              type: 'event',
+              name: 'ChestResults',
+              inputs: [
+                { indexed: true, name: 'player', type: 'address' },
+                { indexed: false, name: 'requestId', type: 'uint256' },
+                { indexed: false, name: 'chestType', type: 'uint256' },
+                { indexed: false, name: 'rewardId', type: 'uint256' }
+              ]
+            },
+            args: {
+              player: account
+            },
+            fromBlock: startBlock,
+            toBlock: 'latest'
+          });
+          
+          console.log('Found', logs.length, 'existing ChestResults events');
+          console.log('Logs:', logs);
+          
+          // Process existing events
+          for (const log of logs) {
+            try {
+              console.log('Processing log:', log);
+              
+              // The log is already decoded by getLogs, we can use it directly
+              const eventData = {
+                args: log.args,
+                eventName: log.eventName,
+                address: log.address,
+                blockNumber: log.blockNumber,
+                transactionHash: log.transactionHash
+              };
+              
+              console.log('Event data ready:', eventData);
+              handleEvent(eventData);
+            } catch (parseErr) {
+              console.error('Error processing existing event:', parseErr);
+              // Clean up the listener on error
+              console.log('Cleaning up ChestResults listener after parsing error');
+              unwatch();
+            }
+          }
+        } catch (err) {
+          console.error('Error querying existing ChestResults events:', err);
+          // Clean up the listener on error
+          console.log('Cleaning up ChestResults listener after query error');
+          unwatch();
+        }
+      };
+      
+      // Query existing events
+      queryExistingEvents();
+      
+      // Return cleanup function
+      return () => {
+        console.log('Cleaning up ChestResults listener');
+        unwatch();
+      };
+      
+    } catch (err) {
+      console.error('Failed to set up ChestResults listener:', err);
+      return () => {}; // Return no-op cleanup function
+    }
+  }, [chestOpener, publicClient, account]);
+
   return {
     ...chestData,
     claimDailyChest,
     openChest,
     getTimeUntilNextChest,
-    fetchChestData
+    fetchChestData,
+    checkPendingRequests,
+    getAllPendingRequests,
+    fulfillPendingRequest,
+    listenForChestResults
   };
 };
 
@@ -2579,11 +2915,92 @@ export const usePotion = () => {
     }
   }, [potion, agwClient]);
 
+  const craftGrowthElixirBatch = useCallback(async (count) => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftGrowthElixirBatch',
+        args: [count],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting growth elixir batch');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftPesticideBatch = useCallback(async (count) => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftPesticideBatch',
+        args: [count],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting pesticide batch');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
+  const craftFertilizerBatch = useCallback(async (count) => {
+    if (!potion || !agwClient) return;
+
+    setPotionData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: potion.abi,
+        address: potion.address,
+        functionName: 'craftFertilizerBatch',
+        args: [count],
+      });
+      
+      setPotionData(prev => ({ ...prev, loading: false }));
+      return { txHash, isPending: true };
+    } catch (err) {
+      const { message } = handleContractError(err, 'crafting fertilizer batch');
+      setPotionData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
+      }));
+      throw new Error(message);
+    }
+  }, [potion, agwClient]);
+
   return {
     potionData,
     craftGrowthElixir,
     craftPesticide,
-    craftFertilizer
+    craftFertilizer,
+    craftGrowthElixirBatch,
+    craftPesticideBatch,
+    craftFertilizerBatch
   };
 };
 
@@ -2648,4 +3065,382 @@ export const useProduceSeeder = () => {
     seedAllProduce
   };
 };
+
+// Hook for P2PMarket contract interactions
+export const useP2PMarket = () => {
+  const { account } = useAgwEthersAndService();
+  const { agwClient, publicClient, getContract, executeWrite } = useContractBase(['P2P_MARKET']);
+  const p2pMarket = getContract('P2P_MARKET');
+  
+  const [marketData, setMarketData] = useState({
+    listings: [],
+    nextId: 0,
+    loading: false,
+    error: null
+  });
+
+  // Get all marketplace listings
+  const getAllListings = useCallback(async () => {
+    if (!p2pMarket || !publicClient) {
+      return [];
+    }
+
+    setMarketData(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      console.log('Fetching all marketplace listings...');
+      
+      // Get nextId to know how many listings exist
+      const nextIdResult = await publicClient.readContract({
+        address: p2pMarket.address,
+        abi: p2pMarket.abi,
+        functionName: 'nextId'
+      });
+      
+      const currentNextId = Number(nextIdResult);
+      console.log('Next ID:', currentNextId);
+
+      const allListings = [];
+
+      // Fetch all active listings
+      for (let i = 1; i <= currentNextId; i++) {
+        try {
+          const listing = await publicClient.readContract({
+            address: p2pMarket.address,
+            abi: p2pMarket.abi,
+            functionName: 'listings',
+            args: [i]
+          });
+          // Only include active listings
+          if (listing[4]) {
+            allListings.push({
+              lid: i,
+              seller: listing[0],
+              id: listing[1],
+              amount: Number(listing[2]),
+              pricePer: Number(listing[3]) / (10 ** 18),
+              active: listing[4]
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch listing ${i}:`, err);
+        }
+      }
+      console.log('All listings:', allListings);
+      setMarketData(prev => ({ 
+        ...prev, 
+        listings: allListings, 
+        nextId: currentNextId,
+        loading: false 
+      }));
+      return allListings;
+    } catch (err) {
+      console.error('Failed to fetch listings:', err);
+      const { message } = handleContractError(err, 'fetching marketplace listings');
+      setMarketData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: message 
+      }));
+      return [];
+    }
+  }, [p2pMarket, publicClient]);
+
+  // Purchase items from a listing
+  const purchase = useCallback(async (lid, amount) => {
+    if (!p2pMarket || !agwClient || !account) {
+      throw new Error('P2P Market contract, AGW Client, or account not available');
+    }
+
+    return await executeWrite({
+      abi: p2pMarket.abi,
+      address: p2pMarket.address,
+      functionName: 'purchase',
+      args: [lid, amount],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [p2pMarket, agwClient, account, executeWrite]);
+
+  // List items for sale
+  const list = useCallback(async (id, amount, pricePer) => {
+    if (!p2pMarket || !agwClient || !account) {
+      throw new Error('P2P Market contract, AGW Client, or account not available');
+    }
+
+    const pricePerInWei = BigInt(pricePer) * BigInt(10 ** 18);
+    return await executeWrite({
+      abi: p2pMarket.abi,
+      address: p2pMarket.address,
+      functionName: 'list',
+      args: [id, amount, pricePerInWei],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [p2pMarket, agwClient, account, executeWrite]);
+
+  // Cancel a listing
+  const cancel = useCallback(async (lid) => {
+    if (!p2pMarket || !agwClient || !account) {
+      throw new Error('P2P Market contract, AGW Client, or account not available');
+    }
+    return await executeWrite({
+      abi: p2pMarket.abi,
+      address: p2pMarket.address,
+      functionName: 'cancel',
+      args: [lid],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [p2pMarket, agwClient, account, executeWrite]);
+
+  // Batch buy items
+  const batchBuy = useCallback(async (id, maxPricePer, totalBudget) => {
+    if (!p2pMarket || !agwClient || !account) {
+      throw new Error('P2P Market contract, AGW Client, or account not available');
+    }
+
+    // Convert amounts to wei (18 decimals)
+    const maxPricePerInWei = BigInt(maxPricePer) * BigInt(10 ** 18);
+    const totalBudgetInWei = BigInt(totalBudget) * BigInt(10 ** 18);
+    
+    return await executeWrite({
+      abi: p2pMarket.abi,
+      address: p2pMarket.address,
+      functionName: 'batchBuy',
+      args: [id, maxPricePerInWei, totalBudgetInWei],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [p2pMarket, agwClient, account, executeWrite]);
+
+  // Send items to another address
+  const send = useCallback(async (id, to, amount) => {
+    if (!p2pMarket || !agwClient || !account) {
+      throw new Error('P2P Market contract, AGW Client, or account not available');
+    }
+
+    return await executeWrite({
+      abi: p2pMarket.abi,
+      address: p2pMarket.address,
+      functionName: 'send',
+      args: [id, to, amount],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [p2pMarket, agwClient, account, executeWrite]);
+
+  return {
+    marketData,
+    getAllListings,
+    purchase,
+    list,
+    cancel,
+    batchBuy,
+    send
+  };
+};
+
+// Hook for Equipment Registry contract interactions
+export const useEquipmentRegistry = () => {
+  const { account } = useAgwEthersAndService();
+  const { agwClient, publicClient, getContract, executeWrite } = useContractBase(['EQUIPMENT_REGISTRY', 'BOOST_NFT']);
+  const equipmentRegistry = getContract('EQUIPMENT_REGISTRY');
+  
+  const equipmentRegistryData = {
+    loading: false,
+    error: null
+  };
+
+  // Random mint function
+  const randomMint = useCallback(async () => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return await executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'randomMint',
+      args: [],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Get token boost for a player
+  const getTokenBoostPpm = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      return null;
+    }
+
+    return publicClient.readContract({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'getTokenBoostPpm',
+      args: [player]
+    });
+  }, [equipmentRegistry, publicClient]);
+
+  // Get avatars for a player
+  const getAvatars = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      return null;
+    }
+
+    return publicClient.readContract({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'getAvatars',
+      args: [player]
+    });
+  }, [equipmentRegistry, publicClient]);
+
+  // Set avatar in slot
+  const setAvatar = useCallback(async (slot, nft, tokenId) => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return await executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'setAvatar',
+      args: [slot, nft, tokenId],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Clear avatar from slot
+  const clearAvatar = useCallback(async (slot) => {
+    if (!equipmentRegistry || !agwClient || !account) {
+      throw new Error('Equipment Registry contract, AGW Client, or account not available');
+    }
+
+    return await executeWrite({
+      abi: equipmentRegistry.abi,
+      address: equipmentRegistry.address,
+      functionName: 'clearAvatar',
+      args: [slot],
+      confirmations: 1,
+      timeout: 120000,
+      pollingInterval: 1000
+    });
+  }, [equipmentRegistry, agwClient, account, executeWrite]);
+
+  // Get owned BoostNFTs for a player
+  const getOwnedBoostNFTs = useCallback(async (player) => {
+    if (!equipmentRegistry || !publicClient) {
+      console.log('Equipment registry or public client not available');
+      return [];
+    }
+
+    try {
+      // Get the BoostNFT contract
+      const boostNFT = getContract('BOOST_NFT');
+      if (!boostNFT) {
+        throw new Error('BoostNFT contract not available');
+      }
+
+      // Get nextId to know how many NFTs exist (total supply = nextId - 1)
+      const nextId = await publicClient.readContract({
+        address: boostNFT.address,
+        abi: boostNFT.abi,
+        functionName: 'nextId'
+      });
+
+      const totalSupply = Number(nextId) - 1;
+      console.log('Total supply from nextId:', totalSupply);
+
+      const nfts = [];
+      
+      // Check each token ID to see if player owns it
+      for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
+        try {
+          const owner = await publicClient.readContract({
+            address: boostNFT.address,
+            abi: boostNFT.abi,
+            functionName: 'ownerOf',
+            args: [tokenId]
+          });
+
+          if (owner.toLowerCase() === player.toLowerCase()) {
+            const tokenURI = await publicClient.readContract({
+              address: boostNFT.address,
+              abi: boostNFT.abi,
+              functionName: 'tokenURI',
+              args: [tokenId]
+            })
+
+            const tokenData = await fetch(tokenURI);
+            const tokenDataJson = await tokenData.json();
+            
+            // Parse the token metadata
+            const name = tokenDataJson.name || `Character #${tokenId}`;
+            const image = tokenDataJson.image || '';
+            const description = tokenDataJson.description || '';
+            
+            // Extract boost values from attributes
+            let boostPpm = 0;
+            let boostPercentage = 0;
+            
+            if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
+              const boostAttribute = tokenDataJson.attributes.find(attr => 
+                attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
+              );
+              
+              if (boostAttribute) {
+                if (boostAttribute.trait_type === 'Boost (ppm)') {
+                  boostPpm = Number(boostAttribute.value);
+                  boostPercentage = boostPpm / 1000; // Convert ppm to percentage
+                } else if (boostAttribute.trait_type === 'Boost (%)') {
+                  boostPercentage = Number(boostAttribute.value);
+                  boostPpm = boostPercentage * 1000; // Convert percentage to ppm
+                }
+              }
+            }
+
+            nfts.push({
+              tokenId,
+              name,
+              image,
+              description,
+              boostPpm,
+              boostPercentage,
+              tokenURI
+            });
+          }
+        } catch (err) {
+          // Token might not exist or player doesn't own it, skip
+          console.warn(`Failed to fetch token ${tokenId}:`, err);
+        }
+      }
+      return nfts;
+    } catch (err) {
+      console.error('Failed to fetch owned BoostNFTs:', err);
+      // Return empty array instead of null for better error handling
+      return [];
+    }
+  }, [equipmentRegistry, publicClient, getContract]);
+
+  return {
+    equipmentRegistryData,
+    randomMint,
+    getTokenBoostPpm,
+    getAvatars,
+    setAvatar,
+    clearAvatar,
+    getOwnedBoostNFTs,
+    getContract
+  };
+};
+
 

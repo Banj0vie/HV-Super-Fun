@@ -30,6 +30,24 @@
   margin-top: 1rem;
 }
 
+.pending-requests-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid #FFD700;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.pending-label {
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 .inventory-dialog .seed-row {
   max-height: 100%;
   -o-border-image: var(--primary-bg) 6 repeat;

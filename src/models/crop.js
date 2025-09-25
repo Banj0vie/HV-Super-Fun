@@ -4,6 +4,8 @@ export class CropItemClass {
         this.growStatus = 0; // 0: empty, -1: newly planted, 1: growing, 2: ready to harvest
         this.plantedAt = null; // timestamp when planted
         this.growthTime = 0; // time in seconds to grow
+        this.produceMultiplierX1000 = 1000; // produce multiplier (1000 = 1x, 2000 = 2x)
+        this.tokenMultiplierX1000 = 1000; // token multiplier (1000 = 1x, 1040 = 1.04x)
     }
 }
 
@@ -45,6 +47,8 @@ export class CropItemArrayClass {
             c.growStatus = it.growStatus;
             c.plantedAt = it.plantedAt;
             c.growthTime = it.growthTime;
+            c.produceMultiplierX1000 = it.produceMultiplierX1000 || 1000;
+            c.tokenMultiplierX1000 = it.tokenMultiplierX1000 || 1000;
             return c;
         });
     }
@@ -60,6 +64,8 @@ export class CropItemArrayClass {
         item.growStatus = -1; // newly planted
         item.plantedAt = Date.now();
         item.growthTime = growthTime; // default 60 seconds
+        item.produceMultiplierX1000 = 1000; // default 1x multiplier
+        item.tokenMultiplierX1000 = 1000; // default 1x multiplier
         return true;
     }
 
@@ -72,6 +78,8 @@ export class CropItemArrayClass {
         item.growStatus = 0;
         item.plantedAt = null;
         item.growthTime = 0;
+        item.produceMultiplierX1000 = 1000;
+        item.tokenMultiplierX1000 = 1000;
         return true;
     }
 
