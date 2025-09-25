@@ -13,7 +13,7 @@ export const useVendor = () => {
   const { account } = useAgwEthersAndService();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { getContract, publicClient, executeWrite } = useContractBase(['VENDOR']);
+  const { getContract, publicClient, executeWrite } = useContractBase(['VENDOR', 'YIELD_TOKEN']);
   const vendor = getContract('VENDOR');
   const yieldToken = getContract('YIELD_TOKEN');
   
