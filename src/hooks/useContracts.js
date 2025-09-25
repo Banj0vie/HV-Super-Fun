@@ -64,7 +64,8 @@ export const useVendor = () => {
       return { txHash: result.txHash, tier, isPending: false };
     } catch (err) {
       console.error('Failed to buy seed pack:', err);
-      setError(err.message);
+      const { message } = handleContractError(err, 'buying seed pack');
+      setError(message);
       return null;
     } finally {
       setLoading(false);
@@ -1792,10 +1793,11 @@ export const useGardener = () => {
       });
     } catch (err) {
       console.error('Failed to fetch Gardener data:', err);
+      const { message } = handleContractError(err, 'fetching gardener data');
       setGardenerData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
     }
   }, [gardener, playerStore, yieldToken, account, publicClient]);
@@ -1824,18 +1826,13 @@ export const useGardener = () => {
       return txHash;
     } catch (err) {
       console.error('Failed to level up:', err);
-      console.error('Error details:', {
-        targetLevel,
-        account,
-        gardenerAddress: gardener.address,
-        error: err.message
-      });
+      const { message } = handleContractError(err, 'leveling up valley');
       setGardenerData(prev => ({
         ...prev,
         loading: false,
-        error: err.message
+        error: message
       }));
-      throw err;
+      throw new Error(message);
     }
   }, [gardener, account, agwClient, fetchGardenerData]);
 
