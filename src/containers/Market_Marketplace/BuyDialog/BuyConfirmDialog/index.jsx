@@ -23,7 +23,7 @@ const BuyConfirmDialog = ({ onClose, onPurchaseSuccess, item }) => {
 
     setLoading(true);
     try {
-      const result = await purchase(item.listingId, amount);
+      await purchase(item.listingId, amount);
       show(`Purchase successful!`, 'success');
       if (onPurchaseSuccess) {
         onPurchaseSuccess();

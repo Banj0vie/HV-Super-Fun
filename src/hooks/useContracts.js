@@ -1122,7 +1122,7 @@ export const useDex = () => {
         abi: dex.abi,
         address: dex.address,
         functionName: 'depositNativeForGameToken',
-        args: [ethAmount],
+        value: ethAmount, // Send ETH via value instead of args
       });
       return txHash;
     } catch (err) {
@@ -1137,20 +1137,45 @@ export const useDex = () => {
     }
   }, [dex, agwClient]);
 
+  const swapHoneyForETH = useCallback(async (tokenAmount) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const txHash = await agwClient.writeContract({
+        abi: dex.abi,
+        address: dex.address,
+        functionName: 'depositGameTokenForNative',
+        args: [tokenAmount],
+      });
+      return txHash;
+    } catch (err) {
+      console.error('Failed to swap Honey for ETH:', err);
+      setError(err.message);
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [dex, agwClient]);
+
   const getYieldAmount = useCallback(async (ethAmount) => {
     if (!publicClient) return "0";
 
     try {
-      // Get the actual rate from the MockDex contract
-      const ratePerEth = await publicClient.readContract({
+      // Get the token price from the MockDex contract
+      const tokenPrice = await publicClient.readContract({
         address: dex.address,
         abi: dex.abi,
-        functionName: 'RATE_PER_ETH',
+        functionName: 'tokenPrice',
       });
-      console.log('Rate per ETH from contract:', ratePerEth.toString());
+      console.log('Token price from contract:', tokenPrice.toString());
 
-      // Calculate yield amount: (ethAmount * ratePerEth) / 1 ether
-      const yieldAmount = (ethAmount * ratePerEth) / ethers.parseEther("1");
+      // Calculate yield amount: (ethAmount * 1e18) / tokenPrice
+      // This gives us how many tokens we get for the ETH amount
+      const yieldAmount = (ethAmount * ethers.parseEther("1")) / tokenPrice;
       console.log('Calculated yield amount:', yieldAmount.toString());
 
       return yieldAmount.toString();
@@ -1158,6 +1183,32 @@ export const useDex = () => {
       console.error('Failed to get yield amount:', err);
       const { message } = handleContractError(err, 'getting yield amount');
       console.error('Yield amount error:', message);
+      return "0";
+    }
+  }, [dex, publicClient]);
+
+  const getETHAmount = useCallback(async (tokenAmount) => {
+    if (!publicClient) return "0";
+
+    try {
+      // Get the token price from the MockDex contract
+      const tokenPrice = await publicClient.readContract({
+        address: dex.address,
+        abi: dex.abi,
+        functionName: 'tokenPrice',
+      });
+      console.log('Token price from contract:', tokenPrice.toString());
+
+      // Calculate ETH amount: (tokenAmount * tokenPrice) / 1e18
+      // This gives us how much ETH we need to get the token amount
+      const ethAmount = (tokenAmount * tokenPrice) / ethers.parseEther("1");
+      console.log('Calculated ETH amount:', ethAmount.toString());
+
+      return ethAmount.toString();
+    } catch (err) {
+      console.error('Failed to get ETH amount:', err);
+      const { message } = handleContractError(err, 'getting ETH amount');
+      console.error('ETH amount error:', message);
       return "0";
     }
   }, [dex, publicClient]);
@@ -1243,7 +1294,9 @@ export const useDex = () => {
 
   return {
     swapETHForYield,
+    swapHoneyForETH,
     getYieldAmount,
+    getETHAmount,
     ethBalance,
     honeyBalance,
     fetchBalances,

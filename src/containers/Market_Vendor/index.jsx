@@ -384,12 +384,6 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
           count: item.count,
         },
       }));
-
-       // Show loading message that persists until transaction completes
-       const loadingMessage = item.count === 1 
-         ? "Buying seed pack..." 
-         : `Buying ${item.count} seed packs...`;
-       show(loadingMessage, "info", 300000); // 5 minutes timeout
        
        try {
          
