@@ -36,7 +36,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
         if (isTransactionRejection(error)) {
           showNotification('Transaction was rejected by user.', 'error');
         } else {
-          showNotification(`DEX operation failed: ${error}`, 'error');
+          showNotification(`DEX operation failed!`, 'error');
         }
       }
     }

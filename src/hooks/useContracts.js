@@ -19,12 +19,18 @@ export const useVendor = () => {
     if (!vendor || !yieldToken) {
       console.log('Vendor or Yield token contract not available');
       setError('Vendor or Yield token contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
     if (!account) {
       console.log('Wallet not connected');
       setError('Wallet not connected');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -39,7 +45,7 @@ export const useVendor = () => {
         functionName: 'balanceOf',
         args: [account],
       });
-      
+
       // 2. Get the pack price and calculate total cost
       const packPrice = await publicClient.readContract({
         address: vendor.address,
@@ -48,10 +54,13 @@ export const useVendor = () => {
         args: [tier],
       });
       const totalCost = (parseInt(packPrice.toString()) * count).toString();
-      
+
       // 3. Check if user has enough balance
       if (parseInt(balance.toString()) < parseInt(totalCost)) {
         setError(`Insufficient Yield balance. Need ${totalCost}, have ${balance.toString()}`);
+        setTimeout(() => {
+          setError(null);
+        }, 2000);
         return null;
       }
       const result = await executeWrite({
@@ -60,12 +69,15 @@ export const useVendor = () => {
         functionName: 'buySeedPack',
         args: [tier, count],
       });
-      
+
       return { txHash: result.txHash, tier, isPending: false };
     } catch (err) {
       console.error('Failed to buy seed pack:', err);
       const { message } = handleContractError(err, 'buying seed pack');
       setError(message);
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     } finally {
       setLoading(false);
@@ -121,7 +133,7 @@ export const useVendor = () => {
         args: [account],
       });
       const pendingRequests = [];
-      
+
       for (let i = 0; i < requestIds.length; i++) {
         pendingRequests.push({
           requestId: requestIds[i].toString(),
@@ -129,11 +141,11 @@ export const useVendor = () => {
           count: counts[i].toString()
         });
       }
-      
+
       return pendingRequests;
     } catch (err) {
       console.log('getAllPendingRequests not available, falling back to getPendingRequest');
-      
+
       // Fallback to getPendingRequest for backward compatibility
       try {
         const [requestId, tier, count] = await publicClient.readContract({
@@ -145,7 +157,7 @@ export const useVendor = () => {
         if (requestId.toString() === '0') {
           return [];
         }
-        
+
         return [{
           requestId: requestId.toString(),
           tier: tier,
@@ -189,10 +201,10 @@ export const useVendor = () => {
       console.error('Vendor contract, publicClient, or account not available');
       return;
     }
-    
+
     try {
       console.log('Setting up SeedsRevealed listener for requestId:', requestId);
-      
+
       // Use a recent block number instead of 'latest' for better reliability
       let startBlock = fromBlock;
       if (!startBlock || startBlock === 'latest') {
@@ -205,34 +217,34 @@ export const useVendor = () => {
           startBlock = 'earliest';
         }
       }
-      
+
       // Event handler function
       const handleEvent = (eventData) => {
         try {
           console.log('SeedsRevealed event received:', eventData);
-          
+
           // Extract event data
           const eventRequestId = eventData.args.requestId.toString();
           const seedIds = eventData.args.seedIds.map(id => id.toString());
           const tier = eventData.args.tier;
           const count = eventData.args.count.toString();
-          
+
           console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
-        
-        // Only process if this is the request we're waiting for
-        if (eventRequestId === requestId.toString()) {
+
+          // Only process if this is the request we're waiting for
+          if (eventRequestId === requestId.toString()) {
             console.log('✅ Found matching SeedsRevealed event!');
-          if (onSeedsRevealed) {
-              onSeedsRevealed({ 
-                requestId: eventRequestId, 
-                seedIds, 
-                tier, 
-                count 
+            if (onSeedsRevealed) {
+              onSeedsRevealed({
+                requestId: eventRequestId,
+                seedIds,
+                tier,
+                count
               });
             }
-          // Clean up the listener after processing the event
-          console.log('Cleaning up SeedsRevealed listener after successful event');
-          unwatch();
+            // Clean up the listener after processing the event
+            console.log('Cleaning up SeedsRevealed listener after successful event');
+            unwatch();
           }
         } catch (err) {
           console.error('Error processing SeedsRevealed event:', err);
@@ -241,7 +253,7 @@ export const useVendor = () => {
           unwatch();
         }
       };
-      
+
       // Set up real-time event listener using watchContractEvent
       console.log('Setting up watchContractEvent for SeedsRevealed');
       const unwatch = publicClient.watchContractEvent({
@@ -265,14 +277,14 @@ export const useVendor = () => {
           unwatch();
         }
       });
-      
+
       console.log('watchContractEvent setup complete');
-      
+
       // Also query for any events that might have already happened
       const queryExistingEvents = async () => {
         try {
           console.log('Querying existing SeedsRevealed events from block:', startBlock);
-          
+
           // Use the contract ABI directly for event filtering
           const logs = await publicClient.getLogs({
             address: vendor.address,
@@ -293,15 +305,15 @@ export const useVendor = () => {
             fromBlock: startBlock,
             toBlock: 'latest'
           });
-          
+
           console.log('Found', logs.length, 'existing SeedsRevealed events');
           console.log('Logs:', logs);
-          
+
           // Process existing events
           for (const log of logs) {
             try {
               console.log('Processing log:', log);
-              
+
               // The log is already decoded by getLogs, we can use it directly
               const eventData = {
                 args: log.args,
@@ -310,7 +322,7 @@ export const useVendor = () => {
                 blockNumber: log.blockNumber,
                 transactionHash: log.transactionHash
               };
-              
+
               console.log('Event data ready:', eventData);
               handleEvent(eventData);
             } catch (parseErr) {
@@ -327,19 +339,19 @@ export const useVendor = () => {
           unwatch();
         }
       };
-      
+
       // Query existing events
       queryExistingEvents();
-      
+
       // Return cleanup function
       return () => {
         console.log('Cleaning up SeedsRevealed listener');
         unwatch();
       };
-      
+
     } catch (err) {
       console.error('Failed to set up SeedsRevealed listener:', err);
-      return () => {}; // Return no-op cleanup function
+      return () => { }; // Return no-op cleanup function
     }
   }, [vendor, publicClient, account]);
 
@@ -366,6 +378,9 @@ export const useFarming = () => {
     if (!farming || !agwClient) {
       console.error('Farming contract not available');
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -380,7 +395,7 @@ export const useFarming = () => {
         functionName: 'plant',
         args: [seedId, plotNumber],
       });
-      
+
       console.log('Plant successful!');
       return txHash;
     } catch (err) {
@@ -399,6 +414,9 @@ export const useFarming = () => {
     if (!farming || !agwClient) {
       console.error('Farming contract not available');
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -413,7 +431,7 @@ export const useFarming = () => {
         functionName: 'plantBatch',
         args: [seedIds, plotNumbers],
       });
-      
+
       console.log('Plant batch successful!');
       return txHash;
     } catch (err) {
@@ -431,6 +449,9 @@ export const useFarming = () => {
   const harvest = useCallback(async (slot) => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -444,7 +465,7 @@ export const useFarming = () => {
         functionName: 'harvest',
         args: [slot],
       });
-      
+
       return txHash;
     } catch (err) {
       console.error('Failed to harvest:', err);
@@ -461,6 +482,9 @@ export const useFarming = () => {
   const harvestMany = useCallback(async (slots) => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -474,7 +498,7 @@ export const useFarming = () => {
         functionName: 'harvestMany',
         args: [slots],
       });
-      
+
       console.log('Harvest many successful!');
       return txHash;
     } catch (err) {
@@ -492,6 +516,9 @@ export const useFarming = () => {
   const harvestAll = useCallback(async () => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -504,7 +531,7 @@ export const useFarming = () => {
         address: farming.address,
         functionName: 'harvestAll',
       });
-      
+
       console.log('Harvest all successful!');
       return txHash;
     } catch (err) {
@@ -522,6 +549,9 @@ export const useFarming = () => {
   const getUserCrops = useCallback(async (userAddress) => {
     if (!farming || !publicClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return [];
     }
 
@@ -530,23 +560,23 @@ export const useFarming = () => {
 
     try {
       console.log('Getting user crops for address:', userAddress);
-      
+
       const crops = await publicClient.readContract({
         address: farming.address,
         abi: farming.abi,
         functionName: 'getUserCrops',
         args: [userAddress],
       });
-      
+
       console.log('Got user crops from contract:', crops);
-      
+
       // Convert crops to the expected format with new struct fields
       const formattedCrops = crops.map((crop, index) => {
         const seedIdBig = BigInt(crop.seedId);
         const endTimeNum = Number(crop.endTime);
         const produceMultiplier = Number(crop.produceMultiplierX1000 || 1000);
         const tokenMultiplier = Number(crop.tokenMultiplierX1000 || 1000);
-        
+
         return ({
           plotNumber: index,
           seedId: seedIdBig,
@@ -583,7 +613,7 @@ export const useFarming = () => {
         functionName: 'getMaxPlots',
         args: [userAddress],
       });
-      
+
       return Number(maxPlots);
     } catch (err) {
       console.error('Failed to get max plots:', err);
@@ -601,7 +631,7 @@ export const useFarming = () => {
         functionName: 'crops',
         args: [userAddress, plotIndex],
       });
-      
+
       // Handle case where crop is undefined or doesn't have expected structure
       if (!crop) {
         console.warn('Crop is undefined for plot:', plotIndex);
@@ -612,7 +642,7 @@ export const useFarming = () => {
           tokenMultiplierX1000: 1000
         };
       }
-      
+
       // Handle case where crop is an array (tuple format) - new struct with 4 fields
       if (Array.isArray(crop)) {
         return {
@@ -622,17 +652,17 @@ export const useFarming = () => {
           tokenMultiplierX1000: crop[3] ? Number(crop[3]) : 1000
         };
       }
-      
+
       // Handle case where crop is an object with new struct fields
       if (crop.seedId !== undefined && crop.endTime !== undefined) {
-      return {
-        seedId: crop.seedId.toString(),
+        return {
+          seedId: crop.seedId.toString(),
           endTime: Number(crop.endTime),
           produceMultiplierX1000: crop.produceMultiplierX1000 ? Number(crop.produceMultiplierX1000) : 1000,
           tokenMultiplierX1000: crop.tokenMultiplierX1000 ? Number(crop.tokenMultiplierX1000) : 1000
         };
       }
-      
+
       // Fallback for unexpected structure
       console.warn('Unexpected crop structure:', crop);
       return {
@@ -663,7 +693,7 @@ export const useFarming = () => {
         functionName: 'getGrowthTime',
         args: [seedId],
       });
-      
+
       return Number(growthTime);
     } catch (err) {
       console.error('Failed to get growth time:', err);
@@ -675,6 +705,9 @@ export const useFarming = () => {
   const applyGrowthElixir = useCallback(async (plotNumber) => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -688,7 +721,7 @@ export const useFarming = () => {
         functionName: 'applyGrowthElixir',
         args: [plotNumber],
       });
-      
+
       console.log('Growth Elixir applied successfully!');
       return txHash;
     } catch (err) {
@@ -707,6 +740,9 @@ export const useFarming = () => {
   const applyPesticide = useCallback(async (plotNumber) => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -720,7 +756,7 @@ export const useFarming = () => {
         functionName: 'applyPesticide',
         args: [plotNumber],
       });
-      
+
       console.log('Pesticide applied successfully!');
       return txHash;
     } catch (err) {
@@ -739,6 +775,9 @@ export const useFarming = () => {
   const applyFertilizer = useCallback(async (plotNumber) => {
     if (!farming || !agwClient) {
       setError('Farming contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -752,7 +791,7 @@ export const useFarming = () => {
         functionName: 'applyFertilizer',
         args: [plotNumber],
       });
-      
+
       console.log('Fertilizer applied successfully!');
       return txHash;
     } catch (err) {
@@ -809,7 +848,7 @@ export const useROIData = () => {
 
     try {
       console.log('Getting ROI data for level:', level);
-      
+
       const commonMult = Number(contractService.getCommonMultiplier(level));
       const uncommonMult = Number(contractService.getUncommonMultiplier(level));
       const rareMult = Number(contractService.getRareMultiplier(level));
@@ -871,6 +910,9 @@ export const useBanker = () => {
   const stake = useCallback(async (amount) => {
     if (!banker || !yieldToken || !agwClient || !publicClient) {
       setError('Banker or Yield token contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -881,12 +923,12 @@ export const useBanker = () => {
       if (!account) {
         throw new Error('No account connected');
       }
-      
+
       // Validate amount
       if (amount <= 0) {
         throw new Error('Amount must be greater than 0');
       }
-      
+
       // Check balance first
       const userBalance = await publicClient.readContract({
         address: yieldToken.address,
@@ -897,14 +939,14 @@ export const useBanker = () => {
       if (userBalance < amount) {
         throw new Error(`Insufficient Honey balance. You have ${ethers.formatEther(userBalance)} Honey, trying to stake ${ethers.formatEther(amount)}`);
       }
-      
+
       const txHash = await agwClient.writeContract({
         abi: banker.abi,
         address: banker.address,
         functionName: 'stake',
         args: [amount],
       });
-      
+
       return txHash;
     } catch (err) {
       console.error('Failed to stake:', err);
@@ -921,6 +963,9 @@ export const useBanker = () => {
   const unstake = useCallback(async (shares) => {
     if (!banker || !agwClient) {
       setError('Banker contract not available');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
       return null;
     }
 
@@ -934,7 +979,7 @@ export const useBanker = () => {
         functionName: 'unstake',
         args: [shares],
       });
-      
+
       return txHash;
     } catch (err) {
       console.error('Failed to unstake:', err);
@@ -958,7 +1003,7 @@ export const useBanker = () => {
         functionName: 'balanceOf',
         args: [userAddress],
       });
-      
+
       return balance.toString();
     } catch (err) {
       return "0";
@@ -982,15 +1027,15 @@ export const useBanker = () => {
           functionName: 'totalGameToken',
         })
       ]);
-      
+
       const totalSupplyNum = parseFloat(ethers.formatEther(totalSupply));
       const tokenBalanceNum = parseFloat(ethers.formatEther(tokenBalance));
-      
+
       let ratioValue = 1.0; // Default ratio
       if (totalSupplyNum > 0 && tokenBalanceNum > 0) {
         ratioValue = tokenBalanceNum / totalSupplyNum;
       }
-      
+
       return {
         totalSupply: totalSupplyNum,
         tokenBalance: tokenBalanceNum,
@@ -1063,11 +1108,11 @@ export const useDex = () => {
         functionName: 'RATE_PER_ETH',
       });
       console.log('Rate per ETH from contract:', ratePerEth.toString());
-      
+
       // Calculate yield amount: (ethAmount * ratePerEth) / 1 ether
       const yieldAmount = (ethAmount * ratePerEth) / ethers.parseEther("1");
       console.log('Calculated yield amount:', yieldAmount.toString());
-      
+
       return yieldAmount.toString();
     } catch (err) {
       console.error('Failed to get yield amount:', err);
@@ -1084,15 +1129,15 @@ export const useDex = () => {
 
     try {
       console.log('🔍 useDex: Fetching ETH balance for account:', account);
-      
+
       // Double-check account is valid before making the call
       if (!account) {
         console.warn('🔍 useDex: Account is null/undefined, skipping ETH balance fetch');
         setEthBalance('0.00');
         return;
       }
-      
-      const balance = await publicClient.getBalance({address: account});
+
+      const balance = await publicClient.getBalance({ address: account });
       const ethBalance = parseFloat(ethers.formatEther(balance));
       setEthBalance(ethBalance.toFixed(2));
       console.log('✅ useDex: ETH balance fetched:', ethBalance.toFixed(2));
@@ -1108,7 +1153,7 @@ export const useDex = () => {
       console.log('🔍 useDex fetchHoneyBalance: Missing account or publicClient', { account, publicClient: !!publicClient });
       return;
     }
-    if(!yieldToken?.address) {
+    if (!yieldToken?.address) {
       console.log('🔍 useDex fetchHoneyBalance: Yield token contract not available');
       return;
     }
@@ -1135,7 +1180,7 @@ export const useDex = () => {
       console.log('🔍 useDex: Cannot fetch balances - missing account or publicClient');
       return;
     }
-    
+
     await Promise.all([
       fetchEthBalance(),
       fetchHoneyBalance()
@@ -1175,13 +1220,13 @@ export const useLeaderboard = (epoch = null) => {
 
   const fetchLeaderboardData = useCallback(async (targetEpoch = null) => {
     if (!playerStore || !publicClient) {
-      return; 
+      return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get current epoch from contract
       const contractCurrentEpoch = await publicClient.readContract({
         address: playerStore.address,
@@ -1190,17 +1235,17 @@ export const useLeaderboard = (epoch = null) => {
       });
       const actualCurrentEpoch = Number(contractCurrentEpoch);
       setCurrentEpoch(actualCurrentEpoch);
-      
+
       // Use provided epoch or current epoch
       const epochToFetch = targetEpoch !== null ? targetEpoch : actualCurrentEpoch;
       const targetEpochNumber = Number(epochToFetch);
-      
+
       const leaderboardData = [];
-      
+
       // Check if we're viewing the current epoch (real-time data)
       const isCurrentEpoch = targetEpochNumber === actualCurrentEpoch;
       console.log('Target epoch:', targetEpochNumber, 'Current epoch:', actualCurrentEpoch, 'Is current:', isCurrentEpoch);
-      
+
       // Fetch top 5 players for the specified epoch
       if (isCurrentEpoch) {
         // For current epoch, use top5() and top5Xp() functions
@@ -1218,7 +1263,7 @@ export const useLeaderboard = (epoch = null) => {
               functionName: 'top5Xp',
               args: [i],
             });
-            
+
             if (address !== "0x0000000000000000000000000000000000000000") {
               try {
                 // Get profile data for this address
@@ -1262,29 +1307,29 @@ export const useLeaderboard = (epoch = null) => {
             });
           }
         }
-        } else {
-          // For historical epochs, use getEpochTop5() to get all data at once
-          try {
-            const [top5Players, top5XpAmounts, epochNumber, timestamp] = await publicClient.readContract({
-              address: playerStore.address,
-              abi: playerStore.abi,
-              functionName: 'getEpochTop5',
-              args: [epochToFetch],
-            });
-            console.log(`getEpochTop5(${epochToFetch}) returned:`, {
-              top5Players,
-              top5XpAmounts,
-              epochNumber: Number(epochNumber),
-              timestamp: Number(timestamp),
-              targetEpoch: epochToFetch
-            });
-            
-            // Check if we got valid data (epochNumber should match targetEpoch)
-            if (Number(epochNumber) === targetEpochNumber && Number(timestamp) > 0) {
+      } else {
+        // For historical epochs, use getEpochTop5() to get all data at once
+        try {
+          const [top5Players, top5XpAmounts, epochNumber, timestamp] = await publicClient.readContract({
+            address: playerStore.address,
+            abi: playerStore.abi,
+            functionName: 'getEpochTop5',
+            args: [epochToFetch],
+          });
+          console.log(`getEpochTop5(${epochToFetch}) returned:`, {
+            top5Players,
+            top5XpAmounts,
+            epochNumber: Number(epochNumber),
+            timestamp: Number(timestamp),
+            targetEpoch: epochToFetch
+          });
+
+          // Check if we got valid data (epochNumber should match targetEpoch)
+          if (Number(epochNumber) === targetEpochNumber && Number(timestamp) > 0) {
             for (let i = 0; i < 5; i++) {
               const address = top5Players[i];
               const xp = top5XpAmounts[i];
-              
+
               if (address !== "0x0000000000000000000000000000000000000000") {
                 try {
                   // Get profile data for this address
@@ -1319,20 +1364,20 @@ export const useLeaderboard = (epoch = null) => {
                 });
               }
             }
-            } else {
-              console.log(`No historical data found for epoch ${epochToFetch}, showing empty data. EpochNumber: ${Number(epochNumber)}, Timestamp: ${Number(timestamp)}`);
-              // No historical data available, show empty slots
-              for (let i = 0; i < 5; i++) {
-                leaderboardData.push({
-                  rank: i + 1,
-                  name: "Empty",
-                  address: "0x0000000000000000000000000000000000000000",
-                  score: 0.0
-                });
-              }
+          } else {
+            console.log(`No historical data found for epoch ${epochToFetch}, showing empty data. EpochNumber: ${Number(epochNumber)}, Timestamp: ${Number(timestamp)}`);
+            // No historical data available, show empty slots
+            for (let i = 0; i < 5; i++) {
+              leaderboardData.push({
+                rank: i + 1,
+                name: "Empty",
+                address: "0x0000000000000000000000000000000000000000",
+                score: 0.0
+              });
             }
-          } catch (err) {
-            console.log(`Failed to get epoch ${epochToFetch} data:`, err);
+          }
+        } catch (err) {
+          console.log(`Failed to get epoch ${epochToFetch} data:`, err);
           // Fallback to empty data
           for (let i = 0; i < 5; i++) {
             leaderboardData.push({
@@ -1457,10 +1502,10 @@ export const useSage = () => {
   // Fetch Sage data for the connected user
   const fetchSageData = useCallback(async () => {
     if (!sage || !account || !publicClient) {
-      console.log('🔍 useSage fetchSageData: Missing dependencies', { 
-        sage: !!sage, 
-        account, 
-        publicClient: !!publicClient 
+      console.log('🔍 useSage fetchSageData: Missing dependencies', {
+        sage: !!sage,
+        account,
+        publicClient: !!publicClient
       });
       return;
     }
@@ -1491,9 +1536,9 @@ export const useSage = () => {
           args: [account],
         })
       ]);
-      
+
       console.log('🚀 Sage data fetched:', { lockedAmount, lastUnlockTime, lastUnlockTimeHarvest });
-      
+
       // Handle undefined values
       const safeLockedAmount = lockedAmount !== undefined ? lockedAmount : 0n;
       const safeLastUnlockTime = lastUnlockTime !== undefined ? lastUnlockTime : 0n;
@@ -1509,7 +1554,7 @@ export const useSage = () => {
             args: [account],
           });
           console.log('🚀 Profile data:', profile);
-          
+
           // Handle different profile formats
           if (profile && Array.isArray(profile)) {
             // If profile is an array, level is at index 1
@@ -1528,13 +1573,13 @@ export const useSage = () => {
           playerLevel = 0;
         }
       }
-      
+
       console.log('🚀 Player level:', playerLevel);
 
       // Calculate harvest unlock (percentage-based)
       const harvestUnlockPercent = calculateUnlockRate(playerLevel);
       const harvestUnlockAmount = (safeLockedAmount * BigInt(harvestUnlockPercent)) / BigInt(10000);
-      
+
       // Calculate weekly wage amount using getUnlockCost (fixed amount)
       let weeklyWageAmount = 0n;
       try {
@@ -1554,7 +1599,7 @@ export const useSage = () => {
       const now = Date.now();
       const nextWageUnlockTime = Number(safeLastUnlockTime) * 1000 + SAGE_UNLOCK_COOLDOWN;
       const nextHarvestUnlockTime = Number(safeLastUnlockTimeHarvest) * 1000 + SAGE_UNLOCK_COOLDOWN;
-      
+
       // Check if there are enough locked tokens for wage unlock (needs getUnlockCost amount)
       const canUnlockWage = (safeLastUnlockTime === 0n || now >= nextWageUnlockTime);
       const canUnlockHarvest = safeLockedAmount > 0 && (safeLastUnlockTimeHarvest === 0n || now >= nextHarvestUnlockTime);
@@ -1575,7 +1620,7 @@ export const useSage = () => {
         unlockAmount: parseFloat(ethers.formatEther(harvestUnlockAmount)),
         nextUnlockTime: nextHarvestUnlockTime
       };
-      
+
       console.log('✅ useSage: Final Sage data:', finalSageData);
       setSageData(finalSageData);
     } catch (err) {
@@ -1624,7 +1669,7 @@ export const useSage = () => {
 
     console.log('🚀 useSage: Starting weekly wage unlock');
     console.log('🔍 useSage: Current sageData before unlock:', sageData);
-    
+
     setLoading(true);
     setError(null);
 
@@ -1636,16 +1681,16 @@ export const useSage = () => {
       });
 
       console.log('✅ useSage: Weekly wage unlock transaction successful:', txHash);
-      
+
       // Add a small delay to allow blockchain state to update
       console.log('⏳ useSage: Waiting for blockchain state to update...');
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Refresh data after successful unlock
       console.log('🔄 useSage: Refreshing Sage data after unlock...');
       await fetchSageData();
       console.log('✅ useSage: Sage data refreshed after unlock');
-      
+
       return txHash;
     } catch (err) {
       console.error('Failed to unlock weekly wage:', err);
@@ -1692,7 +1737,7 @@ export const useGardener = () => {
   const gardener = getContract('GARDENER');
   const playerStore = getContract('PLAYER_STORE');
   const yieldToken = getContract('YIELD_TOKEN');
-  
+
   const [gardenerData, setGardenerData] = useState({
     currentLevel: 0,
     maxLevel: 50,
@@ -1709,7 +1754,7 @@ export const useGardener = () => {
 
     try {
       console.log('🌱 Fetching gardener data...');
-      
+
       // Get current player level
       let currentLevel = 0;
       try {
@@ -1720,7 +1765,7 @@ export const useGardener = () => {
           args: [account],
         });
         console.log('🚀 Profile data:', profile);
-        
+
         // Handle different profile formats
         if (profile && Array.isArray(profile)) {
           // If profile is an array, level is at index 1
@@ -1740,7 +1785,7 @@ export const useGardener = () => {
         console.warn('Failed to get player profile, using default level 0:', error);
         currentLevel = 0;
       }
-      
+
       // Get max level from gardener contract
       let maxLevel = 50; // Default max level (matching contract default)
       try {
@@ -1755,7 +1800,7 @@ export const useGardener = () => {
         console.warn('Failed to get max level, using default 50:', error);
         maxLevel = 50;
       }
-      
+
       // Calculate cost to level up to next level
       let levelUpCost = 0;
       if (currentLevel < maxLevel) {
@@ -1789,7 +1834,7 @@ export const useGardener = () => {
         console.warn('Failed to get game token balance, using default 0:', error);
         gameTokenBalance = 0;
       }
-      
+
       const canLevelUp = currentLevel < maxLevel && gameTokenBalance >= levelUpCost;
 
       // Safely format level up cost to avoid overflow
@@ -1802,7 +1847,7 @@ export const useGardener = () => {
           // Convert to string first to handle large numbers
           const levelUpCostStr = levelUpCost.toString();
           console.log('🚀 Raw level up cost:', levelUpCostStr);
-          
+
           // Use BigInt for safe conversion
           const levelUpCostBigInt = BigInt(levelUpCostStr);
           formattedLevelUpCost = parseFloat(ethers.formatEther(levelUpCostBigInt));
@@ -1828,7 +1873,7 @@ export const useGardener = () => {
         loading: false,
         error: null
       });
-      
+
       console.log('🌱 Gardener data set:', {
         currentLevel,
         maxLevel,
@@ -1864,7 +1909,7 @@ export const useGardener = () => {
       });
 
       console.log('🌱 Level up transaction hash:', txHash);
-      
+
       // Refresh data after successful level up
       await fetchGardenerData();
       return txHash;
@@ -1923,7 +1968,7 @@ export const useChestOpener = () => {
       // Handle different profile formats
       let currentLevel = 0;
       let nextChestTime = 0;
-      
+
       if (profile && Array.isArray(profile)) {
         // If profile is an array, level is at index 1, nextChestAt at index 2
         currentLevel = profile[1] !== undefined ? Number(profile[1]) : 0;
@@ -1933,7 +1978,7 @@ export const useChestOpener = () => {
         currentLevel = profile.level !== undefined ? Number(profile.level) : 0;
         nextChestTime = profile.nextChestAt !== undefined ? Number(profile.nextChestAt) : 0;
       }
-      
+
       // Determine chest type based on level
       let chestType = 'WOOD';
       if (currentLevel >= 15) {
@@ -2007,7 +2052,7 @@ export const useChestOpener = () => {
       });
 
       setChestData(prev => ({ ...prev, loading: false, error: null }));
-      
+
       // Return the transaction hash - the fulfillment will happen automatically via events
       return {
         success: true,
@@ -2070,14 +2115,14 @@ export const useChestOpener = () => {
         args: [account],
       });
       const pendingRequests = [];
-      
+
       for (let i = 0; i < requestIds.length; i++) {
         pendingRequests.push({
           requestId: requestIds[i].toString(),
           chestId: chestIds[i].toString()
         });
       }
-      
+
       return pendingRequests;
     } catch (err) {
       console.error('Failed to get chest pending requests:', err);
@@ -2091,10 +2136,10 @@ export const useChestOpener = () => {
       console.error('Chest opener contract, publicClient, or account not available');
       return;
     }
-    
+
     try {
       console.log('Setting up ChestResults listener for requestId:', requestId);
-      
+
       // Use a recent block number instead of 'latest' for better reliability
       let startBlock = fromBlock;
       if (!startBlock || startBlock === 'latest') {
@@ -2107,32 +2152,32 @@ export const useChestOpener = () => {
           startBlock = 'earliest';
         }
       }
-      
+
       // Event handler function
       const handleEvent = (eventData) => {
         try {
           console.log('ChestResults event received:', eventData);
-          
+
           // Extract event data
           const eventRequestId = eventData.args.requestId.toString();
           const chestType = eventData.args.chestType.toString();
           const rewardId = eventData.args.rewardId.toString();
-          
+
           console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
-        
-        // Only process if this is the request we're waiting for
-        if (eventRequestId === requestId.toString()) {
+
+          // Only process if this is the request we're waiting for
+          if (eventRequestId === requestId.toString()) {
             console.log('✅ Found matching ChestResults event!');
-          if (onChestResults) {
-              onChestResults({ 
-                requestId: eventRequestId, 
+            if (onChestResults) {
+              onChestResults({
+                requestId: eventRequestId,
                 chestType,
                 rewardId
               });
             }
-          // Clean up the listener after processing the event
-          console.log('Cleaning up ChestResults listener after successful event');
-          unwatch();
+            // Clean up the listener after processing the event
+            console.log('Cleaning up ChestResults listener after successful event');
+            unwatch();
           }
         } catch (err) {
           console.error('Error processing ChestResults event:', err);
@@ -2141,7 +2186,7 @@ export const useChestOpener = () => {
           unwatch();
         }
       };
-      
+
       // Set up real-time event listener using watchContractEvent
       console.log('Setting up watchContractEvent for ChestResults');
       const unwatch = publicClient.watchContractEvent({
@@ -2165,15 +2210,15 @@ export const useChestOpener = () => {
           unwatch();
         }
       });
-      
+
       console.log('watchContractEvent setup complete');
-      
+
       const queryExistingEvents = async () => {
         try {
           console.log(
             `Querying existing ChestResults events from block ${startBlock} to latest for player ${account}`
           );
-          
+
           const logs = await publicClient.getLogs({
             address: chestOpener.address,
             event: {
@@ -2192,15 +2237,15 @@ export const useChestOpener = () => {
             fromBlock: startBlock,
             toBlock: 'latest'
           });
-          
+
           console.log('Found', logs.length, 'existing ChestResults events');
           console.log('Logs:', logs);
-          
+
           // Process existing events
           for (const log of logs) {
             try {
               console.log('Processing log:', log);
-              
+
               // The log is already decoded by getLogs, we can use it directly
               const eventData = {
                 args: log.args,
@@ -2209,7 +2254,7 @@ export const useChestOpener = () => {
                 blockNumber: log.blockNumber,
                 transactionHash: log.transactionHash
               };
-              
+
               console.log('Event data ready:', eventData);
               handleEvent(eventData);
             } catch (parseErr) {
@@ -2226,19 +2271,19 @@ export const useChestOpener = () => {
           unwatch();
         }
       };
-      
+
       // Query existing events
       queryExistingEvents();
-      
+
       // Return cleanup function
       return () => {
         console.log('Cleaning up ChestResults listener');
         unwatch();
       };
-      
+
     } catch (err) {
       console.error('Failed to set up ChestResults listener:', err);
-      return () => {}; // Return no-op cleanup function
+      return () => { }; // Return no-op cleanup function
     }
   }, [chestOpener, publicClient, account]);
 
@@ -2259,7 +2304,7 @@ export const useReferral = () => {
   const { account } = useAgwEthersAndService();
   const { getContract, publicClient, agwClient } = useContractBase(['PLAYER_STORE']);
   const playerStore = getContract('PLAYER_STORE');
-  
+
   const [referralData, setReferralData] = useState({
     myReferralCode: null,
     sponsor: null,
@@ -2272,10 +2317,10 @@ export const useReferral = () => {
 
   const fetchReferralData = useCallback(async () => {
     if (!playerStore || !account || !publicClient) {
-      console.log('🔍 useReferral fetchReferralData: Missing dependencies', { 
-        playerStore: !!playerStore, 
-        account, 
-        publicClient: !!publicClient 
+      console.log('🔍 useReferral fetchReferralData: Missing dependencies', {
+        playerStore: !!playerStore,
+        account,
+        publicClient: !!publicClient
       });
       return;
     }
@@ -2293,10 +2338,10 @@ export const useReferral = () => {
         args: [account],
       });
       console.log('🔍 useReferral: profile fetched:', profile);
-      
+
       // Handle different profile formats
       let currentLevel = 0;
-      
+
       if (profile && Array.isArray(profile)) {
         // If profile is an array, level is at index 1
         currentLevel = profile[1] !== undefined ? Number(profile[1]) : 0;
@@ -2304,7 +2349,7 @@ export const useReferral = () => {
         // If profile is an object with level property
         currentLevel = Number(profile.level);
       }
-      
+
       // Get user's referral code
       console.log('🔍 useReferral: Fetching myReferralCode...');
       const myReferralCode = await publicClient.readContract({
@@ -2314,7 +2359,7 @@ export const useReferral = () => {
         args: [account],
       });
       console.log('🔍 useReferral: myReferralCode fetched:', myReferralCode);
-      
+
       // Get user's sponsor
       console.log('🔍 useReferral: Fetching sponsor...');
       const sponsor = await publicClient.readContract({
@@ -2324,17 +2369,17 @@ export const useReferral = () => {
         args: [account],
       });
       console.log('🔍 useReferral: sponsor fetched:', sponsor);
-      
+
       // Check if user can register a referral code (level > 5 and no existing code)
       const canRegisterCode = currentLevel > 5 && myReferralCode === "0x0000000000000000000000000000000000000000000000000000000000000000";
-      
-      console.log('🔍 useReferral: Processed data:', { 
-        currentLevel, 
+
+      console.log('🔍 useReferral: Processed data:', {
+        currentLevel,
         canRegisterCode,
         myReferralCode,
-        sponsor 
+        sponsor
       });
-      
+
       // Get referral rates for different levels
       const referralBps = {};
       for (let level = 0; level <= 15; level++) {
@@ -2360,7 +2405,7 @@ export const useReferral = () => {
         loading: false,
         error: null
       };
-      
+
       console.log('✅ useReferral: Final referral data:', finalData);
       setReferralData(finalData);
     } catch (err) {
@@ -2383,7 +2428,7 @@ export const useReferral = () => {
       // Convert string to bytes32
       const codeBytes32 = ethers.encodeBytes32String(code);
       console.log('🔍 useReferral: Converted code to bytes32:', codeBytes32);
-      
+
       const txHash = await agwClient.writeContract({
         abi: playerStore.abi,
         address: playerStore.address,
@@ -2392,12 +2437,12 @@ export const useReferral = () => {
       });
 
       console.log('✅ useReferral: Registration transaction successful:', txHash);
-      
+
       // Refresh data after successful registration
       console.log('🔄 useReferral: Refreshing referral data...');
       await fetchReferralData();
       console.log('✅ useReferral: Referral data refreshed after registration');
-      
+
       return txHash;
     } catch (err) {
       console.error('Failed to register referral code:', err);
@@ -2464,7 +2509,7 @@ export const useFishing = () => {
   const { account } = useAgwEthersAndService();
   const { agwClient, publicClient, getContract, handleContractCall, executeWrite } = useContractBase(['FISHING']);
   const fishing = getContract('FISHING');
-  
+
   const [fishingData, setFishingData] = useState({
     loading: false,
     error: null,
@@ -2481,7 +2526,7 @@ export const useFishing = () => {
         functionName: 'craftBait1',
         args: [baitCount],
       });
-      
+
       return { txHash, isPending: true };
     }, 'crafting bait 1');
   }, [fishing, agwClient, handleContractCall]);
@@ -2498,7 +2543,7 @@ export const useFishing = () => {
         functionName: 'craftBait2',
         args: [itemIds, amounts],
       });
-      
+
       setFishingData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2524,7 +2569,7 @@ export const useFishing = () => {
         functionName: 'craftBait3',
         args: [itemIds, amounts],
       });
-      
+
       setFishingData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2545,7 +2590,7 @@ export const useFishing = () => {
 
     try {
       console.log('Calling fish function with:', { baitId, amount, address: fishing.address });
-      
+
       const result = await executeWrite({
         abi: fishing.abi,
         address: fishing.address,
@@ -2555,14 +2600,14 @@ export const useFishing = () => {
         pollingInterval: 1000,
         timeout: 120000
       });
-      
+
       setFishingData(prev => ({ ...prev, loading: false }));
-      return { 
-        txHash: result.txHash, 
+      return {
+        txHash: result.txHash,
         receipt: result.receipt,
-        baitId, 
+        baitId,
         amount,
-        isPending: false 
+        isPending: false
       };
     } catch (err) {
       console.error('Fish function failed:', err);
@@ -2581,10 +2626,10 @@ export const useFishing = () => {
       console.error('Fishing contract, publicClient, or account not available');
       return;
     }
-    
+
     try {
       console.log('Setting up FishingResults listener for requestId:', requestId);
-      
+
       // Use a recent block number instead of 'latest' for better reliability
       let startBlock = fromBlock;
       if (!startBlock || startBlock === 'latest') {
@@ -2597,36 +2642,36 @@ export const useFishing = () => {
           startBlock = 'earliest';
         }
       }
-      
+
       // Event handler function
       const handleEvent = (eventData) => {
         try {
           console.log('FishingResults event received:', eventData);
-          
+
           // Extract event data
           const eventRequestId = eventData.args.requestId.toString();
           const itemIds = eventData.args.itemIds.map(id => id.toString());
           const amounts = eventData.args.amounts.map(amount => amount.toString());
           const baitId = eventData.args.baitId.toString();
           const totalAmount = eventData.args.totalAmount.toString();
-          
+
           console.log('Event requestId:', eventRequestId, 'Expected:', requestId.toString());
-        
-        // Only process if this is the request we're waiting for
-        if (eventRequestId === requestId.toString()) {
+
+          // Only process if this is the request we're waiting for
+          if (eventRequestId === requestId.toString()) {
             console.log('✅ Found matching FishingResults event!');
-          if (onFishingResults) {
-              onFishingResults({ 
-                requestId: eventRequestId, 
-                itemIds, 
+            if (onFishingResults) {
+              onFishingResults({
+                requestId: eventRequestId,
+                itemIds,
                 amounts,
                 baitId,
                 totalAmount
               });
             }
-          // Clean up the listener after processing the event
-          console.log('Cleaning up FishingResults listener after successful event');
-          unwatch();
+            // Clean up the listener after processing the event
+            console.log('Cleaning up FishingResults listener after successful event');
+            unwatch();
           }
         } catch (err) {
           console.error('Error processing FishingResults event:', err);
@@ -2635,7 +2680,7 @@ export const useFishing = () => {
           unwatch();
         }
       };
-      
+
       // Set up real-time event listener using watchContractEvent
       console.log('Setting up watchContractEvent for FishingResults');
       const unwatch = publicClient.watchContractEvent({
@@ -2659,14 +2704,14 @@ export const useFishing = () => {
           unwatch();
         }
       });
-      
+
       console.log('watchContractEvent setup complete');
-      
+
       // Also query for any events that might have already happened
       const queryExistingEvents = async () => {
         try {
           console.log('Querying existing FishingResults events from block:', startBlock);
-          
+
           // Use the contract ABI directly for event filtering
           const logs = await publicClient.getLogs({
             address: fishing.address,
@@ -2688,15 +2733,15 @@ export const useFishing = () => {
             fromBlock: startBlock,
             toBlock: 'latest'
           });
-          
+
           console.log('Found', logs.length, 'existing FishingResults events');
           console.log('Logs:', logs);
-          
+
           // Process existing events
           for (const log of logs) {
             try {
               console.log('Processing log:', log);
-              
+
               // The log is already decoded by getLogs, we can use it directly
               const eventData = {
                 args: log.args,
@@ -2705,7 +2750,7 @@ export const useFishing = () => {
                 blockNumber: log.blockNumber,
                 transactionHash: log.transactionHash
               };
-              
+
               console.log('Event data ready:', eventData);
               handleEvent(eventData);
             } catch (parseErr) {
@@ -2722,19 +2767,19 @@ export const useFishing = () => {
           unwatch();
         }
       };
-      
+
       // Query existing events
       queryExistingEvents();
-      
+
       // Return cleanup function
       return () => {
         console.log('Cleaning up FishingResults listener');
         unwatch();
       };
-      
+
     } catch (err) {
       console.error('Failed to set up FishingResults listener:', err);
-      return () => {}; // Return no-op cleanup function
+      return () => { }; // Return no-op cleanup function
     }
   }, [fishing, publicClient, account]);
 
@@ -2770,7 +2815,7 @@ export const useFishing = () => {
         args: [account],
       });
       const pendingRequests = [];
-      
+
       for (let i = 0; i < requestIds.length; i++) {
         pendingRequests.push({
           requestId: requestIds[i].toString(),
@@ -2779,7 +2824,7 @@ export const useFishing = () => {
           amount: amounts[i].toString()
         });
       }
-      
+
       return pendingRequests;
     } catch (err) {
       console.error('Failed to get fishing pending requests:', err);
@@ -2820,7 +2865,7 @@ export const usePotion = () => {
         functionName: 'craftGrowthElixir',
         args: [],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2846,7 +2891,7 @@ export const usePotion = () => {
         functionName: 'craftPesticide',
         args: [],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2872,7 +2917,7 @@ export const usePotion = () => {
         functionName: 'craftFertilizer',
         args: [],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2898,7 +2943,7 @@ export const usePotion = () => {
         functionName: 'craftGrowthElixirBatch',
         args: [count],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2924,7 +2969,7 @@ export const usePotion = () => {
         functionName: 'craftPesticideBatch',
         args: [count],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2950,7 +2995,7 @@ export const usePotion = () => {
         functionName: 'craftFertilizerBatch',
         args: [count],
       });
-      
+
       setPotionData(prev => ({ ...prev, loading: false }));
       return { txHash, isPending: true };
     } catch (err) {
@@ -2979,7 +3024,7 @@ export const usePotion = () => {
 export const useRngHub = () => {
   const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['RNG_HUB']);
   const rngHub = getContract('RNG_HUB');
-  
+
   const rngHubData = {
     loading,
     error
@@ -2997,7 +3042,7 @@ export const useRngHub = () => {
         functionName: 'fulfillRequest',
         args: [requestId, randomNumber],
       });
-      
+
       return txHash;
     }, 'fulfilling RNG request');
   }, [rngHub, agwClient, handleContractCall]);
@@ -3012,7 +3057,7 @@ export const useRngHub = () => {
 export const useProduceSeeder = () => {
   const { loading, error, agwClient, getContract, handleContractCall } = useContractBase(['PRODUCE_SEEDER']);
   const produceSeeder = getContract('PRODUCE_SEEDER');
-  
+
   const produceSeederData = {
     loading,
     error
@@ -3028,7 +3073,7 @@ export const useProduceSeeder = () => {
         functionName: 'seedAllProduce',
         args: [amountEach],
       });
-      
+
       return { txHash, isPending: true };
     }, 'seeding all produce');
   }, [produceSeeder, agwClient, handleContractCall]);
@@ -3044,7 +3089,7 @@ export const useP2PMarket = () => {
   const { account } = useAgwEthersAndService();
   const { agwClient, publicClient, getContract, executeWrite } = useContractBase(['P2P_MARKET']);
   const p2pMarket = getContract('P2P_MARKET');
-  
+
   const [marketData, setMarketData] = useState({
     listings: [],
     nextId: 0,
@@ -3062,14 +3107,14 @@ export const useP2PMarket = () => {
 
     try {
       console.log('Fetching all marketplace listings...');
-      
+
       // Get nextId to know how many listings exist
       const nextIdResult = await publicClient.readContract({
         address: p2pMarket.address,
         abi: p2pMarket.abi,
         functionName: 'nextId'
       });
-      
+
       const currentNextId = Number(nextIdResult);
       console.log('Next ID:', currentNextId);
 
@@ -3100,20 +3145,20 @@ export const useP2PMarket = () => {
         }
       }
       console.log('All listings:', allListings);
-      setMarketData(prev => ({ 
-        ...prev, 
-        listings: allListings, 
+      setMarketData(prev => ({
+        ...prev,
+        listings: allListings,
         nextId: currentNextId,
-        loading: false 
+        loading: false
       }));
       return allListings;
     } catch (err) {
       console.error('Failed to fetch listings:', err);
       const { message } = handleContractError(err, 'fetching marketplace listings');
-      setMarketData(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: message 
+      setMarketData(prev => ({
+        ...prev,
+        loading: false,
+        error: message
       }));
       return [];
     }
@@ -3179,7 +3224,7 @@ export const useP2PMarket = () => {
     // Convert amounts to wei (18 decimals)
     const maxPricePerInWei = BigInt(maxPricePer) * BigInt(10 ** 18);
     const totalBudgetInWei = BigInt(totalBudget) * BigInt(10 ** 18);
-    
+
     return await executeWrite({
       abi: p2pMarket.abi,
       address: p2pMarket.address,
@@ -3224,7 +3269,7 @@ export const useEquipmentRegistry = () => {
   const { account } = useAgwEthersAndService();
   const { agwClient, publicClient, getContract, executeWrite } = useContractBase(['EQUIPMENT_REGISTRY', 'BOOST_NFT']);
   const equipmentRegistry = getContract('EQUIPMENT_REGISTRY');
-  
+
   const equipmentRegistryData = {
     loading: false,
     error: null
@@ -3332,21 +3377,21 @@ export const useEquipmentRegistry = () => {
 
       const tokenData = await fetch(tokenURI);
       const tokenDataJson = await tokenData.json();
-      
+
       // Parse the token metadata
       const name = tokenDataJson.name || `Character #${tokenId}`;
       const image = tokenDataJson.image || '';
       const description = tokenDataJson.description || '';
-      
+
       // Extract boost values from attributes
       let boostPpm = 0;
       let boostPercentage = 0;
-      
+
       if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
-        const boostAttribute = tokenDataJson.attributes.find(attr => 
+        const boostAttribute = tokenDataJson.attributes.find(attr =>
           attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
         );
-        
+
         if (boostAttribute) {
           if (boostAttribute.trait_type === 'Boost (ppm)') {
             boostPpm = Number(boostAttribute.value);
@@ -3398,7 +3443,7 @@ export const useEquipmentRegistry = () => {
       console.log('Total supply from nextId:', totalSupply);
 
       const nfts = [];
-      
+
       // Check each token ID to see if player owns it
       for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
         try {

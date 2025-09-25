@@ -37,7 +37,7 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
         if (isTransactionRejection(chestError)) {
           show('Transaction was rejected by user.', 'error');
         } else {
-          show(`Chest operation failed: ${chestError}`, 'error');
+          show(`Chest operation failed!`, 'error');
         }
       }
     }
