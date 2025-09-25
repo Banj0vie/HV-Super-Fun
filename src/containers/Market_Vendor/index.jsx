@@ -6,14 +6,15 @@ import BuySeeds from "./BuySeeds";
 import RollChances from "./RollChances";
 import { ID_CROP_CATEGORIES, ID_SEED_SHOP_PAGES } from "../../constants/app_ids";
 import { SEED_PACK_STATUS } from "../../constants/item_seed";
-import { useVendor, useFarming } from "../../hooks/useContracts";
-import { useAgwEthersAndService } from "../../hooks/useAgwEthersAndService";
+import { useVendor, useFarming, useRngHub } from "../../hooks/useContracts";
+import { useAgwEthersAndService } from "../../hooks/useContractBase";
 import { useNotification } from "../../contexts/NotificationContext";
 import CustomSeedsDialog from "./CustomSeedsDialog";
 import SeedRollingDialog from "./SeedRollingDialog";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   const { isConnected, account, contractService } = useAgwEthersAndService();
-  const { buySeedPack, checkPendingRequests, getAllPendingRequests, fulfillPendingRequest, listenForSeedsRevealed } = useVendor();
+  const { buySeedPack, checkPendingRequests, getAllPendingRequests, listenForSeedsRevealed } = useVendor();
+  const { fulfillRequest } = useRngHub();
   const { getMaxPlots } = useFarming();
   const { show } = useNotification();
   
@@ -182,9 +183,8 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
     setIsRevealing(true);
     try {
       // Event listener will be set up after fulfill call with the correct block number
-      
       // Fulfill the pending request via VRNG system
-      const result = await fulfillPendingRequest(requestId);
+      const result = await fulfillRequest(requestId);
       if (result) {
         // Get the block number from the fulfill transaction
         const fulfillBlockNumber = result.blockNumber;
@@ -263,7 +263,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
       setIsRevealing(false);
       setRevealCleanup(null);
     }
-  }, [listenForSeedsRevealed, fulfillPendingRequest, loadPendingRequests, revealCleanup]);
+  }, [listenForSeedsRevealed, fulfillRequest, loadPendingRequests, revealCleanup]);
 
   // Cancel reveal process
   const cancelReveal = useCallback(async () => {

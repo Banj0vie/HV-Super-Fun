@@ -1,7 +1,7 @@
 /* global BigInt */
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
+import { useAgwEthersAndService } from './useContractBase';
 import { useContractBase } from './useContractBase';
 import { SAGE_UNLOCK_RATES, SAGE_UNLOCK_COOLDOWN } from '../config/contracts';
 import { handleContractError } from '../utils/errorHandler';
@@ -14,8 +14,6 @@ export const useVendor = () => {
   const { getContract, publicClient, executeWrite } = useContractBase(['VENDOR', 'YIELD_TOKEN']);
   const vendor = getContract('VENDOR');
   const yieldToken = getContract('YIELD_TOKEN');
-  // Use the useRngHub hook for fulfillRequest functionality
-  const { fulfillRequest: rngFulfillRequest } = useRngHub();
 
   const buySeedPack = useCallback(async (tier, count) => {
     if (!vendor || !yieldToken) {
@@ -185,24 +183,6 @@ export const useVendor = () => {
     }
   }, [vendor, account, publicClient]);
 
-  const fulfillPendingRequest = useCallback(async (requestId) => {
-    try {
-    setLoading(true);
-    setError(null);
-
-      // Use the useRngHub hook's fulfillRequest function
-      const randomNumber = Math.floor(Math.random() * 100000);
-      const txHash = await rngFulfillRequest(requestId, randomNumber);
-      return txHash;
-    } catch (err) {
-      console.error('Failed to fulfill pending request:', err);
-      setError(err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [rngFulfillRequest]);
-
   const listenForSeedsRevealed = useCallback(async (requestId, onSeedsRevealed, fromBlock) => {
     if (!vendor || !publicClient || !account) {
       console.error('Vendor contract, publicClient, or account not available');
@@ -368,7 +348,6 @@ export const useVendor = () => {
     checkPendingRequests,
     getAllPendingRequests,
     getPendingRequest,
-    fulfillPendingRequest,
     listenForSeedsRevealed,
     loading,
     error
@@ -949,10 +928,52 @@ export const useBanker = () => {
     }
   }, [banker, publicClient]);
 
+  // Get banker contract ratio and total supply data
+  const getBankerData = useCallback(async () => {
+    if (!banker || !publicClient) return null;
+
+    try {
+      const [totalSupply, tokenBalance] = await Promise.all([
+        publicClient.readContract({
+          address: banker.address,
+          abi: banker.abi,
+          functionName: 'totalSupply',
+        }),
+        publicClient.readContract({
+          address: banker.address,
+          abi: banker.abi,
+          functionName: 'totalGameToken',
+        })
+      ]);
+      
+      const totalSupplyNum = parseFloat(ethers.formatEther(totalSupply));
+      const tokenBalanceNum = parseFloat(ethers.formatEther(tokenBalance));
+      
+      let ratioValue = 1.0; // Default ratio
+      if (totalSupplyNum > 0 && tokenBalanceNum > 0) {
+        ratioValue = tokenBalanceNum / totalSupplyNum;
+      }
+      
+      return {
+        totalSupply: totalSupplyNum,
+        tokenBalance: tokenBalanceNum,
+        ratio: ratioValue
+      };
+    } catch (err) {
+      console.error('Failed to get banker data:', err);
+      return {
+        totalSupply: 0,
+        tokenBalance: 0,
+        ratio: 1.0
+      };
+    }
+  }, [banker, publicClient]);
+
   return {
     stake,
     unstake,
     getBalance,
+    getBankerData,
     loading,
     error
   };
@@ -1023,7 +1044,15 @@ export const useDex = () => {
 
     try {
       console.log('🔍 useDex: Fetching ETH balance for account:', account);
-      const balance = await publicClient.getBalance({account});
+      
+      // Double-check account is valid before making the call
+      if (!account) {
+        console.warn('🔍 useDex: Account is null/undefined, skipping ETH balance fetch');
+        setEthBalance('0.00');
+        return;
+      }
+      
+      const balance = await publicClient.getBalance({address: account});
       const ethBalance = parseFloat(ethers.formatEther(balance));
       setEthBalance(ethBalance.toFixed(2));
       console.log('✅ useDex: ETH balance fetched:', ethBalance.toFixed(2));
@@ -1037,6 +1066,10 @@ export const useDex = () => {
   const fetchHoneyBalance = useCallback(async () => {
     if (!account || !publicClient) {
       console.log('🔍 useDex fetchHoneyBalance: Missing account or publicClient', { account, publicClient: !!publicClient });
+      return;
+    }
+    if(!yieldToken?.address) {
+      console.log('🔍 useDex fetchHoneyBalance: Yield token contract not available');
       return;
     }
     try {
@@ -1054,7 +1087,7 @@ export const useDex = () => {
       console.error('Failed to fetch Honey balance:', err);
       setHoneyBalance('0.00');
     }
-  }, [account, publicClient, yieldToken.address, yieldToken.abi]);
+  }, [account, publicClient, yieldToken]);
 
   // Fetch both balances
   const fetchBalances = useCallback(async () => {
@@ -1824,9 +1857,6 @@ export const useChestOpener = () => {
   const { getContract, publicClient, agwClient } = useContractBase(['CHEST_OPENER', 'PLAYER_STORE']);
   const chestOpener = getContract('CHEST_OPENER');
   const playerStore = getContract('PLAYER_STORE');
-
-  // Use the useRngHub hook for fulfillRequest functionality
-  const { fulfillRequest: rngFulfillRequest } = useRngHub();
   const [chestData, setChestData] = useState({
     nextChestTime: 0,
     canClaim: false,
@@ -2014,27 +2044,6 @@ export const useChestOpener = () => {
     }
   }, [chestOpener, account, publicClient]);
 
-  // Fulfill pending request (reveal chest)
-  const fulfillPendingRequest = useCallback(async (requestId) => {
-    try {
-      setChestData(prev => ({ ...prev, loading: true, error: null }));
-
-      const randomNumber = Math.floor(Math.random() * 100000);
-      const txHash = await rngFulfillRequest(requestId, randomNumber);
-      
-      setChestData(prev => ({ ...prev, loading: false }));
-      return txHash;
-    } catch (err) {
-      console.error('Failed to fulfill pending chest request:', err);
-      setChestData(prev => ({
-        ...prev,
-        loading: false,
-        error: err.message
-      }));
-      throw err;
-    }
-  }, [rngFulfillRequest]);
-
   // Listen for chest opening results
   const listenForChestResults = useCallback(async (requestId, onChestResults, fromBlock) => {
     if (!chestOpener || !publicClient || !account) {
@@ -2200,7 +2209,6 @@ export const useChestOpener = () => {
     fetchChestData,
     checkPendingRequests,
     getAllPendingRequests,
-    fulfillPendingRequest,
     listenForChestResults
   };
 };
@@ -2936,8 +2944,10 @@ export const useRngHub = () => {
     error
   };
 
-  const fulfillRequest = useCallback(async (requestId, randomNumber) => {
+  const fulfillRequest = useCallback(async (requestId) => {
     if (!rngHub || !agwClient) return;
+
+    const randomNumber = Math.floor(Math.random() * 100000);
 
     return handleContractCall(async () => {
       const txHash = await agwClient.writeContract({
@@ -3088,9 +3098,9 @@ export const useP2PMarket = () => {
   // List items for sale
   const list = useCallback(async (id, amount, pricePer) => {
     if (!p2pMarket || !agwClient || !account) {
-      throw new Error('P2P Market contract, AGW Client, or account not available');
+      return null;
     }
-
+    console.log(id);
     const pricePerInWei = BigInt(pricePer) * BigInt(10 ** 18);
     return await executeWrite({
       abi: p2pMarket.abi,
@@ -3258,6 +3268,70 @@ export const useEquipmentRegistry = () => {
     });
   }, [equipmentRegistry, agwClient, account, executeWrite]);
 
+  // Get NFT metadata by token ID
+  const getNFTMetadata = useCallback(async (tokenId) => {
+    if (!equipmentRegistry || !publicClient) {
+      return null;
+    }
+
+    try {
+      // Get the BoostNFT contract
+      const boostNFT = getContract('BOOST_NFT');
+      if (!boostNFT) {
+        throw new Error('BoostNFT contract not available');
+      }
+
+      // Fetch token metadata from tokenURI
+      const tokenURI = await publicClient.readContract({
+        address: boostNFT.address,
+        abi: boostNFT.abi,
+        functionName: 'tokenURI',
+        args: [tokenId]
+      });
+
+      const tokenData = await fetch(tokenURI);
+      const tokenDataJson = await tokenData.json();
+      
+      // Parse the token metadata
+      const name = tokenDataJson.name || `Character #${tokenId}`;
+      const image = tokenDataJson.image || '';
+      const description = tokenDataJson.description || '';
+      
+      // Extract boost values from attributes
+      let boostPpm = 0;
+      let boostPercentage = 0;
+      
+      if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
+        const boostAttribute = tokenDataJson.attributes.find(attr => 
+          attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
+        );
+        
+        if (boostAttribute) {
+          if (boostAttribute.trait_type === 'Boost (ppm)') {
+            boostPpm = Number(boostAttribute.value);
+            boostPercentage = boostPpm / 1000; // Convert ppm to percentage
+          } else if (boostAttribute.trait_type === 'Boost (%)') {
+            boostPercentage = Number(boostAttribute.value);
+            boostPpm = boostPercentage * 1000; // Convert percentage to ppm
+          }
+        }
+      }
+
+      return {
+        tokenId,
+        name,
+        image,
+        description,
+        boostPpm,
+        boostPercentage,
+        tokenURI
+      };
+    } catch (err) {
+      console.error('Failed to fetch NFT metadata:', err);
+      return null;
+    }
+  }, [equipmentRegistry, publicClient, getContract]);
+
   // Get owned BoostNFTs for a player
   const getOwnedBoostNFTs = useCallback(async (player) => {
     if (!equipmentRegistry || !publicClient) {
@@ -3295,50 +3369,10 @@ export const useEquipmentRegistry = () => {
           });
 
           if (owner.toLowerCase() === player.toLowerCase()) {
-            const tokenURI = await publicClient.readContract({
-              address: boostNFT.address,
-              abi: boostNFT.abi,
-              functionName: 'tokenURI',
-              args: [tokenId]
-            })
-
-            const tokenData = await fetch(tokenURI);
-            const tokenDataJson = await tokenData.json();
-            
-            // Parse the token metadata
-            const name = tokenDataJson.name || `Character #${tokenId}`;
-            const image = tokenDataJson.image || '';
-            const description = tokenDataJson.description || '';
-            
-            // Extract boost values from attributes
-            let boostPpm = 0;
-            let boostPercentage = 0;
-            
-            if (tokenDataJson.attributes && Array.isArray(tokenDataJson.attributes)) {
-              const boostAttribute = tokenDataJson.attributes.find(attr => 
-                attr.trait_type === 'Boost (ppm)' || attr.trait_type === 'Boost (%)'
-              );
-              
-              if (boostAttribute) {
-                if (boostAttribute.trait_type === 'Boost (ppm)') {
-                  boostPpm = Number(boostAttribute.value);
-                  boostPercentage = boostPpm / 1000; // Convert ppm to percentage
-                } else if (boostAttribute.trait_type === 'Boost (%)') {
-                  boostPercentage = Number(boostAttribute.value);
-                  boostPpm = boostPercentage * 1000; // Convert percentage to ppm
-                }
-              }
+            const metadata = await getNFTMetadata(tokenId);
+            if (metadata) {
+              nfts.push(metadata);
             }
-
-            nfts.push({
-              tokenId,
-              name,
-              image,
-              description,
-              boostPpm,
-              boostPercentage,
-              tokenURI
-            });
           }
         } catch (err) {
           // Token might not exist or player doesn't own it, skip
@@ -3351,7 +3385,7 @@ export const useEquipmentRegistry = () => {
       // Return empty array instead of null for better error handling
       return [];
     }
-  }, [equipmentRegistry, publicClient, getContract]);
+  }, [equipmentRegistry, publicClient, getContract, getNFTMetadata]);
 
   return {
     equipmentRegistryData,
@@ -3360,6 +3394,7 @@ export const useEquipmentRegistry = () => {
     getAvatars,
     setAvatar,
     clearAvatar,
+    getNFTMetadata,
     getOwnedBoostNFTs,
     getContract
   };

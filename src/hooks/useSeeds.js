@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAgwEthersAndService } from '../hooks/useAgwEthersAndService';
+import { useAgwEthersAndService } from '../hooks/useContractBase';
 import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS } from '../constants/app_ids';
 import { ALL_ITEMS } from '../constants/item_data';
 import { useContractBase } from './useContractBase';
