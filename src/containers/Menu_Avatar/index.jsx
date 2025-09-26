@@ -42,7 +42,7 @@ const AvatarDialog = ({ onClose }) => {
         
         // Get total boost
         const boostPpm = await getTokenBoostPpm(account);
-        const boostPercentage = boostPpm ? boostPpm / 100 : 0; // Convert from ppm to percentage, default to 0 if null
+        const boostPercentage = boostPpm ? boostPpm / 1000 : 0; // Convert from ppm to percentage, default to 0 if null
         
         // Create avatar data array
         const avatarData = [];

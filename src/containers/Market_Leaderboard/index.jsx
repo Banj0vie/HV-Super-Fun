@@ -58,7 +58,7 @@ const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
         const now = Math.floor(Date.now() / 1000); // Current timestamp in seconds
         // =================TIME GLITCH=================
         // const epochDuration = 7 * 24 * 60 * 60;
-        const epochDuration = 30 * 60;
+        const epochDuration = 7 * 60 * 60;
         const epochEndTime = epochStart + epochDuration;
         const remaining = Math.max(0, (epochEndTime - now) * 1000); // Convert to milliseconds
         setRemainedTime(remaining);

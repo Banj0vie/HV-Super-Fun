@@ -462,20 +462,26 @@ const Farm = () => {
       show(`Harvesting ${readySlots.length} ready crops...`, "info");
 
       let ok = false;
-      if (readySlots.length > 1 && typeof harvestMany === "function") {
-        const res = await harvestMany(readySlots);
-        ok = !!res;
-      } else if (readySlots.length === 1) {
-        const res = await harvest(readySlots[0]);
-        ok = !!res;
-      } else {
-        // Fallback if batch method is unavailable
-        const res = await harvestAll();
-        ok = !!res;
+      try {
+        if (readySlots.length > 1 && typeof harvestMany === "function") {
+          const res = await harvestMany(readySlots);
+          ok = !!res;
+        } else if (readySlots.length === 1) {
+          const res = await harvest(readySlots[0]);
+          ok = !!res;
+        } else {
+          // Fallback if batch method is unavailable
+          const res = await harvestAll();
+          ok = !!res;
+        }
+      } catch (error) {
+        const { message } = handleContractError(error, 'harvesting crops');
+        console.error("Failed to harvest crops:", message);
+        show(`❌ ${message}`, "error");
       }
 
       if (!ok) {
-        show("❌ Failed to harvest crops. Please try again.", "error");
+        // show("❌ Failed to harvest crops. Please try again.", "error");
         return;
       }
 
@@ -559,27 +565,40 @@ const Farm = () => {
         return;
       }
 
-      // Show loading message
+      // Show loading message that persists until transaction completes
       const loadingMessage =
         cropsToPlant.length === 1
           ? "Planting seed..."
           : `Planting ${cropsToPlant.length} seeds...`;
-      show(loadingMessage, "info");
+      const loadingNotification = show(loadingMessage, "info", 300000); // 5 minutes timeout
 
       // Call contract to plant all crops
       if (cropsToPlant.length === 1) {
         // Single plant
-        const result = await plant(
-          cropsToPlant[0].seedId,
-          cropsToPlant[0].plotNumber
-        );
-        if (result) {
-          show(
-            `✅ Successfully planted seed at plot ${cropsToPlant[0].plotNumber}!`,
-            "success"
+        try {
+          const result = await plant(
+            cropsToPlant[0].seedId,
+            cropsToPlant[0].plotNumber
           );
-        } else {
-          show("❌ Failed to plant seed. Please try again.", "error");
+          if (result) {
+            // Dismiss loading notification
+            loadingNotification.dismiss();
+            show(
+              `✅ Successfully planted seed at plot ${cropsToPlant[0].plotNumber}!`,
+              "success",
+              3000 // 3 seconds timeout
+            );
+          } else {
+            // Dismiss loading notification
+            loadingNotification.dismiss();
+            // show("❌ Failed to plant seed. Please try again.", "error", 3000);
+            // return;
+          }
+        } catch (error) {
+          loadingNotification.dismiss();
+          const { message } = handleContractError(error, 'planting seed');
+          console.error("Failed to plant seedaaaaaaaa:", message);
+          show(`${message}`, "error");
           return;
         }
       } else {
@@ -588,12 +607,17 @@ const Farm = () => {
         const plotNumbers = cropsToPlant.map((crop) => crop.plotNumber);
         const result = await plantBatch(seedIds, plotNumbers);
         if (result) {
+          // Dismiss loading notification
+          loadingNotification.dismiss();
           show(
             `✅ Successfully planted ${cropsToPlant.length} seeds!`,
-            "success"
+            "success",
+            3000 // 3 seconds timeout
           );
         } else {
-          show("❌ Failed to plant seeds. Please try again.", "error");
+          // Dismiss loading notification
+          loadingNotification.dismiss();
+          show("❌ Failed to plant seeds. Please try again.", "error", 3000);
           return;
         }
       }
@@ -842,7 +866,7 @@ const Farm = () => {
         setIsFarmMenu(false);
         setIsPlanting(true);
       } else {
-        show("❌ Failed to apply potion. Please try again.", "error");
+        // show("❌ Failed to apply potion. Please try again.", "error");
       }
     } catch (error) {
       const { message } = handleContractError(error, 'applying potion');
@@ -1018,6 +1042,7 @@ const Farm = () => {
           maxPlots={maxPlots}
           totalPlots={30}
           selectedIndexes={selectedIndexes}
+          crops={cropArray}
         />
       </PanZoomViewport>
       {isFarmMenu && (

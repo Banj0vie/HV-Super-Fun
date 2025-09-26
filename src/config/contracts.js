@@ -4,25 +4,25 @@
 export const CONTRACT_ADDRESSES = {
   // Abstract Testnet (Chain ID: 11124)
   ABSTRACT_TESTNET: {
-    GAME_REGISTRY: "0xDd11efac4fB331f04634b6aA3a0A8D8cCd3B3B22",
-    YIELD_TOKEN: "0x92036f7336edBC830E84429865c03e3830EE10df",
-    ITEMS_1155: "0x8380D240C4877Ff752a99B61794D29Ec94c23158",
-    PLAYER_STORE: "0xe485Fa82a3B8C836d5B3A017CDa5ba77f6f122F1",
-    RNG_HUB: "0x729FCf1f62049681fB6cF3176E188487Ddc3F85B",
-    BANKER: "0x50c14830FFb6217bb8e44bD7d5759ed73B9E12Ca",
-    FARMING: "0x7741a473E047E0a17F8456A92594597eECBF7661",
-    VENDOR: "0x7D5b7AbC2069D84E67e619665f63b95511539ed4",
-    SAGE: "0xaf56a8278829Cd584bB9511B95Dc00C1Ab26302E",
-    DEX: "0x01e0994eb92B222D28B6098B18F5e0Ff85F7c529",
-    GARDENER: "0xD8771af070052b74245C6227A714e55320090517",
-    FISHING: "0x232D6E9a442300fdA791F6Ff9142D11FF83008cf",
-    CHEST_OPENER: "0x9DeA2Bb778d38db25f8e5a8ce35a97dbD6CaeCdB",
-    LEADERBOARD: "0x8E5486450502BE03DEa0E01e277B7FC02b5FB3cB",
-    POTION: "0xeaacca844C3cE69290f53F92Ea38FFf9D5C971fE",
-    P2P_MARKET: "0xD83e49F2820875D2D19c798Be7CFc3b8B486609D",
-    BOOST_NFT: "0xbc59EF48e161114CDCEfa84ec97722Cfd23eDf3F",
-    EQUIPMENT_REGISTRY: "0xD0a198c0F6D5fDe957B4B2f08a64E73e1561F2D9",
-    PRODUCE_SEEDER: "0x383d77d92D6822c6a3BdEA928b4eC482CeE6dBF9",
+    GAME_REGISTRY: "0x5B17bdD42Bd99b77995649F4D9ACDe3c42254F45",
+    YIELD_TOKEN: "0x6920598F4cf9c372216C15678EC89e4B269F676B",
+    ITEMS_1155: "0x3282785A030Af2e9bBd47C16b9Cd899EB1A78446",
+    PLAYER_STORE: "0xF80bc67E80f0Cecb16aec0113fb00FcEA4BD6A5b",
+    RNG_HUB: "0x8e63101108B904754C6A82D955745520566ccccA",
+    BANKER: "0x02104faFA8f483C4d201C10fAf845105006dfd8a",
+    FARMING: "0x5E00457ee9Ba96303084c48f949EDb64046BE712",
+    VENDOR: "0x3D45CD1C7E71bE1b144E24f98D642dE894FCfC3E",
+    SAGE: "0x62f31B79C082db12c064034a6024C68744A1d8e4",
+    DEX: "0x63E2b44337fA3196Bed8ebE1B31c97e6aD441073",
+    GARDENER: "0x86C692115A98bd9c3EF32EB81099493FCEaE6dF2",
+    FISHING: "0xFb2aa90e6303967809a5e440377e2962c8f88BCe",
+    CHEST_OPENER: "0x19e6afE8A40C53A49dA77466FA6B5EdFd186392e",
+    LEADERBOARD: "0xC666eA02aEF7F3b80115D2656907592a9A74f211",
+    POTION: "0xb9A259FbC2fB39c5E19EE40b5dF4973E01Bbd1f9",
+    P2P_MARKET: "0x9219Ccae11e630b6a57A61c827cBc51a99D3c27D",
+    BOOST_NFT: "0x081b924fA5E5397e789a467A9f850eCD58bEae4B",
+    EQUIPMENT_REGISTRY: "0xA592bdf6ea60f7346199De38cf183364138A5fa0",
+    PRODUCE_SEEDER: "0xFf4AEdea23A293051e1D178a3A2f8bB3c5F371f8",
   }
 };
 
@@ -101,6 +101,7 @@ export const CONTRACT_ABIS = {
     "function crops(address, uint8) view returns ((uint256,uint64,uint16,uint16))",
     "function count(address) view returns (uint8)",
     "function getGrowthTime(uint256 seedId) view returns (uint32)",
+    "function previewHarvestForSeed(address user, uint256 seedId) view returns (uint256, uint256, uint256)",
     "function setSage(address sageAddr)",
     "function setEquipment(address eq)",
     "function setGrowthReductions(uint32 low, uint32 mid, uint32 high)",
@@ -119,6 +120,7 @@ export const CONTRACT_ABIS = {
     "function ITEMS() view returns (address)",
     "function GAME_TOKEN() view returns (address)",
     "function sage() view returns (address)",
+    "function equipment() view returns (address)",
     "function MODULE_ROLE() view returns (bytes32)",
     "function hasRole(bytes32 role, address account) view returns (bool)",
     "function grantRole(bytes32 role, address account)",
@@ -165,9 +167,13 @@ export const CONTRACT_ABIS = {
   ],
 
   DEX: [
-    "function depositNativeForGameToken(uint256 amount)",
-    "function RATE_PER_ETH() view returns (uint256)",
-    "function GAME_TOKEN() view returns (address)"
+    "function depositNativeForGameToken() payable",
+    "function depositGameTokenForNative(uint256 tokenAmount)",
+    "function tokenPrice() view returns (uint256)",
+    "function GAME_TOKEN() view returns (address)",
+    "function tokenBalance() view returns (uint256)",
+    "function balance() view returns (uint256)",
+    "receive() external payable"
   ],
 
   PLAYER_STORE: [
@@ -433,4 +439,4 @@ export const SAGE_UNLOCK_RATES = {
 
 // =================TIME GLITCH=================
 // export const SAGE_UNLOCK_COOLDOWN = 7 * 24 * 60 * 60 * 1000;
-export const SAGE_UNLOCK_COOLDOWN = 7 * 60 * 1000;
+export const SAGE_UNLOCK_COOLDOWN = 7 * 60 * 60 * 1000;
