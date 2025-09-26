@@ -52,7 +52,7 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
     
       try {
         // Fulfill the RNG request to reveal fishing results
-        const result = await fulfillRequest(requestId, Math.floor(Math.random() * 1000000));
+        const result = await fulfillRequest(requestId);
         
         if (result) {
           show("Reeling in fish...", "info");
