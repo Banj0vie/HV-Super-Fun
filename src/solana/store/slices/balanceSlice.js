@@ -8,6 +8,8 @@ const initialState = {
   loading: false,
   error: null,
   subscriptionIds: [],
+  dexLoading: false,
+  dexError: null,
 };
 
 const balanceSlice = createSlice({
@@ -68,6 +70,40 @@ const balanceSlice = createSlice({
         state.xTokenShare = String(Number(state.xTokenShare) + Number(xTokenShareDelta));
       }
     },
+    // DEX-specific actions
+    buyTokensStart: (state) => {
+      state.dexLoading = true;
+      state.dexError = null;
+    },
+    buyTokensSuccess: (state) => {
+      state.dexLoading = false;
+      state.dexError = null;
+    },
+    buyTokensFailure: (state, action) => {
+      state.dexLoading = false;
+      state.dexError = action.payload;
+    },
+    sellTokensStart: (state) => {
+      state.dexLoading = true;
+      state.dexError = null;
+    },
+    sellTokensSuccess: (state) => {
+      state.dexLoading = false;
+      state.dexError = null;
+    },
+    sellTokensFailure: (state, action) => {
+      state.dexLoading = false;
+      state.dexError = action.payload;
+    },
+    updateDexBalances: (state, action) => {
+      const { solBalance, gameTokenBalance } = action.payload;
+      if (solBalance !== undefined) {
+        state.solBalance = solBalance;
+      }
+      if (gameTokenBalance !== undefined) {
+        state.gameToken = gameTokenBalance;
+      }
+    },
   },
 });
 
@@ -83,6 +119,21 @@ export const {
   unsubscribeFromBalances,
   clearBalances,
   updateBalancesAfterTransaction,
+  buyTokensStart,
+  buyTokensSuccess,
+  buyTokensFailure,
+  sellTokensStart,
+  sellTokensSuccess,
+  sellTokensFailure,
+  updateDexBalances,
 } = balanceSlice.actions;
 
 export default balanceSlice.reducer;
+
+// Selectors
+export const selectBalanceLoading = (state) => state.balance.loading;
+export const selectBalanceError = (state) => state.balance.error;
+export const selectDexLoading = (state) => state.balance.dexLoading;
+export const selectDexError = (state) => state.balance.dexError;
+export const selectSolBalance = (state) => state.balance.solBalance;
+export const selectGameTokenBalance = (state) => state.balance.gameToken;

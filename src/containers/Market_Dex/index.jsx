@@ -7,45 +7,53 @@ import BaseButton from "../../components/buttons/BaseButton";
 import LabelValueBox from "../../components/boxes/LabelValueBox";
 import DividerLink from "../../components/links/DividerLink";
 import { generateId } from "../../utils/basic";
-import { useDex } from "../../hooks/useContracts";
+import { useDex } from "../../hooks/useDex";
 import { useNotification } from "../../contexts/NotificationContext";
 import { isTransactionRejection } from "../../utils/errorUtils";
 import { useSolanaWallet } from "../../hooks/useSolanaWallet";
-import { ethers } from 'ethers';
+import { useAppSelector } from "../../solana/store";
+import { selectSolBalance, selectGameTokenBalance, selectDexLoading, selectDexError } from "../../solana/store/slices/balanceSlice";
 const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   const { isConnected } = useSolanaWallet();
-  const { swapETHForYield, swapHoneyForETH, getYieldAmount, getETHAmount, ethBalance, honeyBalance, fetchBalances, loading, error } = useDex();
+  const { buyTokens, sellTokens, getTokensOut, getSolOut, fetchBalances, error } = useDex();
+  
+  // Redux state
+  const solBalance = useAppSelector(selectSolBalance);
+  const gameTokenBalance = useAppSelector(selectGameTokenBalance);
+  const dexLoading = useAppSelector(selectDexLoading);
+  const dexError = useAppSelector(selectDexError);
   
   const [isReversed, setIsReversed] = useState(false);
   const [swapInfo, setSwapInfo] = useState([]);
-  const [ethAmount, setEthAmount] = useState('');
-  const [honeyAmount, setHoneyAmount] = useState('0');
+  const [solAmount, setSolAmount] = useState('');
+  const [gameTokenAmount, setGameTokenAmount] = useState('0');
   const [isCalculating, setIsCalculating] = useState(false);
   const { show: showNotification } = useNotification();
 
   // Monitor errors and show notifications with duplicate prevention
   const lastNotificationTime = useRef(0);
   useEffect(() => {
-    if (error) {
+    if (error || dexError) {
       const now = Date.now();
       // Only show notification if it's been more than 2 seconds since last notification
       if (now - lastNotificationTime.current > 2000) {
         lastNotificationTime.current = now;
-        if (isTransactionRejection(error)) {
+        const errorMessage = error || dexError;
+        if (isTransactionRejection(errorMessage)) {
           showNotification('Transaction was rejected by user.', 'error');
         } else {
-          showNotification(`DEX operation failed!`, 'error');
+          showNotification(`DEX operation failed: ${errorMessage}`, 'error');
         }
       }
     }
-  }, [error, showNotification]);
+  }, [error, dexError, showNotification]);
 
   // Calculate amounts when either input changes
   useEffect(() => {
     const calculateAmounts = async () => {
       if (!isConnected) {
-        setHoneyAmount('0');
-        setEthAmount('');
+        setGameTokenAmount('0');
+        setSolAmount('');
         return;
       }
       
@@ -53,32 +61,30 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
         setIsCalculating(true);
         
         if (isReversed) {
-          // Honey → ETH: Calculate ETH amount based on Honey input
-          if (!honeyAmount || parseFloat(honeyAmount) <= 0) {
-            setEthAmount('');
+          // Game Token → SOL: Calculate SOL amount based on Game Token input
+          if (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) {
+            setSolAmount('');
             return;
           }
-          const honeyWei = (honeyAmount);
-          const ethAmount = await getETHAmount(honeyWei);
-          console.log("🚀 ~ calculateAmounts ~ ETH amount for", honeyAmount, "Honey:", ethAmount);
-          setEthAmount(ethers.formatEther(ethAmount));
+          const solOut = await getSolOut(gameTokenAmount);
+          console.log("🚀 ~ calculateAmounts ~ SOL amount for", gameTokenAmount, "Game Tokens:", solOut);
+          setSolAmount(solOut);
         } else {
-          // ETH → Honey: Calculate Honey amount based on ETH input
-          if (!ethAmount || parseFloat(ethAmount) <= 0) {
-            setHoneyAmount('0');
+          // SOL → Game Token: Calculate Game Token amount based on SOL input
+          if (!solAmount || parseFloat(solAmount) <= 0) {
+            setGameTokenAmount('0');
             return;
           }
-          const ethWei = (ethAmount);
-          const honeyAmount = await getYieldAmount(ethWei);
-          console.log("🚀 ~ calculateAmounts ~ Honey amount for", ethAmount, "ETH:", honeyAmount);
-          setHoneyAmount(ethers.formatEther(honeyAmount));
+          const tokensOut = await getTokensOut(solAmount);
+          console.log("🚀 ~ calculateAmounts ~ Game Token amount for", solAmount, "SOL:", tokensOut);
+          setGameTokenAmount(tokensOut);
         }
       } catch (err) {
         console.error('Failed to calculate amounts:', err);
         if (isReversed) {
-          setEthAmount('');
+          setSolAmount('');
         } else {
-          setHoneyAmount('0');
+          setGameTokenAmount('0');
         }
       } finally {
         setIsCalculating(false);
@@ -87,7 +93,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
 
     const timeoutId = setTimeout(calculateAmounts, 500); // Debounce
     return () => clearTimeout(timeoutId);
-  }, [ethAmount, honeyAmount, isReversed, isConnected, getYieldAmount, getETHAmount]);
+  }, [solAmount, gameTokenAmount, isReversed, isConnected, getTokensOut, getSolOut]);
 
   const onSwap = async () => {
     if (!isConnected) {
@@ -96,66 +102,60 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
     }
 
     if (isReversed) {
-      // Honey → ETH swap
-      if (!honeyAmount || parseFloat(honeyAmount) <= 0) {
-        showNotification('Please enter a valid Honey amount', 'warning');
+      // Game Token → SOL swap
+      if (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) {
+        showNotification('Please enter a valid Game Token amount', 'warning');
         return;
       }
 
       try {
-        const honeyWei = ethers.parseEther(honeyAmount);
-        const result = await swapHoneyForETH(honeyWei);
+        const result = await sellTokens(parseFloat(gameTokenAmount));
         
-        if (result) {
-          showNotification('Swap successful! Check your ETH balance.', 'success');
-          setEthAmount('');
-          setHoneyAmount('0');
+        if (result && result.success) {
+          showNotification('Swap successful! Check your SOL balance.', 'success');
+          setSolAmount('');
+          setGameTokenAmount('0');
           // Refresh balances after successful swap
-          await Promise.all([
-            fetchBalances(), // Refresh DEX component balances
-          ]);
+          await fetchBalances();
           // Close dialog after successful swap
           onClose();
         }
       } catch (err) {
-        console.error('Failed to swap Honey for ETH:', err);
+        console.error('Failed to swap Game Tokens for SOL:', err);
         showNotification(`Swap failed: ${err?.message || 'Unknown error'}`, 'error');
       }
     } else {
-      // ETH → Honey swap
-      if (!ethAmount || parseFloat(ethAmount) <= 0) {
-        showNotification('Please enter a valid ETH amount', 'warning');
+      // SOL → Game Token swap
+      if (!solAmount || parseFloat(solAmount) <= 0) {
+        showNotification('Please enter a valid SOL amount', 'warning');
         return;
       }
 
       try {
-        const ethWei = ethers.parseEther(ethAmount);
-        const result = await swapETHForYield(ethWei);
+        const result = await buyTokens(parseFloat(solAmount));
         
-        if (result) {
-          showNotification('Swap successful! Check your Honey token balance.', 'success');
-          setEthAmount('');
-          setHoneyAmount('0');
+        if (result && result.success) {
+          showNotification('Swap successful! Check your Game Token balance.', 'success');
+          setSolAmount('');
+          setGameTokenAmount('0');
           // Refresh balances after successful swap
-          await Promise.all([
-            fetchBalances(), // Refresh DEX component balances
-          ]);
+          await fetchBalances();
           // Close dialog after successful swap
           onClose();
         }
       } catch (err) {
-        console.error('Failed to swap:', err);
+        console.error('Failed to swap SOL for Game Tokens:', err);
         showNotification(`Swap failed: ${err?.message || 'Unknown error'}`, 'error');
       }
     }
   };
 
-  const handleEthBalanceClick = (balance) => {
-    setEthAmount(balance);
+  const handleSolBalanceClick = (balance) => {
+    setSolAmount(balance);
   };
 
-  const handleHoneyBalanceClick = (balance) => {
-    setHoneyAmount(balance);
+  const handleGameTokenBalanceClick = (balance) => {
+    setGameTokenAmount(balance);
   };
 
   useEffect(() => {
@@ -164,10 +164,10 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
       { label: "Price Impact", value: "0.39%" },
       { 
         label: "Minimum Received", 
-        value: isCalculating ? "Calculating..." : (isReversed ? ethAmount : honeyAmount)
+        value: isCalculating ? "Calculating..." : (isReversed ? solAmount : gameTokenAmount)
       },
     ]);
-  }, [honeyAmount, ethAmount, isCalculating, isReversed]);
+  }, [gameTokenAmount, solAmount, isCalculating, isReversed]);
 
   return (
     <BaseDialog className="dex-wrapper" title={label} onClose={onClose} header={header}>
@@ -175,12 +175,12 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   {/* Notifications rendered at app level */}
         <div className="swap-wrapper">
           <TokenInputRow 
-            token={isReversed ? "Honey" : "ABS-ETH"} 
-            balance={isReversed ? (isCalculating ? "Calculating..." : honeyBalance) : ethBalance} 
-            value={isReversed ? honeyAmount : ethAmount}
-            onChange={isReversed ? setHoneyAmount : setEthAmount}
-            onBalanceClick={isReversed ? handleHoneyBalanceClick : handleEthBalanceClick}
-            disabled={loading}
+            token={isReversed ? "GAME" : "SOL"} 
+            balance={isReversed ? (isCalculating ? "Calculating..." : gameTokenBalance) : solBalance} 
+            value={isReversed ? gameTokenAmount : solAmount}
+            onChange={isReversed ? setGameTokenAmount : setSolAmount}
+            onBalanceClick={isReversed ? handleGameTokenBalanceClick : handleSolBalanceClick}
+            disabled={dexLoading}
             readOnly={!isReversed}
           />
           <ExchangeButton
@@ -189,21 +189,21 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
             }}
           ></ExchangeButton>
           <TokenInputRow 
-            token={isReversed ? "ABS-ETH" : "Honey"} 
-            balance={isReversed ? ethBalance : (isCalculating ? "Calculating..." : honeyBalance)}
-            value={isReversed ? ethAmount : honeyAmount}
-            onBalanceClick={isReversed ? handleEthBalanceClick : handleHoneyBalanceClick}
+            token={isReversed ? "SOL" : "GAME"} 
+            balance={isReversed ? solBalance : (isCalculating ? "Calculating..." : gameTokenBalance)}
+            value={isReversed ? solAmount : gameTokenAmount}
+            onBalanceClick={isReversed ? handleSolBalanceClick : handleGameTokenBalanceClick}
             readOnly={isReversed}
             disabled={true}
           />
         </div>
         <BaseButton 
-          label={loading ? "Swapping..." : "Swap"} 
+          label={dexLoading ? "Swapping..." : "Swap"} 
           onClick={onSwap}
           disabled={
-            loading || 
+            dexLoading || 
             !isConnected ||
-            (isReversed ? (!honeyAmount || parseFloat(honeyAmount) <= 0) : (!ethAmount || parseFloat(ethAmount) <= 0))
+            (isReversed ? (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) : (!solAmount || parseFloat(solAmount) <= 0))
           }
         ></BaseButton>
         {swapInfo.map((item) => (
@@ -211,8 +211,8 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
         ))}
         <br/>
         <DividerLink
-          label=" Using Thruster's Uniswap V2 Router! "
-          link="https://app.thruster.finance/"
+          label=" Using Solana Valley DEX! "
+          link="https://solana.com/"
         ></DividerLink>
       </div>
     </BaseDialog>

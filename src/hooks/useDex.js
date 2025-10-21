@@ -1,0 +1,309 @@
+/* global BigInt */
+import { useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useSolanaWallet } from './useSolanaWallet';
+import { createSolanaValleyDexProgram } from '../solana/anchor/client';
+import { 
+  GAME_TOKEN_MINT, 
+  SOLANA_VALLEY_DEX_PROGRAM_ID 
+} from '../solana/constants/programId';
+import { 
+  getAssociatedTokenAddress, 
+  TOKEN_PROGRAM_ID, 
+  ASSOCIATED_TOKEN_PROGRAM_ID 
+} from '@solana/spl-token';
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
+import {
+  buyTokensStart,
+  buyTokensSuccess,
+  buyTokensFailure,
+  sellTokensStart,
+  sellTokensSuccess,
+  sellTokensFailure,
+  updateSolBalance,
+  updateGameTokenBalance,
+  selectBalanceLoading,
+  selectBalanceError,
+} from '../solana/store/slices/balanceSlice';
+
+export const useDex = () => {
+  const { publicKey, wallet, connection } = useSolanaWallet();
+  const dispatch = useDispatch();
+  
+  // Redux state
+  const loading = useSelector(selectBalanceLoading);
+  const error = useSelector(selectBalanceError);
+
+  // Get DEX program instance
+  const getDexProgram = useCallback(() => {
+    if (!publicKey || !wallet || !connection) return null;
+    const anchorWallet = wallet?.adapter?.signTransaction ? wallet.adapter : wallet;
+    return createSolanaValleyDexProgram(connection, anchorWallet);
+  }, [publicKey, wallet, connection]);
+
+  // Calculate PDAs
+  const getDexPoolPda = useCallback(() => {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("dex_pool"), GAME_TOKEN_MINT.toBuffer()],
+      SOLANA_VALLEY_DEX_PROGRAM_ID
+    );
+    return pda;
+  }, []);
+
+  const getSolVaultPda = useCallback(() => {
+    const [pda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("sol_vault"), GAME_TOKEN_MINT.toBuffer()],
+      SOLANA_VALLEY_DEX_PROGRAM_ID
+    );
+    return pda;
+  }, []);
+
+  
+  // Fetch user balances
+  const fetchBalances = useCallback(async () => {
+    if (!publicKey) return;
+
+    try {
+      if (!connection) return;
+
+      // Get SOL balance
+      const solBalance = await connection.getBalance(publicKey);
+      const solBalanceFormatted = (solBalance / LAMPORTS_PER_SOL).toFixed(6);
+
+      // Get game token balance
+      const userGameTokenAta = await getAssociatedTokenAddress(
+        GAME_TOKEN_MINT, 
+        publicKey, 
+        false
+      );
+
+      let gameTokenBalance = '0';
+      try {
+        const tokenAccount = await connection.getTokenAccountBalance(userGameTokenAta);
+        gameTokenBalance = (tokenAccount.value.uiAmount || 0).toFixed(6);
+      } catch (err) {
+        // Token account doesn't exist yet
+        gameTokenBalance = '0';
+      }
+
+      // Update Redux state
+      dispatch(updateSolBalance(solBalanceFormatted));
+      dispatch(updateGameTokenBalance(gameTokenBalance));
+
+    } catch (err) {
+      console.error('Failed to fetch balances:', err);
+    }
+  }, [publicKey, connection, dispatch]);
+
+  // Buy tokens with SOL
+  const buyTokens = useCallback(async (solAmount) => {
+    if (!publicKey) {
+      dispatch(buyTokensFailure('Wallet not connected'));
+      return false;
+    }
+
+    const dexProgram = getDexProgram();
+    if (!dexProgram) {
+      dispatch(buyTokensFailure('DEX program not available'));
+      return false;
+    }
+
+    dispatch(buyTokensStart());
+
+    try {
+      const solAmountLamports = Math.floor(solAmount * LAMPORTS_PER_SOL);
+      if (solAmountLamports <= 0) {
+        throw new Error('Invalid SOL amount');
+      }
+
+      const dexPoolPda = getDexPoolPda();
+      const solVaultPda = getSolVaultPda();
+      const userGameTokenAta = await getAssociatedTokenAddress(
+        GAME_TOKEN_MINT, 
+        publicKey, 
+        false
+      );
+
+      // Get vault ATA (authority = dex_pool PDA)
+      const vaultAta = await getAssociatedTokenAddress(
+        GAME_TOKEN_MINT,
+        dexPoolPda,
+        true
+      );
+
+      const program = dexProgram.getProgram();
+      const tx = await program.methods
+        .buyTokens(new BN(solAmountLamports))
+        .accounts({
+          user: publicKey,
+          dexPool: dexPoolPda,
+          vault: vaultAta,
+          userAta: userGameTokenAta,
+          solVault: solVaultPda,
+          tokenMint: GAME_TOKEN_MINT,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+
+      dispatch(buyTokensSuccess());
+      
+      // Refresh balances after successful transaction
+      await fetchBalances();
+      
+      return { txHash: tx, success: true };
+    } catch (err) {
+      console.error('Buy tokens error:', err);
+      dispatch(buyTokensFailure(err.message));
+      return false;
+    }
+  }, [publicKey, dispatch, getDexProgram, getDexPoolPda, getSolVaultPda, fetchBalances]);
+
+  // Sell tokens for SOL
+  const sellTokens = useCallback(async (tokenAmount) => {
+    if (!publicKey) {
+      dispatch(sellTokensFailure('Wallet not connected'));
+      return false;
+    }
+
+    const dexProgram = getDexProgram();
+    if (!dexProgram) {
+      dispatch(sellTokensFailure('DEX program not available'));
+      return false;
+    }
+
+    dispatch(sellTokensStart());
+
+    try {
+      const tokenAmountBaseUnits = Math.floor(tokenAmount * 1e6); // Assuming 6 decimals
+      if (tokenAmountBaseUnits <= 0) {
+        throw new Error('Invalid token amount');
+      }
+
+      const dexPoolPda = getDexPoolPda();
+      const solVaultPda = getSolVaultPda();
+      const userGameTokenAta = await getAssociatedTokenAddress(
+        GAME_TOKEN_MINT, 
+        publicKey, 
+        false
+      );
+
+      // Get vault ATA (authority = dex_pool PDA)
+      const vaultAta = await getAssociatedTokenAddress(
+        GAME_TOKEN_MINT,
+        dexPoolPda,
+        true
+      );
+
+      const program = dexProgram.getProgram();
+      const tx = await program.methods
+        .sellTokens(new BN(tokenAmountBaseUnits))
+        .accounts({
+          user: publicKey,
+          dexPool: dexPoolPda,
+          vault: vaultAta,
+          userAta: userGameTokenAta,
+          solVault: solVaultPda,
+          tokenMint: GAME_TOKEN_MINT,
+          systemProgram: SystemProgram.programId,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+
+      dispatch(sellTokensSuccess());
+      
+      // Refresh balances after successful transaction
+      await fetchBalances();
+      
+      return { txHash: tx, success: true };
+    } catch (err) {
+      console.error('Sell tokens error:', err);
+      dispatch(sellTokensFailure(err.message));
+      return false;
+    }
+  }, [publicKey, dispatch, getDexProgram, getDexPoolPda, getSolVaultPda, fetchBalances]);
+
+  // Fetch current pool state
+  const fetchDexPool = useCallback(async () => {
+    if (!publicKey) return null;
+
+    const dexProgram = getDexProgram();
+    if (!dexProgram) return null;
+
+    try {
+      const dexPoolPda = getDexPoolPda();
+      const program = dexProgram.getProgram();
+      const poolData = await program.account.dexPool.fetch(dexPoolPda);
+      
+      return {
+        virtualSolReserves: poolData.virtualSolReserves.toString(),
+        virtualTokenReserves: poolData.virtualTokenReserves.toString(),
+        realSolReserves: poolData.realSolReserves.toString(),
+        realTokenReserves: poolData.realTokenReserves.toString(),
+        totalTokensSold: poolData.totalTokensSold.toString(),
+        tokenMint: poolData.tokenMint.toString(),
+        authority: poolData.authority.toString(),
+      };
+    } catch (err) {
+      console.error('Failed to fetch DEX pool:', err);
+      return null;
+    }
+  }, [publicKey, getDexProgram, getDexPoolPda]);
+
+
+  // Calculate tokens out for given SOL amount (preview)
+  const getTokensOut = useCallback(async (solAmount) => {
+    const poolData = await fetchDexPool();
+    if (!poolData) return '0';
+
+    try {
+      const solIn = Math.floor(solAmount * LAMPORTS_PER_SOL);
+      const s0 = BigInt(poolData.virtualSolReserves) + BigInt(poolData.realSolReserves);
+      const t0 = BigInt(poolData.virtualTokenReserves) + BigInt(poolData.realTokenReserves);
+      
+      if (s0 === 0n || t0 === 0n) return '0';
+
+      // token_out = sol_in * t0 / s0
+      const tokensOut = (BigInt(solIn) * t0) / s0;
+      return (Number(tokensOut) / 1e6).toFixed(6); // Convert back to UI units
+    } catch (err) {
+      console.error('Failed to calculate tokens out:', err);
+      return '0';
+    }
+  }, [fetchDexPool]);
+
+  // Calculate SOL out for given token amount (preview)
+  const getSolOut = useCallback(async (tokenAmount) => {
+    const poolData = await fetchDexPool();
+    if (!poolData) return '0';
+
+    try {
+      const tokenIn = Math.floor(tokenAmount * 1e6);
+      const s0 = BigInt(poolData.virtualSolReserves) + BigInt(poolData.realSolReserves);
+      const t0 = BigInt(poolData.virtualTokenReserves) + BigInt(poolData.realTokenReserves);
+      
+      if (s0 === 0n || t0 === 0n) return '0';
+
+      // sol_out = token_in * s0 / t0
+      const solOut = (BigInt(tokenIn) * s0) / t0;
+      return (Number(solOut) / LAMPORTS_PER_SOL).toFixed(6);
+    } catch (err) {
+      console.error('Failed to calculate SOL out:', err);
+      return '0';
+    }
+  }, [fetchDexPool]);
+
+  return {
+    buyTokens,
+    sellTokens,
+    fetchDexPool,
+    fetchBalances,
+    getTokensOut,
+    getSolOut,
+    loading,
+    error,
+  };
+};

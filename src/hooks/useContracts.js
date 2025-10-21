@@ -15,6 +15,6 @@ export { useROIData } from './useROIData';
 
 
 export const useEquipmentRegistry = () => ({ });
-export const useDex = () => ({ });
+export { useDex } from './useDex';
 export const useLeaderboard = () => ({ });
 

@@ -2,6 +2,7 @@ import { PublicKey } from '@solana/web3.js';
 import { getClusterConfig, getRpcEndpoint, getWsEndpoint, getFinalCluster } from '../utils/clusterUtils';
 
 export const SOLANA_VALLEY_PROGRAM_ID = new PublicKey('CGT1otbr2P59kjbJckZvTAQLRFsX7oZhN5RZPHJhSzth');
+export const SOLANA_VALLEY_DEX_PROGRAM_ID = new PublicKey('HJn5wSX47xUqeYtVsaXkS4a7qD1CXNNnSg9BMNjGWdvr');
 
 export const GAME_TOKEN_MINT = new PublicKey('6k71Fit7Tp48UM6jHN3WDRA7QTDhycM7a64H4fyZsjPe');
 
