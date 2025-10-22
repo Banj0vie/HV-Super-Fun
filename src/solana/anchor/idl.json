@@ -206,6 +206,16 @@
           "isSigner": false
         },
         {
+          "name": "gameTokenMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gameTokenMintAuth",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -1612,6 +1622,42 @@
           "type": "u32"
         }
       ]
+    },
+    {
+      "name": "prodMint",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "gameRegistry",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "itemMintAuth",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [

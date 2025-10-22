@@ -49,8 +49,6 @@ export const useVendor = () => {
       remainingAccounts.push({ pubkey: userDataPda, isWritable: true, isSigner: false });
       remainingAccounts.push({ pubkey: bankerDataPda, isWritable: true, isSigner: false });
       remainingAccounts.push({ pubkey: userGameAta, isWritable: true, isSigner: false });
-      remainingAccounts.push({ pubkey: GAME_TOKEN_MINT, isWritable: true, isSigner: false });
-      remainingAccounts.push({ pubkey: gameTokenMintAuthPda, isWritable: false, isSigner: false });
       remainingAccounts.push({ pubkey: epochTop5Pda, isWritable: true, isSigner: false });
       remainingAccounts.push({ pubkey: sponsorGameAta, isWritable: false, isSigner: false });
       const tx = await program.methods
@@ -59,6 +57,8 @@ export const useVendor = () => {
         buyer: publicKey,
         gameRegistry: gameRegistryPda,
         request: requestPda,
+        gameTokenMint: GAME_TOKEN_MINT,
+        gameTokenMintAuth: gameTokenMintAuthPda,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
       })
