@@ -27,19 +27,25 @@ export const useItems = () => {
 
     try {
       const balances = await fetchAllItemBalances(connection, publicKey);
+      
       // Include ALL items (even with 0 balance) for crafting interface
       const userItems = [];
       Object.entries(balances).forEach(([itemId, balance]) => {
         // Convert balance to number for comparison
         const balanceNum = typeof balance === 'object' && balance.toNumber ? balance.toNumber() : Number(balance);
+        
+        
         const itemData = ALL_ITEMS[itemId];
         if (itemData) {
         // Item exists in ALL_ITEMS, use its data
-          userItems.push({
-            id: itemId,
+          const item = {
+            id: Number(itemId), // Ensure id is always a number
             count: balanceNum,
             ...itemData
-          });
+          };
+          
+          
+          userItems.push(item);
         } else {
           // Item doesn't exist in ALL_ITEMS, create proper category structure
           let category, subCategory;
@@ -87,7 +93,7 @@ export const useItems = () => {
 
           // Create item data with proper categories
           userItems.push({
-            id: itemId,
+            id: Number(itemId), // Ensure id is always a number
             count: balanceNum,
             category,
             subCategory,

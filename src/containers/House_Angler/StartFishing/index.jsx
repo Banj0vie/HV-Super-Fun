@@ -6,7 +6,7 @@ import LabelValueBox from "../../../components/boxes/LabelValueBox";
 import BaseButton from "../../../components/buttons/BaseButton";
 import SelectBaitDialog from "./SelectBaitDialog";
 import ConfirmBaitAmountDialog from "./ConfirmBaitAmountDialog";
-import { useFishing } from "../../../hooks/useContracts";
+import { useFishing } from "../../../hooks/useFishing";
 import { useNotification } from "../../../contexts/NotificationContext";
 import { handleContractError } from "../../../utils/errorHandler";
 

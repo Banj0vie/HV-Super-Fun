@@ -52,7 +52,7 @@
 
 .loading, .error, .no-nfts {
   text-align: center;
-  padding: 2rem;
+  /* padding: 2rem; */
   color: #fff;
   font-size: 1.2rem;
 }

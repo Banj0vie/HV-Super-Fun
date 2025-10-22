@@ -9,7 +9,7 @@ import ItemCombinationTable from "./ItemCombinationTable";
 import ItemCombinationDescription from "./ItemCombinationDescription";
 import { ITEM_COMBI } from "../../../constants/item_combination";
 import BaseButton from "../../buttons/BaseButton";
-import { useFishing } from "../../../hooks/useContracts";
+import { useFishing } from "../../../hooks/useFishing";
 import { usePotion } from "../../../hooks/useContracts";
 import { useItems } from "../../../hooks/useItems";
 import { useNotification } from "../../../contexts/NotificationContext";
@@ -27,7 +27,7 @@ const ItemCombinationBox = ({
   const { show } = useNotification();
   
   // Get contract hooks (always call hooks unconditionally)
-  const fishing = useFishing();
+  const { craftBait1, craftBait2, craftBait3 } = useFishing();
   const { 
     craftGrowthElixir, 
     craftPesticide, 
@@ -200,11 +200,14 @@ const ItemCombinationBox = ({
   };
 
   const handleBaitCraft = async () => {
-    if (!fishing) throw new Error("Fishing contract not available");
+    if (!craftBait1 || !craftBait2 || !craftBait3) throw new Error("Fishing contract not available");
 
     if (itemId === ID_BAIT_ITEMS.BAIT_1) {
       // Bait1: Use the multiplier as the bait count to craft
-      await fishing.craftBait1(multiplier);
+      const result = await craftBait1(multiplier);
+      if (!result || !result.txHash) {
+        throw new Error("Failed to craft Bait 1");
+      }
     } else if (itemId === ID_BAIT_ITEMS.BAIT_2 || itemId === ID_BAIT_ITEMS.BAIT_3) {
       // Bait2 and Bait3 require arrays of items and amounts
       const itemIds = [];
@@ -212,15 +215,21 @@ const ItemCombinationBox = ({
       
       Object.entries(cropCounts).forEach(([cropId, count]) => {
         if (count > 0) {
-          itemIds.push(BigInt(cropId));
+          itemIds.push(parseInt(cropId)); // Convert to number, not BigInt
           amounts.push(count);
         }
       });
       
+      
+      let result;
       if (itemId === ID_BAIT_ITEMS.BAIT_2) {
-        await fishing.craftBait2(itemIds, amounts);
+        result = await craftBait2(itemIds, amounts);
       } else {
-        await fishing.craftBait3(itemIds, amounts);
+        result = await craftBait3(itemIds, amounts);
+      }
+      
+      if (!result || !result.txHash) {
+        throw new Error(`Failed to craft ${itemId === ID_BAIT_ITEMS.BAIT_2 ? 'Bait 2' : 'Bait 3'}`);
       }
     }
   };

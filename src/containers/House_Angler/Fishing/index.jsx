@@ -10,13 +10,12 @@ import { handleContractError } from "../../../utils/errorHandler";
 
 const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
   const [isFishing, setIsFishing] = useState(false);
-  console.log(requestId);
   const [isLootReceivedDialog, setIsLootReceivedDialog] = useState(false);
   const [isBuyAgain, setIsBuyAgain] = useState(false);
   const [fishingResult, setFishingResult] = useState(null);
   const [hasThrownBait, setHasThrownBait] = useState(false);
   
-  const { revealFishing } = useFishing();
+  const { revealFishing, listenForFishingResults } = useFishing();
   const { refetch } = useItems();
   const { show } = useNotification();
   
@@ -36,11 +35,6 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
 
   // Phase 2: Reel in Fish - Fulfill RNG request and get results (like fulfillPendingRequest)
   const onReelInFish = useCallback(async () => {
-    if (!requestId) {
-      show("No pending fishing request found", "error");
-      return;
-    }
-
     // Clean up any existing fishing process
     if (fishingCleanupRef.current) {
       fishingCleanupRef.current();
@@ -49,19 +43,28 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
 
     setIsFishing(true);
     
-      try {
-        // Reveal fishing on-chain
-        const result = await revealFishing(requestId);
+    try {
+      // Reveal fishing on-chain - use requestId if available, otherwise use stored nonce
+      const result = await revealFishing(requestId);
+      
+      if (result && result.txHash) {
+        show("Reeling in fish...", "info");
         
-        if (result) {
-          show("Reeling in fish...", "info");
+        // Listen for fishing results from transaction logs
+        await listenForFishingResults(result.txHash, (results) => {
+          // Transform itemIds array into items array with id and count
+          const items = results.itemIds.map(itemId => ({
+            id: itemId,
+            count: 1 // Each fishing result gives 1 of each item
+          }));
           
-          // Set up event listener for fishing results
-          // No event listener; results will be reflected in inventory. Prompt user.
-          show("Fishing revealed! Check your inventory.", "success");
+          setFishingResult(items);
+          setIsLootReceivedDialog(true);
           setIsFishing(false);
           refetch();
+        });
         
+        show("Fishing revealed! Check your rewards.", "success");
       } else {
         // If fulfillment failed, reset the loading state
         setIsFishing(false);
@@ -79,7 +82,7 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
         fishingCleanupRef.current = null;
       }
     }
-    }, [requestId, revealFishing, show, refetch]);
+  }, [requestId, revealFishing, listenForFishingResults, show, refetch]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -2,7 +2,7 @@ import { ComputeBudgetProgram, PublicKey } from '@solana/web3.js';
 import { GAME_TOKEN_MINT, SOLANA_VALLEY_PROGRAM_ID } from '../constants/programId';
 import { SEEDS } from '../constants/seeds';
 import { getAssociatedTokenAddressSync } from '@solana/spl-token';
-import { CAT_CHEST, ID_CHEST_ITEMS, ID_SEEDS } from '../../constants/app_ids';
+import { CAT_CHEST, ID_BAIT_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_PRODUCE_ITEMS, ID_SEEDS } from '../../constants/app_ids';
 import { chestLootTable } from '../../utils/basic';
 import { BN } from 'bn.js';
 
@@ -255,4 +255,125 @@ export const getRequestPDAs = (wallet, nonce) => {
     vendorRequest: getRequestPDA(wallet, nonce),
     fishingRequest: getFishingRequestPDA(wallet, nonce),
   };
+};
+
+export const getCraftBaitRemainingAccounts = (publicKey) => {
+  const accounts = [];
+  
+  // Add all produce items (for burning ingredients)
+  const produceItems = Object.values(ID_PRODUCE_ITEMS);
+  for (const itemId of produceItems) {
+    const mint = getItemMintPDA(itemId);
+    const ata = getAssociatedTokenAddressSync(mint, publicKey, false);
+    accounts.push({ pubkey: mint, isWritable: true, isSigner: false });
+    accounts.push({ pubkey: ata, isWritable: true, isSigner: false });
+  }
+  
+  // Add all bait items (for minting crafted bait)
+  const baitItems = Object.values(ID_BAIT_ITEMS);
+  for (const itemId of baitItems) {
+    const mint = getItemMintPDA(itemId);
+    const ata = getAssociatedTokenAddressSync(mint, publicKey, false);
+    accounts.push({ pubkey: mint, isWritable: true, isSigner: false });
+    accounts.push({ pubkey: ata, isWritable: true, isSigner: false });
+  }
+  
+  // Add item mint authority
+  const itemMintAuth = getItemMintAuthPDA();
+  accounts.push({ pubkey: itemMintAuth, isWritable: false, isSigner: false });
+  
+  return accounts;
+};
+
+export const getCraftBait1RemainingAccounts = (publicKey) => {
+  const accounts = [];
+  
+  try {
+    // Bait 1 requires: POTATO, LETTUCE, CABBAGE (for burning) and BAIT_1 (for minting)
+    const requiredItems = [
+      ID_PRODUCE_ITEMS.POTATO,
+      ID_PRODUCE_ITEMS.LETTUCE, 
+      ID_PRODUCE_ITEMS.CABBAGE,
+      ID_BAIT_ITEMS.BAIT_1
+    ];
+    
+    for (const itemId of requiredItems) {
+      const mint = getItemMintPDA(itemId);
+      const ata = getAssociatedTokenAddressSync(mint, publicKey, false);
+      accounts.push({ pubkey: mint, isWritable: true, isSigner: false });
+      accounts.push({ pubkey: ata, isWritable: true, isSigner: false });
+    }
+    
+    // Add item mint authority
+    const itemMintAuth = getItemMintAuthPDA();
+    accounts.push({ pubkey: itemMintAuth, isWritable: false, isSigner: false });
+    return accounts;
+  } catch (error) {
+    console.error('getCraftBait1RemainingAccounts - error:', error);
+    throw error;
+  }
+};
+
+export const getRevealFishingRemainingAccounts = (publicKey) => {
+  const accounts = [];
+  
+  try {
+    // Reveal fishing can mint these reward items (matching Rust constants):
+    const rewardItems = [
+      ID_POTION_ITEMS.POTION_FERTILIZER,      // CAT_POTION << 8 | 3
+      ID_POTION_ITEMS.POTION_PESTICIDE,       // CAT_POTION << 8 | 2  
+      ID_POTION_ITEMS.POTION_GROWTH_ELIXIR,   // CAT_POTION << 8 | 1
+      ID_CHEST_ITEMS.CHEST_GOLD,              // CAT_CHEST << 8 | 4
+      ID_CHEST_ITEMS.CHEST_SILVER,            // CAT_CHEST << 8 | 3
+      ID_CHEST_ITEMS.CHEST_BRONZE,            // CAT_CHEST << 8 | 2
+      ID_CHEST_ITEMS.CHEST_WOOD               // CAT_CHEST << 8 | 1
+    ];
+    
+    for (const itemId of rewardItems) {
+      const mint = getItemMintPDA(itemId);
+      const ata = getAssociatedTokenAddressSync(mint, publicKey, false);
+      accounts.push({ pubkey: mint, isWritable: true, isSigner: false });
+      accounts.push({ pubkey: ata, isWritable: true, isSigner: false });
+    }
+    
+    // Add item mint authority
+    const itemMintAuth = getItemMintAuthPDA();
+    accounts.push({ pubkey: itemMintAuth, isWritable: false, isSigner: false });
+    return accounts;
+  } catch (error) {
+    console.error('getRevealFishingRemainingAccounts - error:', error);
+    throw error;
+  }
+};
+
+export const getCraftBaitSpecificRemainingAccounts = (publicKey, itemIds, baitId) => {
+  const accounts = [];
+  
+  try {
+    // Ensure itemIds is an array
+    const itemIdsArray = Array.isArray(itemIds) ? itemIds : [];
+    
+    // Add specific produce items that are being used (for burning ingredients)
+    for (const itemId of itemIdsArray) {
+      const mint = getItemMintPDA(itemId);
+      const ata = getAssociatedTokenAddressSync(mint, publicKey, false);
+      accounts.push({ pubkey: mint, isWritable: true, isSigner: false });
+      accounts.push({ pubkey: ata, isWritable: true, isSigner: false });
+    }
+    
+    // Add the specific bait item being crafted (for minting)
+    const baitMint = getItemMintPDA(baitId);
+    const baitAta = getAssociatedTokenAddressSync(baitMint, publicKey, false);
+    accounts.push({ pubkey: baitMint, isWritable: true, isSigner: false });
+    accounts.push({ pubkey: baitAta, isWritable: true, isSigner: false });
+    
+    // Add item mint authority
+    const itemMintAuth = getItemMintAuthPDA();
+    accounts.push({ pubkey: itemMintAuth, isWritable: false, isSigner: false });
+    
+    return accounts;
+  } catch (error) {
+    console.error('getCraftBaitSpecificRemainingAccounts - error:', error);
+    throw error;
+  }
 };

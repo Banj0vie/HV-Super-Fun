@@ -50,26 +50,9 @@ const AnglerDialog = ({ onClose, label = "QUIET POND", header = "" }) => {
     setSelectedBaitId(baitId);
     setSelectedAmount(amount);
     
-    // Refresh pending requests to get the real request ID from the fish() call
-    await loadPendingRequests();
-    
-    // Get the updated pending requests after refresh
-    const updatedPendingRequests = await getAllPendingRequests();
-    
-    // Find the matching pending request for this bait and amount
-    const matchingRequest = updatedPendingRequests.find(req => 
-      parseInt(req.baitId) === parseInt(baitId) && parseInt(req.amount) === parseInt(amount)
-    );
-    
-    if (matchingRequest) {
-      setSelectedRequestId(matchingRequest.requestId);
-    } else {
-      // Fallback - this shouldn't happen but just in case
-      setSelectedRequestId(null);
-    }
-    
+    // Navigate to fishing page immediately - the request ID will be handled by the Fishing component
     setPageIndex(ID_ANGLER_PAGES.FISHING);
-  }, [loadPendingRequests, getAllPendingRequests]);
+  }, []);
 
   const onReelFish = (requestId, baitId, level, amount) => {
     // Navigate to fishing page with pending request info

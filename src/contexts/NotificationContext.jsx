@@ -6,7 +6,7 @@ const NotificationContext = createContext(null);
 export const NotificationProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const show = (message, kind = 'info', timeout = 4000) => {
+  const show = (message, kind = 'info', timeout = 3000) => {
     const id = generateId();
     setToasts((t) => [...t, { id, message, kind }]);
     
