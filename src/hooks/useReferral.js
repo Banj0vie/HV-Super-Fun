@@ -82,18 +82,49 @@ export const useReferral = () => {
     setReferralData(p => ({ ...p, loading: true, error: null }));
     try {
       const userDataPda = getUserDataPDA(publicKey);
-      // Encode referralCode to [u8;32]
-      let referralBytes = new Uint8Array(32);
-      if (referralCode) {
+      
+      // Check if profile already exists
+      try {
+        const existingProfile = await program.account.userData.fetch(userDataPda);
+        if (existingProfile && existingProfile.name) {
+          setReferralData(p => ({ ...p, loading: false, error: 'Profile already exists' }));
+          throw new Error('Profile already exists');
+        }
+      } catch (err) {
+        // Profile doesn't exist, continue with creation
+      }
+      
+      // Check if referral code is provided and valid
+      let referralBytes = new Uint8Array(32); // Default to [0u8; 32]
+      let referralCodeOwnerPda = null;
+      
+      if (referralCode && referralCode.trim() !== '') {
+        // Encode referralCode to [u8;32]
         if (typeof referralCode === 'string') {
           const enc = new TextEncoder();
-          const buf = enc.encode(referralCode);
+          const buf = enc.encode(referralCode.trim());
           referralBytes.set(buf.slice(0, 32));
         } else if (referralCode instanceof Uint8Array) {
           referralBytes.set(referralCode.slice(0, 32));
         }
+        
+        // Check if the referral code owner account exists
+        referralCodeOwnerPda = getReferralCodeOwnerPDA(referralBytes);
+        try {
+          await program.account.referralCodeOwner.fetch(referralCodeOwnerPda);
+        } catch (err) {
+          // Referral code doesn't exist, show user-friendly error
+          setReferralData(p => ({ ...p, loading: false, error: 'Invalid referral code' }));
+          throw new Error('Invalid referral code');
+        }
       }
-      const referralCodeOwnerPda = getReferralCodeOwnerPDA(referralBytes);
+      
+      // For empty referral code, use [0u8; 32] and null codeOwner (as per test script)
+      if (!referralCodeOwnerPda) {
+        referralBytes = new Uint8Array(32); // [0u8; 32]
+        referralCodeOwnerPda = null; // null for empty referral code
+      }
+      
       const tx = await program.methods
         .createProfile(name, referralBytes)
         .accounts({ user: publicKey, userData: userDataPda, codeOwner: referralCodeOwnerPda, systemProgram: SystemProgram.programId })
@@ -101,8 +132,27 @@ export const useReferral = () => {
       await fetchReferralData();
       return tx;
     } catch (err) {
-      const { message } = handleContractError(err, 'creating profile with referral');
-      setReferralData(p => ({ ...p, loading: false, error: message }));
+      let errorMessage = 'Failed to create profile';
+      
+      // Handle specific error cases with shorter messages
+      if (err.message.includes('Invalid referral code')) {
+        errorMessage = 'Invalid referral code';
+      } else if (err.message.includes('AccountNotInitialized')) {
+        errorMessage = 'Invalid referral code';
+      } else if (err.message.includes('already been processed') || err.message.includes('Transaction simulation failed: This transaction has already been processed')) {
+        errorMessage = 'Profile already exists or transaction already submitted';
+      } else if (err.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient funds';
+      } else if (err.message.includes('User rejected')) {
+        errorMessage = 'Transaction cancelled';
+      } else if (err.message.includes('Transaction simulation failed')) {
+        errorMessage = 'Transaction failed - please try again';
+      } else {
+        const { message } = handleContractError(err, 'creating profile');
+        errorMessage = message;
+      }
+      
+      setReferralData(p => ({ ...p, loading: false, error: errorMessage }));
       throw err;
     }
   }, [program, publicKey, fetchReferralData]);

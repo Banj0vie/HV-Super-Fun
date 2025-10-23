@@ -1,10 +1,11 @@
 .loading-page {
   width: 100vw;
   height: 100vh;
-  background-image: url('/public/images/loading/loading.jpg');
+  /* background-image: url('/public/images/loading/loading.jpg');
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
+  background-repeat: no-repeat; */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   justify-content: center;
   align-items: center;

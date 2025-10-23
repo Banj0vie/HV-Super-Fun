@@ -163,7 +163,8 @@
         {
           "name": "codeOwner",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "isOptional": true
         },
         {
           "name": "systemProgram",
@@ -1657,7 +1658,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "category",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
