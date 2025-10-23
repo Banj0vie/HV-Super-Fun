@@ -133,7 +133,7 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
       try {
         if (!previewHarvestForSeed || !account || !data?.seedId) return;
         
-        const res = await previewHarvestForSeed(account, data.seedId);
+        const res = await previewHarvestForSeed(data.seedId);
         
         if (!cancelled && res) {
           // Handle BigInt values properly
@@ -198,15 +198,15 @@ const CropTooltip = ({ container, pos = { x: 0, y: 0 }, data = {}, growthProgres
       </div>
       <div className="flex-text">
         <div>Total Harvest</div>
-        <div>{((Number(locked) + Number(unlocked)) / 1e18).toFixed(2)} $HNY</div>
+        <div>{((Number(locked || 0) + Number(unlocked || 0)) / 1e6).toFixed(2)} $HNY</div>
       </div>
       <div className="flex-text">
         <div className="locked">locked</div>
-        <div className="locked">{(Number(locked) / 1e18).toFixed(2)} $HNY</div>
+        <div className="locked">{(Number(locked || 0) / 1e6).toFixed(2)} $HNY</div>
       </div>
       <div className="flex-text">
         <div className="highlight">unlocked</div>
-        <div className="highlight">{(Number(unlocked) / 1e18).toFixed(2)} $HNY</div>
+        <div className="highlight">{(Number(unlocked || 0) / 1e6).toFixed(2)} $HNY</div>
       </div>
       <BaseDivider/>
       <div className="active-effect">
