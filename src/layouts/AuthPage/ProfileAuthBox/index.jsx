@@ -70,11 +70,6 @@ const ProfileAuthBox = ({ onCreateProfile }) => {
         setValue={(rc) => setReferralCode(rc)}
         value={referralCode}
       ></BaseInput>
-      {error && (
-        <div style={{color: 'red', margin: '10px 0', fontSize: '14px'}}>
-          {error}
-        </div>
-      )}
       <BaseButton
         className="h-3rem w-75"
         label={isCreatingProfile ? "Creating Profile..." : "Create Profile"}
