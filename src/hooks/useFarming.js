@@ -7,6 +7,8 @@ import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_I
 import { GAME_TOKEN_MINT, LOOKUP_TABLE_ADDRESS } from '../solana/constants/programId';
 import { sendTransactionForPhantom } from '../utils/transactionHelper';
 import { ID_POTION_ITEMS } from '../constants/app_ids';
+import { PRICE_BY_CATEGORY, LOCKED_BPS } from '../constants/farming';
+import { getMultiplier, getSubtype } from '../utils/basic';
 
 export const useFarming = () => {
     const { publicKey, sendTransaction } = useSolanaWallet();
@@ -203,6 +205,65 @@ export const useFarming = () => {
         } catch { return 0; }
     }, [program, publicKey]);
 
+    // Preview harvest amounts for a given seed (based on on-chain rules in farming.rs)
+    const previewHarvestForSeed = useCallback(async (seedId) => {
+        try {
+            if (!program || !publicKey) return { lockedGameToken: '0', unlockedGameToken: '0' };
+
+            // Decode seed to category (1..4) and local id
+            const seedCategory = (Number(seedId) >> 8) & 0xFF;
+            const localId = Number(seedId) & 0xFF;
+            const basePrice = PRICE_BY_CATEGORY[seedCategory] || 0n;
+
+            // Pull user level and token multiplier from user data for this crop
+            let level = 0;
+            let tokenMul = 1000;  // x1000
+            try {
+                const userDataPda = getUserDataPDA(publicKey);
+                const ud = await program.account.userData.fetch(userDataPda);
+                level = Number(ud?.level || 0);
+                const crops = ud?.userCrops || ud?.user_crops || [];
+                const targetCat = seedCategory;
+                const targetLocalId = localId;
+                for (const c of crops) {
+                    const rawId = c?.id?.toNumber ? c.id.toNumber() : Number(c?.id || 0);
+                    const cat = (rawId >> 16) & 0xFF;
+                    const localId = rawId & 0xFF;
+                    if (cat === targetCat && localId === targetLocalId) {
+                        tokenMul = Number(c?.tokenMultiplier ?? 1000);
+                        break;
+                    }
+                }
+            } catch (err) {
+                // fallback to defaults
+            }
+
+            // Use helper getMultiplier(subType, level) per on-chain helper.rs
+            const subType = getSubtype(Number(seedId));
+            const mult = getMultiplier(subType, level); // x1000 or higher
+
+            // Apply multiplier and token multiplier as helper.rs::calc_harvest
+            const toBI = (v) => (typeof window !== 'undefined' && window.BigInt ? window.BigInt(v) : 0n);
+            let totalTokens = 0n;
+            if (tokenMul > 1000) {
+                totalTokens = (basePrice * toBI(mult) * toBI(tokenMul)) / 1_000_000n;
+            } else {
+                totalTokens = (basePrice * toBI(mult)) / 1000n;
+            }
+
+            // Split locked/unlocked. LOCKED_RATIO = 166 bps (approx) per consts.rs
+            const locked = (totalTokens * LOCKED_BPS) / 1000n;
+            const unlocked = totalTokens - locked;
+
+            return {
+                lockedGameToken: locked.toString(),
+                unlockedGameToken: unlocked.toString(),
+            };
+        } catch {
+            return { lockedGameToken: '0', unlockedGameToken: '0' };
+        }
+    }, [program, publicKey]);
+
     const getCrop = useCallback(async (plotIndex) => {
         if (!program || !publicKey) return null;
         try {
@@ -315,7 +376,7 @@ export const useFarming = () => {
         }
     }, [program, publicKey, loading]);
 
-    return { plantBatch, harvestMany, getUserCrops, getMaxPlots, getPlantedPlotsCount, getCrop, applyGrowthElixir, applyPesticide, applyFertilizer, loading, error };
+    return { plantBatch, harvestMany, getUserCrops, getMaxPlots, getPlantedPlotsCount, getCrop, applyGrowthElixir, applyPesticide, applyFertilizer, previewHarvestForSeed, loading, error };
 };
 
 
