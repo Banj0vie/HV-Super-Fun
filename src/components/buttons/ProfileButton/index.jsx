@@ -2,9 +2,10 @@ import React from 'react';
 import './style.css';
 import { profileAssets } from '../../../constants/_baseimages';
 
-const ProfileButton = ({ icon, text, title, ariaLabel, style, bg, onClick, disabled }) => {
+const ProfileButton = ({ icon, text, title, ariaLabel, style, bg, onClick, disabled, className }) => {
   const backgroundUrl = bg || profileAssets.buttonBg;
-  const className = `profile-btn${text ? ' with-text' : ' only-icon'}${disabled ? ' disabled' : ''}`;
+  const baseClassName = `profile-btn${text ? ' with-text' : ' only-icon'}${disabled ? ' disabled' : ''}`;
+  const finalClassName = className ? `${baseClassName} ${className}` : baseClassName;
   
   const handleClick = (e) => {
     if (disabled) return;
@@ -21,7 +22,7 @@ const ProfileButton = ({ icon, text, title, ariaLabel, style, bg, onClick, disab
 
   return (
     <div
-      className={className}
+      className={finalClassName}
       title={title}
       aria-label={ariaLabel || title}
       role="button"

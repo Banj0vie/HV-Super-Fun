@@ -10,6 +10,7 @@ const initialState = {
   subscriptionIds: [],
   dexLoading: false,
   dexError: null,
+  balanceRefreshing: false,
 };
 
 const balanceSlice = createSlice({
@@ -21,12 +22,33 @@ const balanceSlice = createSlice({
       state.error = null;
     },
     fetchBalancesSuccess: (state, action) => {
+      // Only log if there are actual changes
+      const hasChanges = (
+        state.gameToken !== action.payload.gameToken ||
+        state.stakedBalance !== action.payload.stakedBalance ||
+        state.xTokenShare !== action.payload.xTokenShare ||
+        state.solBalance !== action.payload.solBalance
+      );
+      
+      if (hasChanges) {
+        console.log('🔄 Balance slice updating with:', action.payload);
+      }
+      
       state.gameToken = action.payload.gameToken;
       state.stakedBalance = action.payload.stakedBalance;
       state.xTokenShare = action.payload.xTokenShare;
       state.solBalance = action.payload.solBalance;
       state.loading = false;
       state.error = null;
+      
+      if (hasChanges) {
+        console.log('✅ Balance slice updated:', {
+          gameToken: state.gameToken,
+          stakedBalance: state.stakedBalance,
+          xTokenShare: state.xTokenShare,
+          solBalance: state.solBalance
+        });
+      }
     },
     fetchBalancesFailure: (state, action) => {
       state.loading = false;
@@ -104,6 +126,13 @@ const balanceSlice = createSlice({
         state.gameToken = gameTokenBalance;
       }
     },
+    // Balance refresh actions
+    startBalanceRefresh: (state) => {
+      state.balanceRefreshing = true;
+    },
+    completeBalanceRefresh: (state) => {
+      state.balanceRefreshing = false;
+    },
   },
 });
 
@@ -126,6 +155,8 @@ export const {
   sellTokensSuccess,
   sellTokensFailure,
   updateDexBalances,
+  startBalanceRefresh,
+  completeBalanceRefresh,
 } = balanceSlice.actions;
 
 export default balanceSlice.reducer;
@@ -137,3 +168,4 @@ export const selectDexLoading = (state) => state.balance.dexLoading;
 export const selectDexError = (state) => state.balance.dexError;
 export const selectSolBalance = (state) => state.balance.solBalance;
 export const selectGameTokenBalance = (state) => state.balance.gameToken;
+export const selectBalanceRefreshing = (state) => state.balance.balanceRefreshing;
