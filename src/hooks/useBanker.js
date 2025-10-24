@@ -18,6 +18,7 @@ import {
   fetchBalancesSuccess,
 } from '../solana/store/slices/balanceSlice';
 import { sendTransactionForPhantom } from '../utils/transactionHelper';
+import { useBalanceRefresh } from './useBalanceRefresh';
 
 export const useBanker = () => {
   const { publicKey, sendTransaction } = useSolanaWallet();
@@ -25,6 +26,7 @@ export const useBanker = () => {
   const program = validatorProgram.getProgram();
   const connection = validatorProgram.getConnection();
   const dispatch = useDispatch();
+  const { refreshBalancesAfterTransaction } = useBalanceRefresh();
   
   // Redux state
   const loading = useSelector(selectBankerLoading);
@@ -61,30 +63,18 @@ export const useBanker = () => {
       
       await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       
-      // Fetch updated balance after successful stake
+      // Fetch updated banker data after successful stake
       try {
         const bankerData = await program.account.bankerData.fetch(bankerDataPda);
         const xGameToken = bankerData.xbalance / 1e6 || '0';
         const gameToken = bankerData.balance / 1e6 || '0';
         dispatch(fetchBankerDataSuccess({ totalGameToken: gameToken, totalXGameToken: xGameToken }));
-        
-        // Refresh user's actual token balances with retry mechanism
-        await getBankerBalance();
-        
-        // Multiple refresh attempts to ensure balance updates
-        const refreshBalances = async (attempt = 1) => {
-          console.log(`🔄 Balance refresh attempt ${attempt} after stake...`);
-          await getBankerBalance();
-          
-          if (attempt < 3) {
-            setTimeout(() => refreshBalances(attempt + 1), 1000 * attempt);
-          }
-        };
-        
-        setTimeout(() => refreshBalances(), 1000);
       } catch (err) {
         console.error('Failed to update banker data:', err);
       }
+      
+      // Use centralized balance refresh
+      await refreshBalancesAfterTransaction(1000);
       
       return true;
     } catch (err) {
@@ -139,30 +129,18 @@ export const useBanker = () => {
       
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       
-      // Fetch updated balance after successful unstake
+      // Fetch updated banker data after successful unstake
       try {
         const bankerData = await program.account.bankerData.fetch(bankerDataPda);
         const xGameToken = bankerData.xbalance / 1e6 || '0';
         const gameToken = bankerData.balance / 1e6 || '0';
         dispatch(fetchBankerDataSuccess({ totalGameToken: gameToken, totalXGameToken: xGameToken }));
-        
-        // Refresh user's actual token balances with retry mechanism
-        await getBankerBalance();
-        
-        // Multiple refresh attempts to ensure balance updates
-        const refreshBalances = async (attempt = 1) => {
-          console.log(`🔄 Balance refresh attempt ${attempt} after unstake...`);
-          await getBankerBalance();
-          
-          if (attempt < 3) {
-            setTimeout(() => refreshBalances(attempt + 1), 1000 * attempt);
-          }
-        };
-        
-        setTimeout(() => refreshBalances(), 1000);
       } catch (err) {
         console.error('Failed to update banker data:', err);
       }
+      
+      // Use centralized balance refresh
+      await refreshBalancesAfterTransaction(1000);
       
       return tx;
     } catch (err) {

@@ -11,6 +11,7 @@ import { EPOCH_PERIOD } from '../utils/basic';
 import { fetchBalancesSuccess } from '../solana/store/slices/balanceSlice';
 import { getBalance, getParsedTokenAccountsByOwner } from '../utils/requestQueue';
 import { sendTransaction as sendTransactionHelper, handleSimulationError, sendTransactionForPhantom } from '../utils/transactionHelper';
+import { useBalanceRefresh } from './useBalanceRefresh';
 
 export const useVendor = () => {
   const { publicKey, sendTransaction } = useSolanaWallet();
@@ -20,6 +21,7 @@ export const useVendor = () => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { refreshBalancesAfterTransaction } = useBalanceRefresh();
 
   // Function to refresh user balances after transactions
   const refreshBalances = useCallback(async () => {
@@ -108,6 +110,10 @@ export const useVendor = () => {
       // Store pending request on success
       if (result) {
         localStorage.setItem(pendingKey, JSON.stringify({requestId: nonce, tier, count}));
+        
+        // Refresh balances after successful purchase
+        await refreshBalancesAfterTransaction(1000);
+        
         return { txHash: result, tier, isPending: false };
       } else {
         return null;

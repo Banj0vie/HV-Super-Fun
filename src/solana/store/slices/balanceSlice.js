@@ -10,6 +10,7 @@ const initialState = {
   subscriptionIds: [],
   dexLoading: false,
   dexError: null,
+  balanceRefreshing: false,
 };
 
 const balanceSlice = createSlice({
@@ -104,6 +105,13 @@ const balanceSlice = createSlice({
         state.gameToken = gameTokenBalance;
       }
     },
+    // Balance refresh actions
+    startBalanceRefresh: (state) => {
+      state.balanceRefreshing = true;
+    },
+    completeBalanceRefresh: (state) => {
+      state.balanceRefreshing = false;
+    },
   },
 });
 
@@ -126,6 +134,8 @@ export const {
   sellTokensSuccess,
   sellTokensFailure,
   updateDexBalances,
+  startBalanceRefresh,
+  completeBalanceRefresh,
 } = balanceSlice.actions;
 
 export default balanceSlice.reducer;
@@ -137,3 +147,4 @@ export const selectDexLoading = (state) => state.balance.dexLoading;
 export const selectDexError = (state) => state.balance.dexError;
 export const selectSolBalance = (state) => state.balance.solBalance;
 export const selectGameTokenBalance = (state) => state.balance.gameToken;
+export const selectBalanceRefreshing = (state) => state.balance.balanceRefreshing;

@@ -8,6 +8,7 @@ import { formatNumber } from "../../../utils/basic";
 import InventoryDialog from "../../../containers/Menu_Inventory";
 import SettingsDialog from "../../../containers/Menu_Settings";
 import { useSelector } from "react-redux";
+import { selectBalanceRefreshing, selectGameTokenBalance } from "../../../solana/store/slices/balanceSlice";
 // Removed bnToNumber; using plain parsing based on 1e6 decimals for locked tokens
 
 const ProfileBar = ({ isFarmMenu }) => {
@@ -17,16 +18,28 @@ const ProfileBar = ({ isFarmMenu }) => {
   const [isInventoryDialog, setIsInventoryDialog] = useState(false);
   const [isSettingsDialog, setIsSettingsDialog] = useState(false);
   const gameToken = useSelector((state) => state.balance.gameToken);
-  // locked_tokens stored as string (lamports with 1e6 decimals). Convert to UI units.
+  const stakedBalance = useSelector((state) => state.balance.stakedBalance);
+  const isBalanceRefreshing = useSelector(selectBalanceRefreshing);
+  
+  // Force re-render when balance refresh completes (less aggressive)
+  const balanceKey = useMemo(() => {
+    return `${gameToken}-${stakedBalance}-${isBalanceRefreshing}`;
+  }, [gameToken, stakedBalance, isBalanceRefreshing]);
+  
+  // Use balance slice data instead of user slice for consistency
   const lockedTokensUi = useMemo(() => {
-    const raw = userData?.locked_tokens ?? '0';
-    const n = parseFloat(raw);
-    if (!isFinite(n)) return '0';
-    return (n / 1e6).toString();
-  }, [userData?.locked_tokens]);
+    return stakedBalance || '0';
+  }, [stakedBalance]);
 
-  const lockedHoney = useMemo(() => formatNumber(lockedTokensUi), [lockedTokensUi]);
-  const honeyBalance = useMemo(() => formatNumber((gameToken || "0").toString()), [gameToken]);
+  const lockedHoney = useMemo(() => {
+    const formatted = formatNumber(lockedTokensUi);
+    return formatted;
+  }, [lockedTokensUi, stakedBalance, isBalanceRefreshing]);
+  
+  const honeyBalance = useMemo(() => {
+    const formatted = formatNumber((gameToken || "0").toString());
+    return formatted;
+  }, [gameToken, isBalanceRefreshing]);
 
   return (
     <div className="profile-bar" style={{ display: isFarmMenu ? 'none' : 'flex' }}>
@@ -47,7 +60,7 @@ const ProfileBar = ({ isFarmMenu }) => {
         title="Inventory"
         onClick={() => setIsInventoryDialog(true)}
       />
-      <div className="resource-badge">
+      <div className="resource-badge" key={balanceKey}>
         <ProfileButton
           icon={
             <img
@@ -55,13 +68,15 @@ const ProfileBar = ({ isFarmMenu }) => {
               src={profileAssets.btnLockedHoney}
             />
           }
-          text={lockedHoney}
+          text={isBalanceRefreshing ? "••••••" : lockedHoney}
           title="Locked Honey Balance"
+          className={isBalanceRefreshing ? "balance-loading" : ""}
         />
         <ProfileButton
           icon={<img alt="Honey Balance" src={profileAssets.btnHoney} />}
-          text={honeyBalance}
+          text={isBalanceRefreshing ? "••••••" : honeyBalance}
           title="Honey Balance"
+          className={isBalanceRefreshing ? "balance-loading" : ""}
         />
       </div>
       {isInventoryDialog && (

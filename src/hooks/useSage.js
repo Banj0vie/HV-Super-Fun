@@ -9,6 +9,7 @@ import { GAME_TOKEN_MINT } from '../solana/constants/programId';
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { EPOCH_PERIOD } from '../utils/basic';
 import { sendTransactionForPhantom } from '../utils/transactionHelper';
+import { useBalanceRefresh } from './useBalanceRefresh';
 
 // Mirror on-chain constants/logic from sage.rs
 const SAGE_UNLOCK_COOLDOWN = EPOCH_PERIOD; // EPOCH_PERIOD (ms)
@@ -28,6 +29,7 @@ export const useSage = () => {
   const valleyProgram = useProgram();
   const program = valleyProgram.getProgram();
   const dispatch = useDispatch();
+  const { refreshBalancesAfterTransaction } = useBalanceRefresh();
   const [sageData, setSageData] = useState({
     lockedAmount: 0,
     lastUnlockTime: 0,
@@ -147,6 +149,10 @@ export const useSage = () => {
       
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       await fetchSageData();
+      
+      // Refresh balances after successful unlock
+      await refreshBalancesAfterTransaction(1000);
+      
       return tx;
     } catch (err) { 
       // Handle specific transaction errors
@@ -190,6 +196,10 @@ export const useSage = () => {
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       await new Promise(r => setTimeout(r, 2000));
       await fetchSageData();
+      
+      // Refresh balances after successful unlock
+      await refreshBalancesAfterTransaction(1000);
+      
       return tx;
     } catch (err) { 
       // Handle specific transaction errors

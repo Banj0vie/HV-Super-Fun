@@ -9,6 +9,7 @@ import { sendTransactionForPhantom } from '../utils/transactionHelper';
 import { ID_POTION_ITEMS } from '../constants/app_ids';
 import { PRICE_BY_CATEGORY, LOCKED_BPS } from '../constants/farming';
 import { getMultiplier, getSubtype } from '../utils/basic';
+import { useBalanceRefresh } from './useBalanceRefresh';
 
 export const useFarming = () => {
     const { publicKey, sendTransaction } = useSolanaWallet();
@@ -17,6 +18,7 @@ export const useFarming = () => {
     const connection = valleyProgram.getConnection();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const { refreshBalancesAfterTransaction } = useBalanceRefresh();
 
     const plantBatch = useCallback(async (seedIds) => {
         if (!program || !publicKey) { setError('Program or wallet not available'); return null; }
@@ -67,6 +69,10 @@ export const useFarming = () => {
                 sig = await sendTransaction(tx, connection, { skipPreflight: true, maxRetries: 3 });
             }
             await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight });
+            
+            // Refresh balances after successful plant
+            await refreshBalancesAfterTransaction(1000);
+            
             return sig;
         } catch (err) {
             console.error("🚀 ~ plantBatch ~ err:", err)
@@ -147,6 +153,10 @@ export const useFarming = () => {
                 sig = await sendTransaction(tx, connection, { skipPreflight: true, maxRetries: 3 });
             }
             await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight });
+            
+            // Refresh balances after successful harvest
+            await refreshBalancesAfterTransaction(1000);
+            
             return sig;
         } catch (err) {
             console.error("🚀 ~ harvestMany ~ err:", err)

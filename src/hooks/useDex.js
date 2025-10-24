@@ -28,10 +28,12 @@ import {
   selectBalanceError,
 } from '../solana/store/slices/balanceSlice';
 import { sendTransactionForPhantom } from '../utils/transactionHelper';
+import { useBalanceRefresh } from './useBalanceRefresh';
 
 export const useDex = () => {
   const { publicKey, wallet, connection, sendTransaction } = useSolanaWallet();
   const dispatch = useDispatch();
+  const { refreshBalancesAfterTransaction } = useBalanceRefresh();
   
   // Redux state
   const loading = useSelector(selectBalanceLoading);
@@ -161,6 +163,7 @@ export const useDex = () => {
       
       // Refresh balances after successful transaction
       await fetchBalances();
+      await refreshBalancesAfterTransaction(1000);
       
       return { txHash: tx, success: true };
     } catch (err) {
@@ -246,6 +249,7 @@ export const useDex = () => {
       
       // Refresh balances after successful transaction
       await fetchBalances();
+      await refreshBalancesAfterTransaction(1000);
       
       return { txHash: tx, success: true };
     } catch (err) {
