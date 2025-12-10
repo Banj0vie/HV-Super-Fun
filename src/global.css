@@ -22,13 +22,6 @@ body {
   color: #ffffff;
 }
 
-/* Ensure pixel-perfect rendering */
-* {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
 /* Remove default button and input styling for game aesthetic */
 button,
 input,

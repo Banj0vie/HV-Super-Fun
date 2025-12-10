@@ -9,13 +9,8 @@ const MenuItem = ({ path, icon, label, isActive }) => {
       className={`menu-item ${isActive ? 'active' : ''}`}
     >
       <div className="menu-icon">
-        {icon.startsWith('data:') ? (
-          <img src={icon} alt={label} className="menu-icon-img" />
-        ) : (
-          icon
-        )}
+        <img src={icon} alt={label} className="menu-icon-img" />
       </div>
-      <p className="menu-label">{label}</p>
     </Link>
   );
 }
