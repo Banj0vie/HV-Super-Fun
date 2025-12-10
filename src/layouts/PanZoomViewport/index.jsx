@@ -194,6 +194,8 @@ const PanZoomViewport = ({
                 alt="Scene"
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
+                loading="eager"
+                decoding="sync"
               />
             )}
 
