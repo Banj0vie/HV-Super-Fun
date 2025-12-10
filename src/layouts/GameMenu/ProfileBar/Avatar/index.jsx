@@ -8,10 +8,10 @@ const Avatar = ({ src, alt = "avatar" }) => {
   const [isAvatarDialog, setIsAvatarDialog] = useState(false);
   const [avatarImage, setAvatarImage] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   const { account } = useSolanaWallet();
   const { getAvatars, getNFTMetadata } = useEquipmentRegistry();
-  
+
   const fallbackSrc = "/images/avatars/avatar-left-placeholder.png";
 
   useEffect(() => {
@@ -23,18 +23,18 @@ const Avatar = ({ src, alt = "avatar" }) => {
 
       try {
         setLoading(true);
-        
+
         // Get equipped avatars (cached via context when available)
         const avatarResult = await getAvatars(account);
         const [nfts, tokenIds] = avatarResult;
-        
+
         // Check if we have any equipped avatars
         if (nfts && Array.isArray(nfts) && nfts.length >= 2) {
           setAvatarImage(nfts[0].image);
           setLoading(false);
           return;
         }
-        
+
         // No equipped avatar found, use placeholder
         setAvatarImage(null);
       } catch (error) {
@@ -59,22 +59,25 @@ const Avatar = ({ src, alt = "avatar" }) => {
 
   return (
     <div className="avatar">
-      {loading ? (
-        <div className="loading-placeholder">
-          <div className="loading-spinner"></div>
-        </div>
-      ) : (
-        <img
-          src={resolvedSrc}
-          alt={alt}
-          className="avatar-img"
-          onClick={() => setIsAvatarDialog(true)}
-          onError={(e) => {
-            e.target.src = fallbackSrc;
-          }}
-        />
-      )}
-      {isAvatarDialog && <AvatarDialog onClose={()=>setIsAvatarDialog(false)}></AvatarDialog>}
+      <img src="/images/profile_bar/avatar_bg.png" alt="empty slot" className="avatar-bg"></img>
+      <div className="avatar-content">
+        {loading ? (
+          <div className="loading-placeholder">
+            <div className="loading-spinner"></div>
+          </div>
+        ) : (
+          <img
+            src={resolvedSrc}
+            alt={alt}
+            className="avatar-img"
+            onClick={() => setIsAvatarDialog(true)}
+            onError={(e) => {
+              e.target.src = fallbackSrc;
+            }}
+          />
+        )}
+      </div>
+      {isAvatarDialog && <AvatarDialog onClose={() => setIsAvatarDialog(false)}></AvatarDialog>}
     </div>
   );
 };
