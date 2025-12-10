@@ -22,7 +22,6 @@
   transform-origin: 0 0;
   /* Disable transitions so scale changes are applied immediately without animation */
   transition: none !important;
-  border-image: var(--profile-btn-bg) 6 fill / 1rem / 0.5rem repeat;
 }
 
 .panzoom-children {
@@ -59,9 +58,13 @@
 }
 
 .img-scene {
+  position:absolute;
   display: block;
   user-select: none;
   pointer-events: none;
   width: 100%;
   height: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
