@@ -6,7 +6,6 @@
 .tooltip-btn {
   position: absolute;
   color: #fff;
-  font-size: 12px;
   cursor: pointer;
   min-width: 10rem;
   height: 3rem;
@@ -17,11 +16,12 @@
   background-size: contain;
   background-position: 50% center;
   transition: 0.25s ease-in-out;
-  font-size: 1.15rem;
+  font-size: 1rem;
+  font-family: "Cartoonist", "GROBOLD", "Courier New", monospace !important;
 }
 
 .tooltip-btn span {
-  margin-top: 5px;
+  margin-top: 7px;
 }
 
 .tooltip-btn.map-btn {

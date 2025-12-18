@@ -66,7 +66,7 @@ const StartFishing = ({ onBack, onStart }) => {
       <LabelValueBox label="Life Bud Chance" value="0.01%"></LabelValueBox>
       <br />
       <div className="button-wrapper">
-        <BaseButton label="Back" onClick={onBack}></BaseButton>
+        <BaseButton label="Back" onClick={onBack} isError className="w-50"></BaseButton>
         {selectedBaitId ? (
           <BaseButton
             label={isThrowingBait ? "Throwing..." : "Throw Bait"}

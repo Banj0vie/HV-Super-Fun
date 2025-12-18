@@ -7,6 +7,7 @@ const BaseButton = ({
   onClick,
   disabled = false,
   focused = false,
+  isError = false,
 }) => {
   return (
     <div className={`${className} base-button-wrapper`}>
@@ -18,7 +19,7 @@ const BaseButton = ({
           }
         }}
       >
-        <img className="base-button-bg" src="/images/button/base_button_bg.png" alt="base-button-image" />
+        <img className="base-button-bg" src={isError ? "/images/button/base_button_error_bg.png" : "/images/button/base_button_bg.png"} alt="base-button-image" />
         <p>{label}</p>
       </div>
     </div>
