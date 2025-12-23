@@ -1,14 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import "./style.css";
 import {
-  FARM_CROP_HEIGHT,
-  FARM_CROP_WIDTH,
-  FARM_LEFT_PLOT_START_X,
-  FARM_LEFT_PLOT_START_Y,
-  FARM_RIGHT_PLOT_START_X,
-  FARM_RIGHT_PLOT_START_Y,
-  FARM_GRID_COLS,
   FARM_PLOTS_PER_SIDE,
+  FARM_POSITIONS,
 } from "../../../constants/scene_farm";
 import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
 import { ALL_ITEMS } from "../../../constants/item_data";
@@ -150,15 +144,8 @@ const CropItem = ({
   const plotIndex = isLeftPlot ? index : index - FARM_PLOTS_PER_SIDE;
 
   const position = {
-    left: isLeftPlot
-      ? FARM_LEFT_PLOT_START_X + FARM_CROP_WIDTH * (plotIndex % FARM_GRID_COLS)
-      : FARM_RIGHT_PLOT_START_X +
-        FARM_CROP_WIDTH * (plotIndex % FARM_GRID_COLS),
-    top: isLeftPlot
-      ? FARM_LEFT_PLOT_START_Y +
-        FARM_CROP_HEIGHT * Math.floor(plotIndex / FARM_GRID_COLS)
-      : FARM_RIGHT_PLOT_START_Y +
-        FARM_CROP_HEIGHT * Math.floor(plotIndex / FARM_GRID_COLS),
+    left: FARM_POSITIONS[index].left,
+    top: FARM_POSITIONS[index].top,
   };
 
   // Determine sprite frame based on growth progress for smoother, real-time stages

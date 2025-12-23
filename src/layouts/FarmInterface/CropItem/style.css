@@ -1,9 +1,9 @@
 .crop-item {
-  width: 4rem;
-  height: 4rem;
+  width: 158.86px;
+  height: 207.76px;
   position: absolute;
-  background: url(/public/images/crops/bigger_plants.png);
-  transform-origin: 32px 64px;
+  background: url(/public/images/crops/bigger_plants.webp);
+  scale: 0.45;
 }
 
 .crop-item .bounding-box {
