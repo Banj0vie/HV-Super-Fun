@@ -31,6 +31,10 @@
   font-family: "Cartoonist", "GROBOLD", "Courier New", monospace !important;
 }
 
+.modal * {
+  font-family: "GROBOLD", "Courier New", monospace !important;
+}
+
 body {
   font-family: "GROBOLD", "Courier New", monospace;
   margin: 0;

@@ -81,7 +81,7 @@ const AvatarDialog = ({ onClose }) => {
     setTotalBoost(newTotalBoost);
   };
 
-  return <BaseDialog onClose={onClose} title="WORKERS">
+  return <BaseDialog onClose={onClose} title="WORKERS" header="/images/dialog/modal-header-worker.png">
     <div className="avatar-dialog">
         <div className="nft-list">
             {loading ? (
