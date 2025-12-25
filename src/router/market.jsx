@@ -41,7 +41,8 @@ const Market = () => {
       id: ID_MARKET_HOTSPOTS.LEADERBOARD,
       component: LeaderboardDialog,
       label: "LEADERBOARD",
-      header: dialogFrames.modalHeaderTrophy,
+      header: "/images/dialog/modal-header-leaderboard.png",
+      headerOffset: 22,
     },
     {
       id: ID_MARKET_HOTSPOTS.SAGE,

@@ -169,6 +169,10 @@ a {
   height: 4.5rem;
 }
 
+.min-h-0 {
+  min-height: 0;
+}
+
 .w-full {
   width: 100%;
 }

@@ -2,14 +2,14 @@ import React from "react";
 import "./style.css";
 import BaseDialog from "../../_BaseDialog";
 import { PRIZES } from "../../../constants/scene_market";
-import CardView from "../../../components/boxes/CardView";
 
 const RewardsDialog = ({ onClose }) => {
   return (
-    <BaseDialog onClose={onClose} title="PRIZES">
+    <BaseDialog onClose={onClose} title="PRIZES" header="/images/dialog/modal-header-leaderboard.png" headerOffset={22}>
       <div className="rewards-dialog-content">
         {PRIZES.map((group, index) => (
-          <CardView key={index} className="p-0 rewards-item-card">
+          <div key={index} className="rewards-item-card">
+            <img src="/images/label/choco-bg.png" alt="rewards-bg" className="rewards-item-bg" />
             <div className="rewards-item-wrapper">
               <span className="font-bold">{index + 1}.&nbsp;</span>
               <span>
@@ -24,7 +24,7 @@ const RewardsDialog = ({ onClose }) => {
                 ))}
               </span>
             </div>
-          </CardView>
+          </div>
         ))}
       </div>
     </BaseDialog>
