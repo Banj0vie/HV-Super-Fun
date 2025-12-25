@@ -13,7 +13,12 @@
 .seed-rolling-image {
   width: 4rem;
   height: 4rem;
-  background: url(/public/images/crops/seeds.png) 0;
+  background: url(/public/images/crops/seeds.webp) 0;
+  /* Scale from 159x207.7647 to fit 64px height: scale factor = 64/207.7647 ≈ 0.308 */
+  /* Scaled width = 159 * 0.308 ≈ 48.96px ≈ 3.06rem */
+  /* Scaled total height = 7076 * 0.308 ≈ 2179.4px */
+  background-size: 3.06rem auto;
+  background-repeat: no-repeat;
 }
 
 .seed-rolling-image.rolling {
@@ -26,7 +31,7 @@
     background-position-y: 0;
   }
   to {
-    background-position-y: calc(var(--all-seed-image-height));
+    background-position-y: calc(var(--all-seed-image-height, -2179.4px));
   }
 }
 

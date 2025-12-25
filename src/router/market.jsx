@@ -24,7 +24,8 @@ const Market = () => {
       id: ID_MARKET_HOTSPOTS.VENDOR,
       component: VendorDialog,
       label: "SEED SHOP",
-      header: "/images/dialog/modal-header-dex.png",
+      header: "/images/dialog/modal-header-vendor.png",
+      headerOffset: 10,
     },
     {
       id: ID_MARKET_HOTSPOTS.BANKER,

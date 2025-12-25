@@ -2,9 +2,9 @@ import React from "react";
 import "./style.css";
 import LabelValueBox from "../LabelValueBox";
 
-const CardListView = ({ data }) => {
+const CardListView = ({ data, className = "" }) => {
   return (
-    <div className="card-list-view">
+    <div className={`card-list-view ${className}`}>
       {data.map((item, index) => (
         <LabelValueBox
           key={index}

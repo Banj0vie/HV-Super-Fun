@@ -1,4 +1,3 @@
-import { seedIcons } from "./_baseimages";
 import { ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_SEEDS } from "./app_ids";
 
 export const SEED_PACKS = [
@@ -10,21 +9,21 @@ export const SEED_PACKS = [
                 count: 1,
                 price: 1,
                 priceLabel: "1 HNY",
-                icon: seedIcons.feebleOneRandom,
+                icon: "/images/crops/pack-pico-one.png",
             },
             {
                 label: "3x Seed",
                 count: 3,
                 price: 1,
                 priceLabel: "3 HNY",
-                icon: seedIcons.feebleThree,
+                icon: "/images/crops/pack-pico-three.png",
             },
             {
                 label: "Custom",
                 count: 0,
                 price: 1,
                 priceLabel: "1.00 HNY x Seed",
-                icon: seedIcons.feebleOneRandom,
+                icon: "/images/crops/pack-pico-random.png",
             },
         ],
         tip: "Feeble seeds won't give produce!",
@@ -36,21 +35,21 @@ export const SEED_PACKS = [
                 count: 1,
                 price: 20,
                 priceLabel: "20 HNY",
-                icon: seedIcons.picoOne,
+                icon: "/images/crops/pack-pico-one.png",
             },
             {
                 label: "3x Seed",
                 count: 3,
                 price: 20,
                 priceLabel: "60 HNY",
-                icon: seedIcons.picoThree,
+                icon: "/images/crops/pack-pico-three.png",
             },
             {
                 label: "Custom",
                 count: 0,
                 price: 20,
                 priceLabel: "20 HNY x Seed",
-                icon: seedIcons.picoOneRandom,
+                icon: "/images/crops/pack-pico-random.png",
             },
         ],
     }, {
@@ -61,21 +60,21 @@ export const SEED_PACKS = [
                 count: 1,
                 price: 100,
                 priceLabel: "100 HNY",
-                icon: seedIcons.basicOne,
+                icon: "/images/crops/pack-basic-one.png",
             },
             {
                 label: "3x Seed",
                 count: 3,
                 price: 100,
                 priceLabel: "300 HNY",
-                icon: seedIcons.basicThree,
+                icon: "/images/crops/pack-basic-three.png",
             },
             {
                 label: "Custom",
                 count: 0,
                 price: 100,
                 priceLabel: "100 HNY x Seed",
-                icon: seedIcons.basicOneRandom,
+                icon: "/images/crops/pack-basic-random.png",
             },
         ],
     }, {
@@ -86,21 +85,21 @@ export const SEED_PACKS = [
                 count: 1,
                 price: 250,
                 priceLabel: "250 HNY",
-                icon: seedIcons.premiumOne,
+                icon: "/images/crops/pack-premium-one.png",
             },
             {
                 label: "3x Seed",
                 count: 3,
                 price: 250,
                 priceLabel: "750 HNY",
-                icon: seedIcons.premiumThree,
+                icon: "/images/crops/pack-premium-three.png",
             },
             {
                 label: "Custom",
                 count: 0,
                 price: 250,
                 priceLabel: "250 HNY x Seed",
-                icon: seedIcons.premiumOneRandom,
+                icon: "/images/crops/pack-premium-random.png",
             },
         ],
     }
@@ -131,8 +130,9 @@ export const SEED_PACK_STATUS = {
     COMMITED: "SEED_PACK_STATUS_COMMITED",
 }
 
-export const ALL_SEED_IMAGE_HEIGHT = 2176;
-export const ONE_SEED_HEIGHT = 64;
+export const ALL_SEED_IMAGE_HEIGHT = 7076;
+export const ONE_SEED_HEIGHT = 207.7647;
+export const ONE_SEED_WIDTH = 159;
 export const TYPE_LABEL_COLOR = {
     [ID_RARE_TYPE.COMMON]: {
         label: "COMMON",

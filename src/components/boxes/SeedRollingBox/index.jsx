@@ -3,6 +3,7 @@ import "./style.css";
 import {
   ALL_SEED_IMAGE_HEIGHT,
   ONE_SEED_HEIGHT,
+  ONE_SEED_WIDTH,
   TYPE_LABEL_COLOR,
 } from "../../../constants/item_seed";
 import { ALL_ITEMS } from "../../../constants/item_data";
@@ -83,10 +84,14 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
           style={
             selectedSeed.pos
               ? {
-                  "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT}px`,
-                  backgroundPositionY: 0 - selectedSeed.pos * ONE_SEED_HEIGHT,
+                  "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
+                  "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
+                  backgroundPositionY: `-${selectedSeed.pos * ONE_SEED_HEIGHT * 0.308}px`,
                 }
-              : { "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT}px` }
+              : { 
+                  "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
+                  "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
+                }
           }
         ></div>
       </div>

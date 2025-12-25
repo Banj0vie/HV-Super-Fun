@@ -8,7 +8,7 @@ import BaseButton from "../../../components/buttons/BaseButton";
 const CustomSeedsDialog = ({ price = 1, onConfirm, onClose }) => {
   const [seedCount, setSeedCount] = useState("1");
   return (
-    <BaseDialog title={"AMOUNT"} onClose={onClose}>
+    <BaseDialog title={"AMOUNT"} onClose={onClose} header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="custom-seed-wrapper">
         <Slider
           min="1"
@@ -20,7 +20,7 @@ const CustomSeedsDialog = ({ price = 1, onConfirm, onClose }) => {
           Buy {seedCount} seeds for {seedCount * price} HNY
         </div>
         <BaseDivider></BaseDivider>
-        <BaseButton className="h-4rem" label="Confirm" onClick={() => onConfirm(parseInt(seedCount))}></BaseButton>
+        <BaseButton className="h-3rem" label="Confirm" onClick={() => onConfirm(parseInt(seedCount))}></BaseButton>
       </div>
     </BaseDialog>
   );

@@ -2,6 +2,9 @@
 
 :root {
   --primary-dlg-bg: #99633F;
+  --secondary-dlg-bg: #D89875;
+  --error-color: #E12237;
+  --warning-color: #FFAB00;
 }
 
 /* GROBOLD Font Setup */
@@ -136,6 +139,10 @@ a {
   text-decoration: none;
 }
 
+.relative {
+  position: relative;
+}
+
 .highlight {
   color: #EAAC2F;
 }
@@ -224,6 +231,10 @@ a {
 
 .p-0 {
   padding: 0;
+}
+
+.px-2rem {
+  padding: 0 2rem;
 }
 
 .mt-1rem {

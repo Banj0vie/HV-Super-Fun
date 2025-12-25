@@ -14,28 +14,3 @@
   width: 100%;
 }
 
-.weekly-wage-header {
-  position: absolute;
-  height: 3.5rem;
-  width: 50%;
-  min-height: 2rem;
-  top: -1rem;
-  cursor: pointer;
-  transition: 0.1s ease-in;
-  padding: 0px 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.weekly-wage-header-bg {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-.weekly-wage-header span {
-  position: absolute;
-}

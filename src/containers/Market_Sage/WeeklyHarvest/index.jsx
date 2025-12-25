@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import "./style.css";
 import CardView from "../../../components/boxes/CardView";
 import LabelValueBox from "../../../components/boxes/LabelValueBox";
+import CardTopicView from "../../../components/boxes/CardTopicView";
 import { formatDuration } from "../../../utils/basic";
 import BaseButton from "../../../components/buttons/BaseButton";
 import { useSage } from "../../../hooks/useContracts";
@@ -91,10 +92,7 @@ const WeeklyHarvest = ({onBack}) => {
           />
         </div>
       </CardView>
-      <div className="weekly-harvest-header">
-        <img src="/images/label/grey-bg.png" alt="grey-bg" className="weekly-harvest-header-bg" />
-        <span>Weekly Harvest</span>
-      </div>
+      <CardTopicView title="Weekly Harvest" width="55%" />
       {sageData.lockedAmount === 0 ? (
         <CardView className="p-0">
           <div className="text-center">{loading ? "Loading ..." : "No locked tokens to unlock"}</div>
