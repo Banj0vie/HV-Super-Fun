@@ -42,34 +42,36 @@ const SettingsDialog = ({ onClose }) => {
   return (
     <BaseDialog onClose={onClose} title="SETTINGS" header="/images/dialog/modal-header-setting.png" headerWidth={120} className="custom-modal-background">
       <div className="settings-dialog">
-        <div className="settings-row">
-          <div className="left"><img className="sound-icon" src="/images/settings/sound.png" alt="sound"/></div>
-          <div className="right">
-            <Slider
-              min="0"
-              max="100"
-              value={soundVolume}
-              setValue={(val) => setSoundVolume(val)}
-            ></Slider>
+        <div className="settings-row-wrapper">
+          <div className="settings-row">
+            <div className="left"><img className="sound-icon" src="/images/settings/sound.png" alt="sound" /></div>
+            <div className="right">
+              <Slider
+                min="0"
+                max="100"
+                value={soundVolume}
+                setValue={(val) => setSoundVolume(val)}
+              ></Slider>
+            </div>
           </div>
-        </div>
-        <div className="settings-row">
-          <div className="left"><img src="/images/settings/music.png" alt="music"/></div>
-          <div className="right">
-            <Slider
-              min="0"
-              max="100"
-              value={musicVolume}
-              setValue={(val) => setMusicVolume(val)}
-            ></Slider>
+          <div className="settings-row">
+            <div className="left"><img src="/images/settings/music.png" alt="music" /></div>
+            <div className="right">
+              <Slider
+                min="0"
+                max="100"
+                value={musicVolume}
+                setValue={(val) => setMusicVolume(val)}
+              ></Slider>
+            </div>
           </div>
-        </div>
-        <div className="settings-row">
-          <div>Show Growth Stages</div>
-          <BaseCheckBox
-            isChecked={isShowGrowthStage}
-            onChange={(v) => setIsShowGrowthStage(v)}
-          ></BaseCheckBox>
+          <div className="settings-row">
+            <div>Show Growth Stages</div>
+            <BaseCheckBox
+              isChecked={isShowGrowthStage}
+              onChange={(v) => setIsShowGrowthStage(v)}
+            ></BaseCheckBox>
+          </div>
         </div>
         {/* <div className="settings-row">
           <div>Overwrite plant modifiers</div>
@@ -78,21 +80,22 @@ const SettingsDialog = ({ onClose }) => {
             onChange={(v) => setIsOverwritePlant(v)}
           ></BaseCheckBox>
         </div> */}
-        <BaseDivider></BaseDivider>
-        <div className="settings-row">
+        <div className="settings-row-input">
           <div className="left">Dex Slippage %</div>
           <BaseInput
             className="right"
             value={dexSlippage}
             setValue={(val) => setDexSlippage(val)}
+            primary={true}
           ></BaseInput>
         </div>
-        <div className="settings-row">
+        <div className="settings-row-input">
           <div className="left">Base Gwei</div>
           <BaseInput
             className="right"
             value={baseGwei}
             setValue={(val) => setBaseGwei(val)}
+            primary={true}
           ></BaseInput>
         </div>
       </div>

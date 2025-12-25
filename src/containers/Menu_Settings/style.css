@@ -1,8 +1,9 @@
 .settings-dialog {
-  width: 300px;
+  width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 1rem 0;
 }
 
 .settings-row {
@@ -10,6 +11,23 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.settings-row-input {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.settings-row-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem;
+  background-color: #d89875;
+  border-radius: 1rem;
 }
 
 .settings-row .left {
@@ -21,6 +39,14 @@
 .settings-row .right {
   width: 85%;
 }
+
+.settings-row-input .left {
+  width: 50%;
+}
+.settings-row-input .right {
+  width: 50%;
+}
+
 .sound-icon {
   margin-left: 7px;
 }

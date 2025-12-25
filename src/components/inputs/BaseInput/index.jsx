@@ -10,9 +10,11 @@ const BaseInput = ({
   setValue,
   placeholder = "",
   maxLength = 32,
+  primary = false,
 }) => {
   return (
     <div className={`${className} base-input`}>
+      <img src={primary ? "/images/input/primary-bg.png" : "/images/inputs/input-bg.png"} alt="input-bg" className="input-bg" />
       <input
         id={id}
         type={type}
