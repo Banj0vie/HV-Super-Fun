@@ -14,7 +14,7 @@ const BaseInput = ({
 }) => {
   return (
     <div className={`${className} base-input`}>
-      <img src={primary ? "/images/input/primary-bg.png" : "/images/inputs/input-bg.png"} alt="input-bg" className="input-bg" />
+      <img src={primary ? "/images/input/primary-bg.png" : "/images/input/secondary-bg.png"} alt="input-bg" className="input-bg" />
       <input
         id={id}
         type={type}

@@ -1,7 +1,59 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import './style.css';
 
 const BaseDialog = ({ className = "", title, onClose, children, header = null, headerWidth = 210 }) => {
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    const adjustFontSize = () => {
+      if (!titleRef.current) return;
+      
+      const titleElement = titleRef.current;
+      
+      // Wait for element to be rendered
+      requestAnimationFrame(() => {
+        const containerWidth = titleElement.offsetWidth;
+        if (containerWidth === 0) return; // Element not yet rendered
+        
+        const maxFontSize = 32; // 2rem = 32px
+        let fontSize = maxFontSize;
+        
+        // Create a temporary span to measure text width
+        const tempSpan = document.createElement('span');
+        tempSpan.style.visibility = 'hidden';
+        tempSpan.style.position = 'absolute';
+        tempSpan.style.whiteSpace = 'nowrap';
+        tempSpan.style.fontSize = `${fontSize}px`;
+        tempSpan.style.fontWeight = '700';
+        tempSpan.style.fontFamily = getComputedStyle(titleElement).fontFamily;
+        tempSpan.textContent = title || '';
+        document.body.appendChild(tempSpan);
+        
+        const textWidth = tempSpan.offsetWidth;
+        document.body.removeChild(tempSpan);
+        
+        // If text is wider than container, reduce font size
+        if (textWidth > containerWidth) {
+          fontSize = (containerWidth / textWidth) * maxFontSize;
+          // Ensure minimum font size
+          fontSize = Math.max(fontSize, 12);
+        }
+        
+        titleElement.style.fontSize = `${fontSize}px`;
+      });
+    };
+
+    // Adjust on mount and when title changes with a small delay to ensure DOM is ready
+    const timeoutId = setTimeout(adjustFontSize, 0);
+    
+    // Also adjust on window resize
+    window.addEventListener('resize', adjustFontSize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', adjustFontSize);
+    };
+  }, [title]);
+
   return (
     <div className={`${className} modal-backdrop`} onClick={onClose}>
       <div className="modal-wrapper">
@@ -19,7 +71,7 @@ const BaseDialog = ({ className = "", title, onClose, children, header = null, h
               <img className="modal-header-image" src="/images/dialog/top-baseheader.png" alt="header" />
               {header && <img style={{ width: headerWidth }} className="modal-header-additional-image" src={header} alt="header" />}
               <img className="modal-header-label-scroll" src="/images/dialog/label-scroll.png" alt="header" />
-              <span className="modal-header-title">{title}</span>
+              <span ref={titleRef} className="modal-header-title">{title}</span>
             </div>
             <div className="modal-close" onClick={onClose}></div>
           </div>

@@ -18,12 +18,13 @@ const Market = () => {
       id: ID_MARKET_HOTSPOTS.DEX,
       component: DexDialog,
       label: "EXCHANGE TOKENS",
+      header: "/images/dialog/modal-header-dex.png",
     },
     {
       id: ID_MARKET_HOTSPOTS.VENDOR,
       component: VendorDialog,
       label: "SEED SHOP",
-      header: dialogFrames.modalHeaderSeeds,
+      header: "/images/dialog/modal-header-dex.png",
     },
     {
       id: ID_MARKET_HOTSPOTS.BANKER,

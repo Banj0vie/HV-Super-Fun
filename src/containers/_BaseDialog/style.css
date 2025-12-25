@@ -13,6 +13,7 @@
 .modal-wrapper {
   position: relative;
   display: inline-block;
+  margin-top: 5rem;
 }
 
 .modal {
@@ -117,8 +118,8 @@
   position: absolute;
   top: 129px;
   left: 50%;
+  width: 90%;
   transform: translate(-50%);
-  width: max-content;
   font-size: 2rem;
   color: #26120F;
   text-shadow:

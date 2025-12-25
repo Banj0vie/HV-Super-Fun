@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import "./style.css";
 import BaseDialog from "../_BaseDialog";
 import Slider from "../../components/inputs/Slider";
-import BaseDivider from "../../components/dividers/BaseDivider";
 import BaseCheckBox from "../../components/inputs/BaseCheckBox";
 import BaseInput from "../../components/inputs/BaseInput";
 import { loadSettings, saveSettings, defaultSettings } from "../../utils/settings";

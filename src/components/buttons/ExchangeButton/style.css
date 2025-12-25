@@ -6,22 +6,14 @@
   width: 100%;
   height: 2.25rem;
   gap: 0.5rem;
+  position: relative;
 }
 
-.exchange-button p {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 20%;
-  height: 2.25rem;
-  -o-border-image: var(--secondary-bg) 6 repeat;
-  border-image: var(--secondary-bg) 6 fill repeat;
-  border-image-width: 0.5rem;
+.exchange-button-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 5rem;
   cursor: pointer;
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.exchange-button p:hover {
-  transform: scale(1.1);
 }
