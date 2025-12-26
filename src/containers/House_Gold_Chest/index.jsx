@@ -94,7 +94,6 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
         
         {!canClaim ? (
           <CardView className="p-0 text-center">
-            <br />
             <div className="font-bold">Already Claimed!</div>
           </CardView>
         ) : (
@@ -103,6 +102,7 @@ const GoldChestDialog = ({ onClose, label = "DAILY CHEST", header = "" }) => {
             label={isClaiming || loading ? "Claiming..." : "Claim Chest"}
             onClick={handleClaim}
             disabled={isClaiming || loading}
+            large
           ></BaseButton>
         )}
 

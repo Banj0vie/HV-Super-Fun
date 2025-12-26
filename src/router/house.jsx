@@ -31,7 +31,7 @@ const House = () => {
       id: ID_HOUSE_HOTSPOTS.GOLD_CHEST,
       component: GoldChestDialog,
       label: "DAILY CHEST",
-      header: dialogFrames.modalHeaderBox
+      header: "/images/dialog/modal-header-chest.png"
     },
     {
       id: ID_HOUSE_HOTSPOTS.ANGLER,
