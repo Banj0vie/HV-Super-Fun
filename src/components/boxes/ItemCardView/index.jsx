@@ -17,6 +17,7 @@ const ItemCardView = ({
       secondary={!selected}
       onClick={selectable ? onClick : () => {}}
     >
+      <img className="left-panel-bg" src={selected ? "/images/label/left-panel-selected.png" : "/images/label/left-panel-normal.png"} alt="item-image" width="24"></img>
       <div className="icon">
         {itemData.pos === -1 ? (
           <img src={itemData.image} alt="item-image" width="24"></img>
@@ -24,7 +25,7 @@ const ItemCardView = ({
           <div></div>
         )}
       </div>
-      <div className="" style={{ color: TYPE_LABEL_COLOR[itemData.type].color }}>
+      <div className="">
         {itemData.label}
       </div>
     </CardView>

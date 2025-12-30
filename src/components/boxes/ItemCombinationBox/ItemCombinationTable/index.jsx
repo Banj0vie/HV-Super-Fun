@@ -16,6 +16,7 @@ const ItemCombinationTable = ({
   const data = ITEM_COMBI[itemId];
   return (
     <CardView className="item-combination-table">
+      <img src="/images/label/combination-body-bg.png" className="item-combination-table-bg"/>
       <div className="wrapper">
         {data.list.map((combi, index) => (
           <div key={index} className="combi-row">

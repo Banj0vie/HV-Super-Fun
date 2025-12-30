@@ -1,33 +1,33 @@
 .item-combination-header .header-wrapper {
-  padding: 0.5rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.5rem;
+  margin-right: auto;
 }
 
 .item-combination-header .header-icon {
-  width: 6rem;
-  height: 6rem;
+  width: 3rem;
+  height: 3rem;
   display: flex;
   justify-content: center;
   flex-direction: column;
   gap: 0.25rem;
   align-items: center;
-  background: var(--crop-circle-bg);
-  background-size: 100% 100%;
   position: relative;
   cursor: pointer;
 }
 
 .item-combination-header .header-icon img {
-  height: 50%;
-  width: 50%;
-  image-rendering: pixelated;
-  transform-origin: 32px 64px;
+  height: 80%;
+}
+
+.item-combination-header .header-wrapper {
+  z-index: 1;
 }
 
 .item-combination-header .header-wrapper div {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
@@ -38,4 +38,12 @@
   margin-right: 0.5rem;
   text-align: start;
   font-size: 1.45rem;
+}
+
+.item-combination-header .combination-header-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
 }

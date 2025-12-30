@@ -333,16 +333,18 @@ const ItemCombinationBox = ({
       <div className="button-wrapper">
         {!combiItems.simple && (
           <BaseButton
-            className=""
+            className="h-4rem"
             label="Autofill"
             onClick={onAutofill}
+            small
           ></BaseButton>
         )}
         <BaseButton 
-          className="" 
+          className="h-4rem" 
           label={isCrafting ? "Crafting..." : "Craft"} 
           onClick={onCraft}
           disabled={isCraftDisabled() || isCrafting}
+          small={!combiItems.simple}
         ></BaseButton>
       </div>
     </div>

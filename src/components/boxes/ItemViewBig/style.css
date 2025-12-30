@@ -6,13 +6,20 @@
 }
 
 .item-big-view .icon {
-  border-image: var(--primary-bg) 6 fill repeat;
-  border-image-width: 0.5rem;
   min-width: 5.5rem;
   min-height: 5.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.item-big-view .icon-bg {
+  position: absolute;
+  width: 100% !important;
+  height: 100% !important;
+  top: 0;
+  left: 0;
 }
 
 .item-big-view .icon:hover {
@@ -22,21 +29,22 @@
 .item-big-view .icon img {
   height: 64px;
   width: 64px;
-  image-rendering: pixelated;
-  transform-origin: 32px 64px;
+}
+
+.item-big-view .icon .icon-content {
+  z-index: 1;
 }
 
 .item-big-view .label {
   width: 9rem;
   height: 2.5rem;
-  -o-border-image: var(--profile-btn-bg) 6 repeat;
-  border-image: var(--profile-btn-bg) 6 fill repeat;
-  border-image-width: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #99633F;
+  border-radius: 100px;
 }
 
 .item-big-view .label div {
-  font-size: 1.25rem;
+  font-size: 1rem;
 }

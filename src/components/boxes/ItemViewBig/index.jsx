@@ -7,7 +7,8 @@ const ItemBigView = ({ itemId, onClick }) => {
   return (
     <div className="item-big-view">
       <div className="icon" onClick={() => onClick()}>
-        {itemId && <img src={ALL_ITEMS[itemId].image} alt="item"></img>}
+        <img src="/images/profile_bar/avatar_bg.png" className="icon-bg" alt="icon-bg"/>
+        {itemId && <img src={ALL_ITEMS[itemId].image} alt="item" className="icon-content"></img>}
       </div>
       <br />
       <div className="label">

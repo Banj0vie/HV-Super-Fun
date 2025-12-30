@@ -15,7 +15,7 @@ const ItemCombinationController = ({
     <CardView className="item-combination-controller">
       {limitedController && (
         <img
-          src={buttonFrames.leftTriangleButton}
+          src={buttonFrames.leftTriangleButtonWithBg}
           alt="left limit"
           className="controller-button"
           onClick={() => onLeftToLimited()}
@@ -24,8 +24,8 @@ const ItemCombinationController = ({
       <img
         src={
           limitedController
-            ? buttonFrames.leftTriangleButtonWithBg
-            : buttonFrames.leftTriangleButton
+            ? buttonFrames.leftTriangleButton
+            : buttonFrames.leftTriangleButtonWithBg
         }
         alt="left"
         className="controller-button"
@@ -35,8 +35,8 @@ const ItemCombinationController = ({
       <img
         src={
           limitedController
-            ? buttonFrames.rightTriangleButtonWithBg
-            : buttonFrames.rightTriangleButton
+            ? buttonFrames.rightTriangleButton
+            : buttonFrames.rightTriangleButtonWithBg
         }
         alt="right"
         className="controller-button"
@@ -44,7 +44,7 @@ const ItemCombinationController = ({
       />
       {limitedController && (
         <img
-          src={buttonFrames.rightTriangleButton}
+          src={buttonFrames.rightTriangleButtonWithBg}
           alt="right limit"
           className="controller-button"
           onClick={() => onRightToLimited()}

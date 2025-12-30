@@ -38,6 +38,8 @@ const House = () => {
       id: ID_HOUSE_HOTSPOTS.ANGLER,
       component: AnglerDialog,
       label: "QUIET POND",
+      header: "/images/dialog/modal-header-angler.png",
+      headerOffset: 50,
     },
   ];
   const bees = HOUSE_BEES;

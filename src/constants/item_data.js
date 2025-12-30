@@ -702,7 +702,7 @@ export const ALL_ITEMS = {
     lockedHoney: 0,
   },
   [ID_BAIT_ITEMS.BAIT_3]: {
-    label: "Bait_III",
+    label: "Bait III",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.BAIT,
     pos: -1,

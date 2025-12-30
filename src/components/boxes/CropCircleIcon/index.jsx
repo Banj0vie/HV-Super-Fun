@@ -1,7 +1,7 @@
 import React from "react";
 import "./style.css";
 import { ALL_ITEMS } from "../../../constants/item_data";
-import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
+import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../../../constants/item_seed";
 
 const CropCircleIcon = ({ seedId, size, scale = 1 }) => {
   return (
@@ -12,7 +12,9 @@ const CropCircleIcon = ({ seedId, size, scale = 1 }) => {
       <div
         className="crop-icon"
         style={{
-          backgroundPositionY: -ALL_ITEMS[seedId]?.pos * ONE_SEED_HEIGHT,
+          backgroundPositionY: ALL_ITEMS[seedId]?.pos 
+            ? `-${ALL_ITEMS[seedId].pos * ONE_SEED_HEIGHT * 0.308}px`
+            : 0,
         }}
       ></div>
     </div>

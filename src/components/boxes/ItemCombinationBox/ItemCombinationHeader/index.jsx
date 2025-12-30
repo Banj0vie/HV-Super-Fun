@@ -5,6 +5,7 @@ import CardView from "../../CardView";
 const ItemCombinationHeader = ({ image, label, exp }) => {
   return (
     <CardView className="p-0 item-combination-header">
+      <img className="combination-header-bg" src="/images/label/combination-header-bg.png" alt="item-image" width="24"></img>
       <div className="header-wrapper">
         <div className="header-icon">
           <img src={image} alt="header"></img>

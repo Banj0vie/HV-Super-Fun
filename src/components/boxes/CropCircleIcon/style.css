@@ -4,14 +4,17 @@
   flex-direction: column;
   gap: 0.25rem;
   align-items: center;
-  background: var(--crop-circle-bg);
   background-size: 100% 100%;
   position: relative;
 }
 
 .crop-circle-icon-bg .crop-icon {
-  background: url(/public/images/crops/seeds.png);
+  background: url(/public/images/crops/seeds.webp);
   width: 64px;
   height: 64px;
-  scale: 0.8;
+  scale: 1.5;
+  /* Scale from 159x207.7647 to fit 64px height: scale factor = 64/207.7647 ≈ 0.308 */
+  /* Scaled width = 159 * 0.308 ≈ 48.96px ≈ 3.06rem */
+  background-size: 3.06rem auto;
+  background-repeat: no-repeat;
 }

@@ -28,11 +28,11 @@ const StartFishing = ({ onBack, onStart }) => {
   const onConfirmBaitAmount = async (amount) => {
     setIsThrowingBait(true);
     setIsConfirmDialog(false);
-    
+
     try {
       // Call fish() function when user confirms bait amount
       const result = await fish(selectedBaitId, amount);
-      
+
       if (result && result.txHash) {
         show("Bait thrown! Now reel in your catch!", "success");
         // Navigate to fishing page - request ID will be loaded from pending requests
@@ -52,21 +52,23 @@ const StartFishing = ({ onBack, onStart }) => {
       <div className="tool-bar">
         <ItemBigView
           itemId={currentFishingRodId}
-          onClick={() => {}}
+          onClick={() => { }}
         ></ItemBigView>
-        <div>{`<>`}</div>
+        <img className="vs" src="/images/items/left-right.png" alt="vs" />
         <ItemBigView
           itemId={selectedBaitId}
           onClick={() => setIsBaitSelectDialog(true)}
         ></ItemBigView>
       </div>
-      <LabelValueBox label="Fishing Power" value="5"></LabelValueBox>
-      <LabelValueBox label="Failure Chance" value="12.5%"></LabelValueBox>
-      <LabelValueBox label="Exp Reward" value="250"></LabelValueBox>
-      <LabelValueBox label="Life Bud Chance" value="0.01%"></LabelValueBox>
+      <div className="description">
+        <LabelValueBox label="Fishing Power" value="5"></LabelValueBox>
+        <LabelValueBox label="Failure Chance" value="12.5%"></LabelValueBox>
+        <LabelValueBox label="Exp Reward" value="250"></LabelValueBox>
+        <LabelValueBox label="Life Bud Chance" value="0.01%"></LabelValueBox>
+      </div>
       <br />
       <div className="button-wrapper">
-        <BaseButton label="Back" onClick={onBack} isError className="w-50"></BaseButton>
+        <BaseButton label="Back" onClick={onBack} isError small className="w-50"></BaseButton>
         {selectedBaitId ? (
           <BaseButton
             label={isThrowingBait ? "Throwing..." : "Throw Bait"}

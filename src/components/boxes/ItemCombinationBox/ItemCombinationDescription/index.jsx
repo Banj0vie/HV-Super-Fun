@@ -8,7 +8,7 @@ const ItemCombinationDescription = ({ itemId }) => {
   return (
     <CardView className="p-0">
       <div className="item-combination-description">
-        <div>{combiInfo.description.summary}</div>
+        <div className="item-combination-description-top">{combiInfo.description.summary}</div>
         <div>
           {combiInfo.description.extra_bonus}
           <span className="highlight">{combiInfo.description.extra_point}</span>
