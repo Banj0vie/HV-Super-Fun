@@ -50,7 +50,7 @@ const BatchBuyConfirmDialog = ({ onClose, onPurchaseSuccess, item }) => {
   };
 
   return (
-    <BaseDialog onClose={onClose} title="BATCH BUY">
+    <BaseDialog onClose={onClose} title="BATCH BUY" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="batch-buy-confirm-dialog">
         {item && (
           <>

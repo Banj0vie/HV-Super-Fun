@@ -49,7 +49,7 @@ const SellConfirmDialog = ({ onClose, onSellSuccess, item }) => {
   };
 
   return (
-    <BaseDialog onClose={onClose} title="SELL ITEMS">
+    <BaseDialog onClose={onClose} title="SELL ITEMS" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="sell-confirm-dialog">
         {item && (
           <>

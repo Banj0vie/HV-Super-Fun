@@ -7,9 +7,6 @@
 
 .buy-dialog-content .left-panel {
   width: 35%;
-  padding: 1rem;
-  background: #8b4513;
-  border-radius: 8px;
 }
 
 .buy-dialog-content .right-panel {
@@ -17,7 +14,6 @@
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  background: #654321;
   border-radius: 8px;
 }
 

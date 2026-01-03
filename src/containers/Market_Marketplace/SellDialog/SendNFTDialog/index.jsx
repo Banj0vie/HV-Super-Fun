@@ -50,7 +50,7 @@ const SendNFTDialog = ({ onClose, onSendSuccess, item }) => {
     }
   };
   return (
-    <BaseDialog onClose={onClose} title="SEND NFT">
+    <BaseDialog onClose={onClose} title="SEND NFT" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="send-nft-dialog">
         {item && (
           <>

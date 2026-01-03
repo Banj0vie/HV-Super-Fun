@@ -65,9 +65,9 @@ const SellDialog = ({ onBack, onClose }) => {
   };
 
   return (
-    <BaseDialog onClose={onClose} title="SELL ITEMS">
+    <BaseDialog onClose={onClose} title="SELL ITEMS" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="sell-dialog-content">
-        <CardView className="left-panel items-list">
+        <div className="left-panel items-list">
           <TreeInput
             onBack={onBack}
             onSelect={useCallback(
@@ -77,7 +77,7 @@ const SellDialog = ({ onBack, onClose }) => {
             onSearch={setSearchTerm}
             search={searchTerm}
           ></TreeInput>
-        </CardView>
+        </div>
         <CardView className="right-panel">
           {loading && <div className="items-header">Loading items... </div>}
           <div className="items-list">

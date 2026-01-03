@@ -2,6 +2,7 @@ import React from "react";
 import "./style.css";
 import {
   ONE_SEED_HEIGHT,
+  ONE_SEED_WIDTH,
   TYPE_LABEL_COLOR,
 } from "../../../constants/item_seed";
 import { ALL_ITEMS } from "../../../constants/item_data";
@@ -10,11 +11,11 @@ import BaseButton from "../../buttons/BaseButton";
 
 const ItemViewMarketplace = ({
   item,
-  onSend = () => {},
-  onSell = () => {},
-  onBatchBuy = () => {},
-  onBuy = () => {},
-  onCancel = () => {},
+  onSend = () => { },
+  onSell = () => { },
+  onBatchBuy = () => { },
+  onBuy = () => { },
+  onCancel = () => { },
   isBatchBuy = false,
   isBuy = false,
   isMyListing = false,
@@ -67,58 +68,65 @@ const ItemViewMarketplace = ({
   return (
     <CardView className="sell-item-box-wrapper" secondary>
       <div className="sell-item-box">
-        {/* Item Icon */}
-        <CardView className="item-icon-card">
-          <div className="item-icon-wrapper">
-            {shouldUseImageTag() ? (
-              <img src={getImageSrc()} alt={itemLabel} className="item-icon" />
-            ) : (
-              <div
-                className={getImageClass()}
-                style={{
-                  backgroundPositionY: 0 - itemPos * ONE_SEED_HEIGHT,
-                  // Add chest-specific styling
-                  ...(itemData.image === "chest"
-                    ? {
+        <div className="item-left-content">
+          <img src="/images/label/combination-header-bg.png" className="item-left-bg" alt="left bg"/>
+          {/* Item Icon */}
+          <div className="item-icon-card">
+            <div className="item-icon-wrapper">
+              {shouldUseImageTag() ? (
+                <img src={getImageSrc()} alt={itemLabel} className="item-icon" />
+              ) : (
+                <div
+                  className={getImageClass()}
+                  style={{
+                    backgroundPositionY: itemPos 
+                      ? `-${itemPos * ONE_SEED_HEIGHT * 0.308}px`
+                      : 0,
+                    // Add chest-specific styling
+                    ...(itemData.image === "chest"
+                      ? {
                         "--chest-type": itemPos,
                       }
-                    : {}),
-                }}
-              ></div>
-            )}
+                      : {}),
+                  }}
+                ></div>
+              )}
+            </div>
           </div>
-        </CardView>
 
-        {/* Item Name and Quantity/Price */}
-        <div
-          className="item-details"
-          style={{ color: TYPE_LABEL_COLOR[item.type].color }}
-        >
-          {itemLabel} {isBatchBuy ? '' : isBuy ? `(${price} HNY)` : `(${item.count})`}
+          {/* Item Name and Quantity/Price */}
+          <div
+            className="item-details"
+            style={{ color: TYPE_LABEL_COLOR[item.type].color }}
+          >
+            {itemLabel} {isBatchBuy ? '' : isBuy ? `(${price} HNY)` : `(${item.count})`}
+          </div>
         </div>
-
         {/* Action Buttons */}
         <div className="item-actions">
           {!isBatchBuy && !isBuy && (
-            <BaseButton label="Send" onClick={() => onSend(item)}></BaseButton>
+            <BaseButton small label="Send" onClick={() => onSend(item)}></BaseButton>
           )}
           {!isBatchBuy && !isBuy && (
-            <BaseButton label="Sell" onClick={() => onSell(item)}></BaseButton>
+            <BaseButton small label="Sell" onClick={() => onSell(item)}></BaseButton>
           )}
           {isBatchBuy && (
-            <BaseButton
+            <BaseButton 
+              small
               label="Batch Buy"
               onClick={() => onBatchBuy(item)}
             ></BaseButton>
           )}
           {isBuy && isMyListing && onCancel && (
-            <BaseButton
+            <BaseButton 
+              small
               label="Cancel"
               onClick={() => onCancel(item)}
             ></BaseButton>
           )}
           {isBuy && !isMyListing && onBuy && (
             <BaseButton
+              small
               label="Buy"
               onClick={() => onBuy(item)}
             ></BaseButton>
