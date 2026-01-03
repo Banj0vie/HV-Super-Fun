@@ -4,7 +4,7 @@ import {
   FARM_PLOTS_PER_SIDE,
   FARM_POSITIONS,
 } from "../../../constants/scene_farm";
-import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
+import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../../../constants/item_seed";
 import { ALL_ITEMS } from "../../../constants/item_data";
 import CropTooltip from "./CropTooltip";
 import { getSetting } from "../../../utils/settings";
@@ -192,7 +192,7 @@ const CropItem = ({
         ...position,
         backgroundPositionX:
           data.seedId && ALL_ITEMS[data.seedId]
-            ? 0 - frameIndex * ONE_SEED_HEIGHT
+            ? 0 - frameIndex * ONE_SEED_WIDTH
             : 0,
         backgroundPositionY:
           data.seedId && ALL_ITEMS[data.seedId]
