@@ -869,7 +869,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       id: ID_FARM_HOTSPOTS.DEX,
       component: FarmerDialog,
       label: "FARMER",
-      header: dialogFrames.modalHeaderSeeds,
+      header: "/images/dialog/modal-header-gardner.png",
       actions: {
         plant: startPlanting,
         plantAll: plantAll,

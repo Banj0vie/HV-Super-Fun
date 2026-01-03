@@ -11,7 +11,7 @@ const SelectSeedDialog = ({ onClose, onClickSeed, availableSeeds = null }) => {
 
   if (loading) {
     return (
-      <BaseDialog title="PICK SEED" onClose={onClose}>
+      <BaseDialog title="PICK SEED" onClose={onClose} header="/images/dialog/modal-header-gardner.png">
         <div className="select-seed-dialog">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -24,7 +24,7 @@ const SelectSeedDialog = ({ onClose, onClickSeed, availableSeeds = null }) => {
 
   if (error) {
     return (
-      <BaseDialog title="PICK SEED" onClose={onClose}>
+      <BaseDialog title="PICK SEED" onClose={onClose} header="/images/dialog/modal-header-gardner.png">
         <div className="select-seed-dialog">
           <div className="error-container">
             <div className="error-icon">⚠️</div>
@@ -44,7 +44,7 @@ const SelectSeedDialog = ({ onClose, onClickSeed, availableSeeds = null }) => {
 
   if (seeds.length === 0) {
     return (
-      <BaseDialog title="PICK SEED" onClose={onClose}>
+      <BaseDialog title="PICK SEED" onClose={onClose} header="/images/dialog/modal-header-gardner.png">
         <div className="select-seed-dialog">
           <div className="empty-seeds-container">
             <div className="empty-seeds-icon">🌱</div>
@@ -64,7 +64,7 @@ const SelectSeedDialog = ({ onClose, onClickSeed, availableSeeds = null }) => {
   const totalSeedCount = seeds.reduce((sum, s) => sum + (Number(s.count) || 0), 0);
 
   return (
-    <BaseDialog title="PICK SEED" onClose={onClose}>
+    <BaseDialog title="PICK SEED" onClose={onClose} header="/images/dialog/modal-header-gardner.png">
       <div className="select-seed-dialog">
         <div className="seeds-header">
           <span className="seeds-count">You have {totalSeedCount} seed{totalSeedCount !== 1 ? 's' : ''}</span>

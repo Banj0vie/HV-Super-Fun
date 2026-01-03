@@ -1,31 +1,32 @@
 .select-seed-dialog {
   width: 380px;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem;
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.05), rgba(160, 82, 45, 0.05));
-  border-radius: 8px;
-  border: 1px solid rgba(139, 69, 19, 0.1);
 }
 
 .seeds-header {
   text-align: center;
   margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: rgba(139, 69, 19, 0.1);
+  padding: 1rem;
+  background: #99633F;
   border-radius: 6px;
-  border: 1px solid rgba(139, 69, 19, 0.2);
 }
 
 .seeds-count {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #8B4513;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  color: white;
+  text-shadow: -1px -1px 0 #26120F,
+    1px -1px 0 #26120F,
+    -1px 1px 0 #26120F,
+    1px 1px 0 #26120F,
+    -1px 0 0 #26120F,
+    1px 0 0 #26120F,
+    0 -1px 0 #26120F,
+    0 1px 0 #26120F;
 }
 
 .seeds-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   row-gap: 0.5rem;
   column-gap: 0.5rem;
   animation: fadeInUp 0.5s ease-out;
