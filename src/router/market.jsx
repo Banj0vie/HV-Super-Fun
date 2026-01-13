@@ -1,7 +1,6 @@
 import React from "react";
 import PanZoomViewport from "../layouts/PanZoomViewport";
-import { MARKET_VIEWPORT, MARKET_HOTSPOTS, MARKET_BEES } from "../constants/scene_market";
-import { dialogFrames } from "../constants/_baseimages";
+import { MARKET_VIEWPORT, MARKET_HOTSPOTS, MARKET_BEES, MARKET_STUFFS } from "../constants/scene_market";
 import DexDialog from "../containers/Market_Dex";
 import VendorDialog from "../containers/Market_Vendor";
 import BankerDialog from "../containers/Market_Banker";
@@ -63,6 +62,7 @@ const Market = () => {
       dialogs={dialogs}
       width={width}
       height={height}
+      stuffs={MARKET_STUFFS}
       bees={bees}
     />
   );

@@ -236,10 +236,10 @@ const CropItem = ({
         <div
           style={{
             position: "absolute",
-            top: "73%", // Moved slightly down from 50%
-            left: "51%",
+            top: "70%", // Moved slightly down from 50%
+            left: "40%",
             transform: "translate(-50%, -50%)",
-            fontSize: "10px",
+            fontSize: "50px",
             color: "#666",
             zIndex: 10,
             pointerEvents: "none",

@@ -15,6 +15,17 @@ export const MARKET_HOTSPOTS = [
   { id: ID_MARKET_HOTSPOTS.SAGE, label: 'QUEEN', x: 204, y: -10, delay: 0.6 },
 ];
 
+export const MARKET_STUFFS = [
+    {
+        image: "/images/market/flag.gif",
+        x: 279,
+        y: 24,
+        width: 49,
+        height: 34,
+        zIndex: 0,
+    },
+]
+
 export const MARKET_BEES = [
   {
     image: "/images/bees/bee_1.png",
