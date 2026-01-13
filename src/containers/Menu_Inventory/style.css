@@ -12,12 +12,9 @@
   flex-direction: column;
   gap: 0.5rem;
   align-items: center;
-  -o-border-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAApklEQVQ4jWNkgAJ7DaP/DCSAgzfOMTIwMDAwwjSvXlNBin6G0JAOhoM3zjEywjSznN1GkgF/jL0YQkM6GFgYGBhQNLfNu4lXY1WSOgOyHhZkybZ5NxlcDMTxGtA27ybcEAYGBgYmZElCmrGpYcKhjmgwagCaAUapUQQ1oKtBSQcsZ7cRNAQ9xTLCMtH6Sj2CtiODwPZLEAMYGEjPiTBw8MY5RooDEQBeui3fWIO6NwAAAABJRU5ErkJggg==)
-    6 repeat;
-  border-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAApklEQVQ4jWNkgAJ7DaP/DCSAgzfOMTIwMDAwwjSvXlNBin6G0JAOhoM3zjEywjSznN1GkgF/jL0YQkM6GFgYGBhQNLfNu4lXY1WSOgOyHhZkybZ5NxlcDMTxGtA27ybcEAYGBgYmZElCmrGpYcKhjmgwagCaAUapUQQ1oKtBSQcsZ7cRNAQ9xTLCMtH6Sj2CtiODwPZLEAMYGEjPiTBw8MY5RooDEQBeui3fWIO6NwAAAABJRU5ErkJggg==)
-    6 fill repeat;
-  border-image-width: 1rem;
   height: 100%;
+  background-color: var(--secondary-dlg-bg);
+  border-radius: 8px;
 }
 
 .inventory-dialog .info-row .button {
@@ -50,10 +47,7 @@
 
 .inventory-dialog .seed-row {
   max-height: 100%;
-  -o-border-image: var(--primary-bg) 6 repeat;
-  border-image: var(--primary-bg) 6 fill repeat;
-  border-image-width: 1rem;
-  height: 100%;
+  padding-top: 1rem;
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
@@ -63,7 +57,7 @@
 }
 
 .inventory-dialog .seed-row-wrapper {
-  margin-top: 1rem;
+  padding-top: 1rem;
   overflow-x: hidden;
   overflow-y: auto;
   display: flex;
@@ -71,7 +65,9 @@
   justify-content: flex-start;
   align-items: flex-start;
   gap: 1.75rem;
-  width: 90%;
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
   max-height: 90%;
   height: auto;
 }

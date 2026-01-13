@@ -19,6 +19,7 @@ const SeedRollingDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
             label="Back"
             onClick={onBack}
             small
+            isError
           ></BaseButton>
           <BaseButton
             className="h-4rem"

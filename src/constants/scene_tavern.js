@@ -11,9 +11,9 @@ export const TAVERN_HOTSPOTS = [
 
 export const TAVERN_STUFFS = [
     {
-        image: "/images/tavern/smoke.webp",
-        x: 490,
-        y: -142,
+        image: "/images/tavern/smoke.gif",
+        x: 535,
+        y: -178,
         width: 223,
         height: 177,
         zIndex: 0,

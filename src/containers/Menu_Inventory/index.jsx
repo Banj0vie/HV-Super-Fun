@@ -196,7 +196,7 @@ const InventoryDialog = ({ onClose }) => {
 
   return (
     <>
-      <BaseDialog onClose={onClose} title="INVENTORY">
+      <BaseDialog onClose={onClose} title="INVENTORY" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
         <div className="inventory-dialog">
           <div className="layout">
             <div className="info-row">
@@ -207,6 +207,7 @@ const InventoryDialog = ({ onClose }) => {
                   key={index}
                   focused={selectedMenu === item.id}
                   onClick={() => setSelectedMenu(item.id)}
+                  small
                 ></BaseButton>
               ))}
             </div>

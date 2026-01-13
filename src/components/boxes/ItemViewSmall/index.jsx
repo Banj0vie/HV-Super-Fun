@@ -12,12 +12,14 @@ const ItemSmallView = ({ itemId, count }) => {
   return (itemId ? 
     <div className="item-small-view">
       <CardView className="icon">
+        <img src="/images/profile_bar/avatar_bg.png" className="icon-bg" alt="icon background"></img>
         {ALL_ITEMS[itemId].pos === -1 ? (
           <img src={ALL_ITEMS[itemId].image} alt="icon"></img>
         ) : (
           <div
             className="crop-icon"
             style={{
+              backgroundPositionX: 0,
               backgroundPositionY: -ALL_ITEMS[itemId]?.pos * ONE_SEED_HEIGHT,
             }}
           ></div>
@@ -29,7 +31,12 @@ const ItemSmallView = ({ itemId, count }) => {
       >
         {ALL_ITEMS[itemId].label}
       </div>
-      <div className="count">x{count}</div>
+      <div className="small-item-badge">
+        <img className="small-item-badge-icon" src="/images/items/badge-bg.png" alt="seed-badge" />
+        <div className="small-item-badge-count">
+          x{count}
+        </div>
+      </div>
     </div> : <></>
   );
 };
