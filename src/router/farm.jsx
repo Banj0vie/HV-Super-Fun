@@ -3,7 +3,6 @@ import PanZoomViewport from "../layouts/PanZoomViewport";
 import { FARM_BEES, FARM_HOTSPOTS, FARM_VIEWPORT } from "../constants/scene_farm";
 import { ID_FARM_HOTSPOTS } from "../constants/app_ids";
 import FarmerDialog from "../containers/Farm_Farmer";
-import { dialogFrames } from "../constants/_baseimages";
 import FarmInterface from "../layouts/FarmInterface";
 import FarmMenu from "../layouts/FarmInterface/FarmMenu";
 import SelectSeedDialog from "../containers/Farm_SelectSeedDialog";

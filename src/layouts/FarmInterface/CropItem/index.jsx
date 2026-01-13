@@ -30,7 +30,7 @@ const CropItem = ({
   const rootRef = useRef(null);
   const [portalContainer, setPortalContainer] = useState(null);
   const isPreview = useMemo(() => {
-    if(!crops || !data?.seedId || index >= crops.getLength()) return false;
+    if (!crops || !data?.seedId || index >= crops.getLength()) return false;
     return crops.getItem(index).seedId !== data.seedId;
   }, [crops, data?.seedId, index]);
 
@@ -55,10 +55,10 @@ const CropItem = ({
   useEffect(() => {
     const loadGrowthStageSetting = () => {
       try {
-        const setting = getSetting('isShowGrowthStage');
+        const setting = getSetting("isShowGrowthStage");
         setIsShowGrowthStage(setting);
       } catch (error) {
-        console.error('Failed to load growth stage setting:', error);
+        console.error("Failed to load growth stage setting:", error);
         setIsShowGrowthStage(false);
       }
     };
@@ -68,18 +68,18 @@ const CropItem = ({
 
     // Listen for storage changes (when settings are updated in another tab/component)
     const handleStorageChange = (e) => {
-      if (e.key === 'cryptoValley_settings') {
+      if (e.key === "cryptoValley_settings") {
         loadGrowthStageSetting();
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
     // Also check periodically in case localStorage is updated without storage event
     const interval = setInterval(loadGrowthStageSetting, 1000);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
   }, []);
@@ -90,8 +90,14 @@ const CropItem = ({
     if (portalContainer && portalContainer !== document.body) {
       const rect = portalContainer.getBoundingClientRect();
       // Calculate scale factors in case the container is transformed (scaled)
-      const scaleX = rect.width && portalContainer.offsetWidth ? rect.width / portalContainer.offsetWidth : 1;
-      const scaleY = rect.height && portalContainer.offsetHeight ? rect.height / portalContainer.offsetHeight : 1;
+      const scaleX =
+        rect.width && portalContainer.offsetWidth
+          ? rect.width / portalContainer.offsetWidth
+          : 1;
+      const scaleY =
+        rect.height && portalContainer.offsetHeight
+          ? rect.height / portalContainer.offsetHeight
+          : 1;
       // Map client coordinates into container local coordinates by dividing by scale
       const localX = (e.clientX - rect.left) / (scaleX || 1) + 12;
       const localY = (e.clientY - rect.top) / (scaleY || 1) + 12;
@@ -166,7 +172,7 @@ const CropItem = ({
   // Calculate number of filled segments using same logic as sprite frame calculation
   const getFilledSegments = () => {
     if (!data.seedId || data.seedId === 0n) return 0;
-    
+
     // Use the exact same logic as the sprite frame calculation
     if (data.growStatus === -1) {
       return 1; // newly planted
@@ -198,11 +204,7 @@ const CropItem = ({
           data.seedId && ALL_ITEMS[data.seedId]
             ? 0 - ALL_ITEMS[data.seedId].pos * ONE_SEED_HEIGHT
             : 0,
-        cursor: isDisabled ? "not-allowed" : "pointer",
       }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
       {/* Growth progress bar */}
       {data.seedId && data.seedId !== 0n && (
@@ -220,16 +222,27 @@ const CropItem = ({
           {Array.from({ length: 5 }, (_, i) => (
             <div
               key={i}
-              className={`growth-segment ${i <= filledSegments ? 'filled' : ''}`}
+              className={`growth-segment ${
+                i <= filledSegments ? "filled" : ""
+              }`}
             />
           ))}
         </div>
       )}
 
       {/* Tooltip rendered into portal container so it aligns with transformed parents */}
-      {tooltipVisible && data.seedId && data.seedId !== 0n && !isPreview && portalContainer && (
-        <CropTooltip container={portalContainer} pos={tooltipPos} data={data} growthProgress={growthProgress} />
-      )}
+      {tooltipVisible &&
+        data.seedId &&
+        data.seedId !== 0n &&
+        !isPreview &&
+        portalContainer && (
+          <CropTooltip
+            container={portalContainer}
+            pos={tooltipPos}
+            data={data}
+            growthProgress={growthProgress}
+          />
+        )}
 
       {/* Lock icon for disabled plots */}
       {isDisabled && (
@@ -277,6 +290,9 @@ const CropItem = ({
           e.preventDefault();
         }}
         className="bounding-box"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={(e) => {
           if (isDisabled) {
             return; // Don't allow interaction with disabled plots
@@ -298,6 +314,7 @@ const CropItem = ({
             onClick(false, index);
           }
         }}
+        style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
       ></div>
     </div>
   );
