@@ -24,6 +24,7 @@
   padding: 0;
   width: 64px;
   height: 64px;
+  z-index: 1;
 }
 
 .item-icon-wrapper {
@@ -38,25 +39,45 @@
   width: 64px;
   height: 64px;
   background-size: 100% auto;
-  image-rendering: pixelated;
   transform-origin: 32px 32px;
   scale: 0.6;
 }
 
 .item-icon-seeds {
-  background: url(/public/images/crops/seeds.png);
+  background: url(/public/images/crops/seeds.webp);
+  /* Scale from 159x207.7647 to fit 64px height: scale factor = 64/207.7647 ≈ 0.308 */
+  /* Scaled width = 159 * 0.308 ≈ 48.96px ≈ 3.06rem */
+  background-size: 3.06rem auto;
+  background-repeat: no-repeat;
 }
 
 .item-icon-bigger-plants {
-  background: url(/public/images/crops/bigger_plants.png);
+  background: url(/public/images/crops/bigger_plants.webp);
 }
 
 .item-details {
   flex: 1;
+  z-index: 1;
 }
 
 .item-actions {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
+  flex: 1;
+}
+
+.item-left-content {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.item-left-content .item-left-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

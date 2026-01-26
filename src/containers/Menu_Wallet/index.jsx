@@ -21,8 +21,8 @@ const WalletDialog = ({onClose}) => {
   };
 
   return (
-    <BaseDialog title="WALLET" onClose={onClose}>
-      <div className="wallet-dialog">
+    <BaseDialog title="WALLET" onClose={onClose} header="/images/dialog/modal-header-wallet.png">
+      <div className="wallet-dialog text-center">
         <div>Connected Account</div>
         <div className="wallet-address-box">
           <div>
@@ -30,9 +30,10 @@ const WalletDialog = ({onClose}) => {
           </div>
         </div>
         <BaseButton
-          className="h-4rem"
+          className="w-fit mx-auto h-4.5rem"
           label="Disconnect"
           onClick={onDisconnect}
+          small={true}
         ></BaseButton>
       </div>
     </BaseDialog>

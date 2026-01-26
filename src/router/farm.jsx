@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import PanZoomViewport from "../layouts/PanZoomViewport";
-import { FARM_HOTSPOTS, FARM_VIEWPORT } from "../constants/scene_farm";
+import { FARM_BEES, FARM_HOTSPOTS, FARM_VIEWPORT } from "../constants/scene_farm";
 import { ID_FARM_HOTSPOTS } from "../constants/app_ids";
 import FarmerDialog from "../containers/Farm_Farmer";
-import { dialogFrames } from "../constants/_baseimages";
 import FarmInterface from "../layouts/FarmInterface";
 import FarmMenu from "../layouts/FarmInterface/FarmMenu";
 import SelectSeedDialog from "../containers/Farm_SelectSeedDialog";
@@ -869,7 +868,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       id: ID_FARM_HOTSPOTS.DEX,
       component: FarmerDialog,
       label: "FARMER",
-      header: dialogFrames.modalHeaderSeeds,
+      header: "/images/dialog/modal-header-gardner.png",
       actions: {
         plant: startPlanting,
         plantAll: plantAll,
@@ -879,15 +878,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       },
     },
   ];
+
+  const bees = FARM_BEES;
   return (
     <div>
       <PanZoomViewport
-        backgroundSrc="/images/backgrounds/farm.gif"
+        backgroundSrc="/images/backgrounds/farm.webp"
         hotspots={hotspots}
         width={width}
         height={height}
         dialogs={dialogs}
         hideMenu={isFarmMenu}
+        bees={bees}
       >
         <FarmInterface
           key={isFarmMenu ? `preview-${previewUpdateKey}` : "main"}

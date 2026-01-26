@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import "./style.css";
 import CardView from "../../../components/boxes/CardView";
 import LabelValueBox from "../../../components/boxes/LabelValueBox";
+import CardTopicView from "../../../components/boxes/CardTopicView";
 import { formatDuration } from "../../../utils/basic";
 import BaseButton from "../../../components/buttons/BaseButton";
 import { useSage } from "../../../hooks/useContracts";
@@ -75,7 +76,7 @@ const WeeklyHarvest = ({onBack}) => {
   }, [unlockWeeklyHarvest]);
   return (
     <div className="weekly-harvest-wrapper">
-      <CardView className="p-0">
+      <CardView className="mt-1.5rem">
         <div className="weekly-harvest-card">
           <LabelValueBox 
             label="Unlock Rate" 
@@ -89,18 +90,15 @@ const WeeklyHarvest = ({onBack}) => {
             label="Next Harvest in"
             value={sageData.canUnlockHarvest ? "Honey!" : formatDuration(remainedTime)}
           />
-          <div className="weekly-harvest-header">Weekly Harvest</div>
         </div>
       </CardView>
-      
+      <CardTopicView title="Weekly Harvest" width="55%" />
       {sageData.lockedAmount === 0 ? (
         <CardView className="p-0">
-          <br/>
           <div className="text-center">{loading ? "Loading ..." : "No locked tokens to unlock"}</div>
         </CardView>
       ) : !sageData.canUnlockHarvest ? (
         <CardView className="p-0">
-          <br/>
           <div className="text-center">Already Claimed!</div>
         </CardView>
       ) : (
@@ -109,10 +107,11 @@ const WeeklyHarvest = ({onBack}) => {
           label={isUnlocking ? "Unlocking..." : "Unlock Honey"} 
           onClick={handleUnlock}
           disabled={isUnlocking}
+          large={true}
         />
       )}
       
-      <BaseButton className="h-3rem" label="Back" onClick={onBack} />
+      <BaseButton className="h-3rem" label="Back" onClick={onBack} large={true} isError={true}></BaseButton>
     </div>
   );
 };

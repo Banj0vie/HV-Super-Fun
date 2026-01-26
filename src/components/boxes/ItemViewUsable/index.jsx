@@ -7,7 +7,7 @@ import BaseButton from "../../buttons/BaseButton";
 
 const ItemViewUsable = ({ itemId, count, onUse, usable = true, buttonLabel = "Use", disabled = false }) => {
   return (
-    <CardView className="p-0" secondary>
+    <CardView className="p-0">
       <div className="item-view-usable">
         <div className="icon-and-label">
           <CardView className="p-0 icon">
@@ -30,6 +30,7 @@ const ItemViewUsable = ({ itemId, count, onUse, usable = true, buttonLabel = "Us
             label={buttonLabel}
             onClick={() => onUse(itemId)}
             disabled={disabled}
+            small
           ></BaseButton>
         )}
       </div>

@@ -7,7 +7,7 @@ const Valley = () => {
 
   return (
     <PanZoomViewport
-      backgroundSrc="/images/backgrounds/valley.gif"
+      backgroundSrc="/images/backgrounds/valley.webp"
       hotspots={hotspots}
       dialogs={[]}
       width={width}

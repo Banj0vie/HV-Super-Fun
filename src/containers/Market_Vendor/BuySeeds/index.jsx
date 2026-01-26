@@ -14,7 +14,6 @@ const BuySeeds = ({ menuId, onBack, onBuy, buyingItem, isAnyBuying }) => {
 
   return (
     <div className="buy-seeds-wrapper">
-      <BaseDivider />
       {seedPack &&
         seedPack.id &&
         seedPack.items &&
@@ -29,15 +28,15 @@ const BuySeeds = ({ menuId, onBack, onBuy, buyingItem, isAnyBuying }) => {
             isDisabled={isAnyBuying}
           ></BuySeedBox>
         ))}
-      {seedPack && seedPack.tip && <BaseDivider></BaseDivider>}
       {seedPack && seedPack.tip && (
-        <div className="buy-seed-tip highlight">{seedPack.tip}</div>
+        <div className="buy-seed-tip">{seedPack.tip}</div>
       )}
-      <BaseButton 
+      <BaseButton
         className="h-4rem"
         label="Back"
         onClick={onBack}
         disabled={isAnyBuying}
+        isError
       ></BaseButton>
     </div>
   );

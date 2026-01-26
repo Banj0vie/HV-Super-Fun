@@ -1,7 +1,7 @@
 .base-input {
   width: 100%;
   height: 100%;
-  min-height: 2rem;
+  min-height: 3.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -10,20 +10,45 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
-  -o-border-image: var(--input-bg) 6 repeat;
-  border-image: var(--input-bg) 6 fill repeat;
-  border-image-width: 0.75rem;
+  position: relative;
 }
 
 .base-input input {
   width: 100%;
   height: 100%;
-  min-height: 2rem;
+  min-height: 3.5rem;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #fff;
   margin: 0 0.75rem;
+  z-index: 1;
+}
+
+/* Smaller placeholder text */
+.base-input input::placeholder {
+  font-size: 1rem;
+}
+
+/* Hide spinner for number inputs */
+.base-input input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.base-input input[type="number"]::-webkit-outer-spin-button,
+.base-input input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }

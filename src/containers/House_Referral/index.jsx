@@ -92,7 +92,7 @@ const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
     }
   };
   return (
-    <BaseDialog onClose={onClose} title={label}>
+    <BaseDialog onClose={onClose} title={label} header="/images/dialog/modal-header-wallet.png">
       <div className="referral-dialog">
         <div>Your Sponsor</div>
         <CardView className="p-0">
@@ -100,12 +100,10 @@ const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
             // If user has registered their own referral code, show sponsor info or empty state
             sponsor ? (
               <div className="text-center">
-                <br />
                 {sponsor.slice(0, 6)}...{sponsor.slice(-6)}
               </div>
             ) : (
               <div className="text-center">
-                <br />
                 No sponsor
               </div>
             )

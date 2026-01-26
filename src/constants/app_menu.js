@@ -1,11 +1,9 @@
-import { menuIcons } from './_baseimages';
-
 export const MENU_ITEMS = [
-  { path: '/house', icon: menuIcons.house, label: 'House' },
-  { path: '/farm', icon: menuIcons.farm, label: 'Farm' },
-  { path: '/market', icon: menuIcons.market, label: 'Market' },
-  { path: '/tavern', icon: menuIcons.tavern, label: 'Tavern' },
-  { path: '/valley', icon: menuIcons.valley, label: 'Valley' },
+  { path: '/house', icon: '/images/menus/house.png', label: 'House' },
+  { path: '/farm', icon: '/images/menus/farm.png', label: 'Farm' },
+  { path: '/market', icon: '/images/menus/market.png', label: 'Market' },
+  { path: '/tavern', icon: '/images/menus/tavern.png', label: 'Tavern' },
+  { path: '/valley', icon: '/images/menus/valley.png', label: 'Valley' },
 ];
 
 

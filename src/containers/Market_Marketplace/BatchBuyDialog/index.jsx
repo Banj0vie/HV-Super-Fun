@@ -141,7 +141,7 @@ const BatchBuyDialog = ({ onBack, onClose, onPurchaseSuccess, item, excludeSelle
   };
 
   return (
-    <BaseDialog onClose={onClose} title="BATCH BUY">
+    <BaseDialog onClose={onClose} title="BATCH BUY" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="batch-buy-dialog-content">
         <CardView className="left-panel items-list">
           <TreeInput

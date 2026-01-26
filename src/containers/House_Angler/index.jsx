@@ -9,7 +9,7 @@ import Fishing from "./Fishing";
 import { useFishing } from "../../hooks/useFishing";
 import { useSolanaWallet } from "../../hooks/useSolanaWallet";
 
-const AnglerDialog = ({ onClose, label = "QUIET POND", header = "" }) => {
+const AnglerDialog = ({ onClose, label = "QUIET POND", header = "/images/dialog/modal-header-angler.png", headerOffset = 0, headerWidth = 210 }) => {
   const [pageIndex, setPageIndex] = useState(ID_ANGLER_PAGES.ANGLER_MENU);
   const [selectedBaitId, setSelectedBaitId] = useState(null);
   const [selectedAmount, setSelectedAmount] = useState(0);
@@ -63,7 +63,7 @@ const AnglerDialog = ({ onClose, label = "QUIET POND", header = "" }) => {
   };
 
   return (
-    <BaseDialog onClose={onClose} title={label} header={header}>
+    <BaseDialog onClose={onClose} title={label} header={header} headerOffset={headerOffset} headerWidth={headerWidth} className="custom-modal-background">
       {pageIndex === ID_ANGLER_PAGES.ANGLER_MENU && (
         <AnglerMenu
           onStartFish={() => setPageIndex(ID_ANGLER_PAGES.START_FISHING)}

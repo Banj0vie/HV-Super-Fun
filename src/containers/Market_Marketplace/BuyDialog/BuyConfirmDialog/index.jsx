@@ -41,7 +41,7 @@ const BuyConfirmDialog = ({ onClose, onPurchaseSuccess, item }) => {
   const totalCost = item ? item.price * amount : 0;
 
   return (
-    <BaseDialog onClose={onClose} title="BUY ITEMS">
+    <BaseDialog onClose={onClose} title="BUY ITEMS" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="buy-confirm-dialog">
         {item && (
           <>

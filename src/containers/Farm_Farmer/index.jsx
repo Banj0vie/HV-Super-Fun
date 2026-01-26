@@ -1,7 +1,7 @@
 import React from "react";
 import "./style.css";
 import BaseDialog from "../_BaseDialog";
-import ScrollButton from "../../components/buttons/ScrollButton";
+import BaseButton from "../../components/buttons/BaseButton";
 
 const FarmerDialog = ({
   onClose,
@@ -12,14 +12,14 @@ const FarmerDialog = ({
   return (
     <BaseDialog title={label} header={header} onClose={onClose}>
       <div className="farmer-dialog">
-        <ScrollButton
+        <BaseButton
           label="Plant"
           onClick={() => {
             onClose();
             actions.plant();
           }}
-        ></ScrollButton>
-        <ScrollButton
+        ></BaseButton>
+        <BaseButton
           label="Plant All"
           onClick={() => {
             console.log('=== FARMER DIALOG PLANT ALL CLICKED ===');
@@ -31,21 +31,21 @@ const FarmerDialog = ({
               console.error('actions.plantAll is not defined!');
             }
           }}
-        ></ScrollButton>
-        <ScrollButton
+        ></BaseButton>
+        <BaseButton
           label="Harvest"
           onClick={() => {
             onClose();
             actions.harvest();
           }}
-        ></ScrollButton>
-        <ScrollButton
+        ></BaseButton>
+        <BaseButton
           label="Harvest All"
           onClick={() => {
             onClose();
             actions.harvestAll();
           }}
-        ></ScrollButton>
+        ></BaseButton>
       </div>
     </BaseDialog>
   );

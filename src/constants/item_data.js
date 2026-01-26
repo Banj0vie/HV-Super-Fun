@@ -1,7 +1,7 @@
 import { baitImages, chestImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
 import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_LOOT_CATEGORIES, ID_FISHING_RODS } from "./app_ids";
 
-export const IMAGE_URL_CROP = "/public/images/crops/seeds.png";
+export const IMAGE_URL_CROP = "/public/images/crops/seeds.webp";
 // All items data with categories
 export const ALL_ITEMS = {
   // Seeds
@@ -702,7 +702,7 @@ export const ALL_ITEMS = {
     lockedHoney: 0,
   },
   [ID_BAIT_ITEMS.BAIT_3]: {
-    label: "Bait_III",
+    label: "Bait III",
     category: ID_ITEM_CATEGORIES.LOOT,
     subCategory: ID_LOOT_CATEGORIES.BAIT,
     pos: -1,

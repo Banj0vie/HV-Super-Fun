@@ -6,7 +6,7 @@ import ItemViewSmall from "../../../components/boxes/ItemViewSmall";
 
 const ChestRollingDialog = ({ rollingInfo, onClose, onBack, onOpenAgain }) => {
   return (
-    <BaseDialog title="CHEST OPENING" onClose={onClose}>
+    <BaseDialog title="CHEST OPENING" onClose={onClose} header="/images/dialog/modal-header-chest.png" headerOffset={10}>
       <div className="chest-gacha-wrapper">
         <div className="chest-rolling-box-wrapper">
         <div className="chest-result">
@@ -21,6 +21,7 @@ const ChestRollingDialog = ({ rollingInfo, onClose, onBack, onOpenAgain }) => {
             className="h-4rem"
             label="Back"
             onClick={onBack}
+            isError
           ></BaseButton>
           {/* {onOpenAgain && (
             <BaseButton

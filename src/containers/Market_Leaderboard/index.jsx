@@ -10,7 +10,7 @@ import BaseButton from "../../components/buttons/BaseButton";
 import RewardsDialog from "./RewardsDialog";
 import { useLeaderboard } from "../../hooks/useLeaderboard";
 
-const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
+const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "", headerOffset = 0 }) => {
   const {
     leaderboardData,
     userScore,
@@ -19,7 +19,7 @@ const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
     selectedEpoch,
     fetchLeaderboardData,
     setSelectedEpoch,
-    loading  } = useLeaderboard();
+    loading } = useLeaderboard();
   const [remainedTime, setRemainedTime] = useState(0);
   const [isRewardDlg, setIsRewardDlg] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -34,7 +34,7 @@ const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
     if (isNavigating) {
       return;
     }
-    
+
     if (newEpoch >= 0 && newEpoch <= currentEpoch) {
       setIsNavigating(true);
       setSelectedEpoch(newEpoch);
@@ -62,29 +62,37 @@ const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
       return () => clearInterval(interval);
     }
   }, [epochStart]);
+
+  const leaderboardBg = [
+    "/images/label/golden-bg.png",
+    "/images/label/silver-bg.png",
+    "/images/label/bronze-bg.png",
+    "/images/label/choco-bg.png",
+    "/images/label/choco-bg.png",
+    "/images/label/choco-bg.png",
+    "/images/label/choco-bg.png",
+    "/images/label/choco-bg.png",
+    "/images/label/choco-bg.png",
+  ]
+
   return (
-    <BaseDialog onClose={onClose} title={label} header={header}>
+    <BaseDialog onClose={onClose} title={label} header={header} headerOffset={headerOffset}>
       <div className="leaderboard-content">
-        <div className="leaderboard-spliter">
-          <div className="split">Name</div>
-          <div className="split">Score</div>
-        </div>
-        <BaseDivider></BaseDivider>
         {leaderboardData.map((item, index) => (
-          <CardView key={index} className="leaderboard-card p-0">
-            <div className="leaderboard-spliter">
+          <div key={index} className="leaderboard-card">
+            <img src={leaderboardBg[index]} alt="leaderboard-bg" className="leaderboard-item-bg" />
+            <div className="leaderboard-spliter" id={`leaderboard-item-${index}`}>
               <div className="split">
                 {item.rank}. {item.name}
               </div>
-              <div className="split highlight">{item.score.toFixed(2)}</div>
+              <div className={`split ${index >= 3 ? "highlight" : ""}`}>{item.score.toFixed(2)}</div>
             </div>
-          </CardView>
+          </div>
         ))}
-        <br />
+        <CardView className="text-center min-h-0">
+          <div>Your score: <span className="highlight">{loading ? "Loading..." : userScore.toFixed(2)}</span></div>
+        </CardView>
         <div className="text-center">
-          Your score: <span className="highlight">{loading ? "Loading..." : userScore.toFixed(2)}</span>
-        </div>
-        <div className="text-center timer">
           {(selectedEpoch ?? currentEpoch) === currentEpoch ? (
             remainedTime <= 0 ? (
               <div>
@@ -108,53 +116,55 @@ const LeaderboardDialog = ({ onClose, label = "LEADERBOARD", header = "" }) => {
             </>
           )}
         </div>
-        <BaseDivider />
-        <div className="epoch-selector">
-          <img
-            src={buttonFrames.leftTriangleButton}
-            alt="left"
-            className="triangle-button"
-            onClick={() => {
-              if (isNavigating) return;
-              const currentDisplayEpoch = selectedEpoch ?? currentEpoch;
-              const newEpoch = Math.max(0, currentDisplayEpoch - 1);
-              handleEpochChange(newEpoch);
-            }}
-            style={{ 
-              opacity: (selectedEpoch ?? currentEpoch) <= 0 || isNavigating ? 0.5 : 1, 
-              cursor: (selectedEpoch ?? currentEpoch) <= 0 || isNavigating ? 'not-allowed' : 'pointer' 
-            }}
-          ></img>
-          <div>
-            Epoch <span className="highlight">{selectedEpoch ?? currentEpoch}</span>
+        <CardView className="min-h-0">
+          <div className="epoch-selector">
+            <img
+              src={buttonFrames.leftTriangleButton}
+              alt="left"
+              className="triangle-button"
+              onClick={() => {
+                if (isNavigating) return;
+                const currentDisplayEpoch = selectedEpoch ?? currentEpoch;
+                const newEpoch = Math.max(0, currentDisplayEpoch - 1);
+                handleEpochChange(newEpoch);
+              }}
+              style={{
+                opacity: (selectedEpoch ?? currentEpoch) <= 0 || isNavigating ? 0.5 : 1,
+                cursor: (selectedEpoch ?? currentEpoch) <= 0 || isNavigating ? 'not-allowed' : 'pointer'
+              }}
+            ></img>
+            <div>
+              Epoch <span className="highlight">{selectedEpoch ?? currentEpoch}</span>
+            </div>
+            <img
+              src={buttonFrames.rightTriangleButton}
+              alt="right"
+              className="triangle-button"
+              onClick={() => {
+                if (isNavigating) return;
+                const newEpoch = (selectedEpoch ?? currentEpoch) + 1;
+                handleEpochChange(newEpoch);
+              }}
+              style={{
+                opacity: (selectedEpoch ?? currentEpoch) >= currentEpoch || isNavigating ? 0.5 : 1,
+                cursor: (selectedEpoch ?? currentEpoch) >= currentEpoch || isNavigating ? 'not-allowed' : 'pointer'
+              }}
+            ></img>
           </div>
-          <img
-            src={buttonFrames.rightTriangleButton}
-            alt="right"
-            className="triangle-button"
-            onClick={() => {
-              if (isNavigating) return;
-              const newEpoch = (selectedEpoch ?? currentEpoch) + 1;
-              handleEpochChange(newEpoch);
-            }}
-            style={{ 
-              opacity: (selectedEpoch ?? currentEpoch) >= currentEpoch || isNavigating ? 0.5 : 1, 
-              cursor: (selectedEpoch ?? currentEpoch) >= currentEpoch || isNavigating ? 'not-allowed' : 'pointer' 
-            }}
-          ></img>
-        </div>
-        <BaseDivider />
+        </CardView>
         <div className="button-row">
           <BaseButton
             label="Refresh"
             onClick={() => fetchLeaderboardData(selectedEpoch ?? currentEpoch)}
             className="h-4rem mt-1rem"
             disabled={loading}
+            small
           />
           <BaseButton
             label="See Rewards"
             onClick={() => setIsRewardDlg(true)}
             className="h-4rem mt-1rem"
+            small
           />
         </div>
         {isRewardDlg && (

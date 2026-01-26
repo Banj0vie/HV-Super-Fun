@@ -1,5 +1,8 @@
 .rewards-dialog-content {
-    width: 350px;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .rewards-item-wrapper {
@@ -9,5 +12,17 @@
 .rewards-item-card {
     display: flex;
     align-items: center;
-    margin-top: 0.5rem;
+    position: relative;
+    padding: 1rem;
+    width: -webkit-fill-available;
+}
+
+.rewards-item-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: -1;
+    top: 0;
+    left: 0;
 }

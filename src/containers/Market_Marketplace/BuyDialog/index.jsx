@@ -185,9 +185,9 @@ const BuyDialog = ({ onBack, onClose }) => {
   };
 
   return (
-    <BaseDialog onClose={onClose} title="BUY ITEMS">
+    <BaseDialog onClose={onClose} title="BUY ITEMS" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
       <div className="buy-dialog-content">
-        <CardView className="left-panel items-list">
+        <div className="left-panel items-list">
           <TreeInput
             onSearch={setSearchTerm}
             search={searchTerm}
@@ -200,7 +200,7 @@ const BuyDialog = ({ onBack, onClose }) => {
             )}
             sortable
           ></TreeInput>
-        </CardView>
+        </div>
 
         <CardView className="right-panel">
           <div className="items-list">
@@ -234,7 +234,6 @@ const BuyDialog = ({ onBack, onClose }) => {
               </div>
             )}
           </div>
-          <BaseDivider></BaseDivider>
           <div className="pagination">
             <img
               src={buttonFrames.leftTriangleButton}

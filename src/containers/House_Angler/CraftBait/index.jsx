@@ -27,11 +27,11 @@ const CraftBait = ({ onBack }) => {
             ></ItemCardView>
           ))}
         </ItemCardList>
-        <BaseButton label="Back" onClick={onBack}></BaseButton>
+        <BaseButton className="h-4rem"label="Back" onClick={onBack} isError small></BaseButton>
       </CardView>
-      <CardView className="right-panel">
+      <div className="right-panel">
         <ItemCombinationBox itemId={selectedBaitId}></ItemCombinationBox>
-      </CardView>
+      </div>
     </div>
   );
 };

@@ -16,7 +16,7 @@ const SelectBaitDialog = ({ onClose, onSelect }) => {
   );
   
   return (
-    <BaseDialog onClose={onClose} title="SELECT BAIT">
+    <BaseDialog onClose={onClose} title="SELECT BAIT" header="/images/dialog/modal-header-angler.png" headerOffset={50}>
       <div className="select-bait-dialog">
         <CardView className="p-0">
           <div className="bait-list">

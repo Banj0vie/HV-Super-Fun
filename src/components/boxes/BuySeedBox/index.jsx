@@ -7,6 +7,7 @@ const BuySeedBox = ({ item, onBuy, isBuying = false, isDisabled = false }) => {
     <div className="buy-seed-box">
       <div className="buy-seed-box-wrapper">
         <div className="buy-seed-info">
+          <img src="/images/input/token-input-bg.png" className="buy-seed-bg" alt="buy-seed-bg"></img>
           <img src={item.icon} className="buy-seed-icon" alt={item.label}></img>
           <div>
             <p className="buy-seed-label">{item.label}</p>
@@ -19,6 +20,7 @@ const BuySeedBox = ({ item, onBuy, isBuying = false, isDisabled = false }) => {
             label={isBuying ? "Buying..." : "Buy"}
             onClick={onBuy}
             disabled={isDisabled || isBuying}
+            small={true}
           ></BaseButton>
         </div>
       </div>

@@ -8,12 +8,28 @@
 .dl-divider {
   width: 10%;
   height: 0.1rem;
-  background-color: #743f39;
+  background-color: #26120F;
   opacity: 0.5;
   margin: 0.25rem 0;
 }
 
 .dl-link {
   width: 80%;
+  height: 3rem;
   text-align: center;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 1rem;
+}
+
+.divider-link-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: -1;
 }

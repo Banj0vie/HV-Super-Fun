@@ -1,10 +1,9 @@
 import React from 'react';
 import './style.css';
-import { buttonFrames } from '../../../constants/_baseimages';
 
 const TooltipButton = ({ label, style, className = '', onClick, "data-hotspot": dataHotspot, frameSrc }) => {
   const combinedClass = `tooltip-btn ${className}`.trim();
-  const backgroundImage = frameSrc || buttonFrames.tooltipBg;
+  const backgroundImage = frameSrc || '/images/backgrounds/tooltip_bg.png';
   return (
     <div
       className={combinedClass}

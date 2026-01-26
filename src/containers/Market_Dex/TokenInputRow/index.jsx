@@ -42,13 +42,14 @@ const TokenInputRow = ({
 
   return (
     <div className="token-input-row">
+      <img src="/images/input/token-input-bg.png" alt="input-bg" className="token-input-row-bg" />
       <TokenBox 
         token={token} 
         onClick={handleTokenClick}
         clickable={!disabled && onBalanceClick}
       />
       <BaseInput
-        className={`${balance == null ? "w-70" : "w-50"} h-3rem`}
+        className={`${balance == null ? "w-70" : "w-50"} h-3.5rem`}
         type="number"
         value={internalValue}
         setValue={handleValueChange}

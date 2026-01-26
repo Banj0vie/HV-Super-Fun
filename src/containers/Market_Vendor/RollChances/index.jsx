@@ -6,11 +6,12 @@ import Slider from "../../../components/inputs/Slider";
 import BaseButton from "../../../components/buttons/BaseButton";
 import { useROIData } from "../../../hooks/useContracts";
 import { useSelector } from "react-redux";
+import CardTopicView from "../../../components/boxes/CardTopicView";
 
 const RollChances = ({ onBack }) => {
   const { roiData, getROIData, loading } = useROIData();
   const [currentFarmLevel, setCurrentFarmLevel] = useState(0);
-  
+
   const level = useSelector(state => state.user?.userData?.level || 0);
 
   // Load initial data
@@ -34,11 +35,11 @@ const RollChances = ({ onBack }) => {
 
   return (
     <div className="roll-chances-wrapper">
-      <div className="unlocked-roi">
-        <p>Unlocked ROI</p>
+      <div className="relative">
+        <CardListView data={primaryData} className="mt-1rem">
+        </CardListView>
+        <CardTopicView title="Unlocked ROI" />
       </div>
-      <CardListView data={primaryData}></CardListView>
-      <BaseDivider />
       <div className="slider-wrapper">
         <div className="w-full text-center">
           Farm Level: {loading ? "Loading..." : currentFarmLevel}
@@ -52,7 +53,7 @@ const RollChances = ({ onBack }) => {
           disabled={loading}
         ></Slider>
       </div>
-      <BaseButton className="h-4rem" label="Back" onClick={onBack}></BaseButton>
+      <BaseButton className="h-4rem" label="Back" onClick={onBack} isError></BaseButton>
     </div>
   );
 };

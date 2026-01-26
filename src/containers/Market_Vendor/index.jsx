@@ -21,7 +21,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import { isTransactionRejection } from "../../utils/errorUtils";
 import CustomSeedsDialog from "./CustomSeedsDialog";
 import SeedRollingDialog from "./SeedRollingDialog";
-const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
+const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0 }) => {
   const { isConnected, account } = useSolanaWallet();
   const {
     buySeedPack,
@@ -448,7 +448,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "" }) => {
   );
 
   return !isRollingDlg ? (
-    <BaseDialog title={label} onClose={onClose} header={header}>
+    <BaseDialog title={label} onClose={onClose} header={header} headerOffset={headerOffset} className="custom-modal-background">
       {pageIndex === ID_SEED_SHOP_PAGES.SEED_PACK_LIST && (
         <VendorMenu
           seedStatus={seedStatus}

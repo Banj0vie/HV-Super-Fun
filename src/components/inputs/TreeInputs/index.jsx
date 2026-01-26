@@ -235,17 +235,18 @@ const TreeInput = ({ onBack, onSelect, onSearch, search = "", sortable = false, 
       >
         {(search.length === 0 || (search.length > 0 && !hasChildren)) && (
           <div>
-            <CardView
+            <div
               className="tree-row"
               secondary={hasChildren}
               onClick={() => hasChildren && toggleExpand(node.id)}
             >
+              <img src="/images/label/left-panel-normal.png" className="tree-row-bg" alt="background"/>
               <div className="tree-label">{node.label}</div>
               <BaseCheckBox
                 isChecked={isChecked}
                 onChange={(checked) => toggleCheck(node, checked)}
               />
-            </CardView>
+            </div>
           </div>
         )}
         {((search.length === 0 && hasChildren && isExpanded) ||
@@ -316,7 +317,7 @@ const TreeInput = ({ onBack, onSelect, onSearch, search = "", sortable = false, 
       </div>
       <div className="tree-buttons">
         <BaseButton label="Reset" onClick={onReset} />
-        <BaseButton label="Back" onClick={onBack} />
+        <BaseButton label="Back" isError onClick={onBack} />
       </div>
     </div>
   );

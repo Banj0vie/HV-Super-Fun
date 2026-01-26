@@ -1,12 +1,19 @@
 .buy-seeds-wrapper {
-    width: 450px;
+    width: 400px;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    background-color: var(--secondary-dlg-bg);
+    padding: 2rem 1rem;
+    border-radius: 11px;
 }
 
 .buy-seed-tip {
     opacity: .9;
     font-weight: 400;
     text-align: center;
+    background-color: var(--warning-color);
+    padding: 1rem;
+    border-radius: 11px;
+    line-height: 2rem;
 }

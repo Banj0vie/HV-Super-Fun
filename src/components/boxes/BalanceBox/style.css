@@ -1,17 +1,14 @@
 .balance-box {
+    position: relative;
     font-size: 1.25rem;
-    height: 2.5rem;
+    height: 3.5rem;
     width: 20%;
-    background: rgba(0, 0, 0, .25);
     display: flex;
     justify-content: center;
     align-items: center;
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
-    -o-border-image: var(--secondary-bg) 6 repeat;
-    border-image: var(--secondary-bg) 6 fill repeat;
-    border-image-width: .5rem;
     transition: all 0.2s ease;
 }
 
@@ -22,4 +19,14 @@
 
 .balance-box.clickable:active {
     transform: scale(0.95);
+}
+
+.balance-box-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: -1;
 }

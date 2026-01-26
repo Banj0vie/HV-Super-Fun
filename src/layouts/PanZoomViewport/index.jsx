@@ -21,8 +21,10 @@ const PanZoomViewport = ({
   width,
   height,
   hideMenu = false,
+  bees = [],
   children,
   isBig = false,
+  stuffs = [],
 }) => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -177,6 +179,7 @@ const PanZoomViewport = ({
   return isWalletConnected() ? (
     <>
       <div className="panzoom-root">
+
         {!hideMenu && <GameMenu />}
         <div
           ref={containerRef}
@@ -194,9 +197,38 @@ const PanZoomViewport = ({
                 alt="Scene"
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
+                loading="eager"
+                decoding="sync"
               />
             )}
-
+            {bees.map((b, index) => (
+              <div
+                key={`bee-${index}`}
+                className="bee-wrapper"
+                style={{ 
+                  left: b.x, 
+                  top: b.y, 
+                  transform: b.flip ? "scaleX(-1)" : "none",
+                  zIndex: b.zIndex ? b.zIndex : 0
+                }}
+              >
+                <img
+                  src={b.image}
+                  alt="Bee"
+                  className="img-bee"
+                  style={{ animationDelay: `${b.delay}s` }}
+                />
+              </div>
+            ))}
+            {stuffs.map((s, index) => (
+              <img
+                key={`stuff-${index}`}
+                src={s.image}
+                alt="Stuff"
+                className="img-stuff"
+                style={{ left: s.x, top: s.y, width: s.width, height: s.height, zIndex: s.zIndex ? s.zIndex : 0 }}
+              />
+            ))}
             {hotspots.map((h) => (
               <TooltipButton
                 key={h.id}
@@ -219,12 +251,14 @@ const PanZoomViewport = ({
             <div className="panzoom-children">{children}</div>
           </div>
         </div>
+        <div className="panzoom-sunlight"></div>
       </div>
       {activeModal && (
         <activeModal.component
           onClose={() => setActiveModal(null)}
           label={activeModal.label}
           header={activeModal.header}
+          headerOffset={activeModal.headerOffset}
           actions={activeModal.actions}
         />
       )}

@@ -13,16 +13,17 @@ import { isTransactionRejection } from "../../utils/errorUtils";
 import { useSolanaWallet } from "../../hooks/useSolanaWallet";
 import { useAppSelector } from "../../solana/store";
 import { selectSolBalance, selectGameTokenBalance, selectDexLoading, selectDexError } from "../../solana/store/slices/balanceSlice";
+import CardView from "../../components/boxes/CardView";
 const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   const { isConnected } = useSolanaWallet();
   const { buyTokens, sellTokens, getTokensOut, getSolOut, fetchBalances, error } = useDex();
-  
+
   // Redux state
   const solBalance = useAppSelector(selectSolBalance);
   const gameTokenBalance = useAppSelector(selectGameTokenBalance);
   const dexLoading = useAppSelector(selectDexLoading);
   const dexError = useAppSelector(selectDexError);
-  
+
   const [isReversed, setIsReversed] = useState(false);
   const [swapInfo, setSwapInfo] = useState([]);
   const [solAmount, setSolAmount] = useState('');
@@ -56,10 +57,10 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
         setSolAmount('');
         return;
       }
-      
+
       try {
         setIsCalculating(true);
-        
+
         if (isReversed) {
           // Game Token → SOL: Calculate SOL amount based on Game Token input
           if (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) {
@@ -110,7 +111,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
 
       try {
         const result = await sellTokens(parseFloat(gameTokenAmount));
-        
+
         if (result && result.success) {
           showNotification('Swap successful! Check your SOL balance.', 'success');
           setSolAmount('');
@@ -133,7 +134,7 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
 
       try {
         const result = await buyTokens(parseFloat(solAmount));
-        
+
         if (result && result.success) {
           showNotification('Swap successful! Check your Game Token balance.', 'success');
           setSolAmount('');
@@ -162,8 +163,8 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
     setSwapInfo([
       { label: "Slippage", value: "0.5%" },
       { label: "Price Impact", value: "0.39%" },
-      { 
-        label: "Minimum Received", 
+      {
+        label: "Minimum Received",
         value: isCalculating ? "Calculating..." : (isReversed ? solAmount : gameTokenAmount)
       },
     ]);
@@ -172,11 +173,11 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
   return (
     <BaseDialog className="dex-wrapper" title={label} onClose={onClose} header={header}>
       <div className="dex-dialog">
-  {/* Notifications rendered at app level */}
+        {/* Notifications rendered at app level */}
         <div className="swap-wrapper">
-          <TokenInputRow 
-            token={isReversed ? "GAME" : "SOL"} 
-            balance={isReversed ? (isCalculating ? "Calculating..." : gameTokenBalance) : solBalance} 
+          <TokenInputRow
+            token={isReversed ? "GAME" : "SOL"}
+            balance={isReversed ? (isCalculating ? "Calculating..." : gameTokenBalance) : solBalance}
             value={isReversed ? gameTokenAmount : solAmount}
             onChange={isReversed ? setGameTokenAmount : setSolAmount}
             onBalanceClick={isReversed ? handleGameTokenBalanceClick : handleSolBalanceClick}
@@ -188,8 +189,8 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
               setIsReversed(!isReversed);
             }}
           ></ExchangeButton>
-          <TokenInputRow 
-            token={isReversed ? "SOL" : "GAME"} 
+          <TokenInputRow
+            token={isReversed ? "SOL" : "GAME"}
             balance={isReversed ? solBalance : (isCalculating ? "Calculating..." : gameTokenBalance)}
             value={isReversed ? solAmount : gameTokenAmount}
             onBalanceClick={isReversed ? handleSolBalanceClick : handleGameTokenBalanceClick}
@@ -197,19 +198,21 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
             disabled={true}
           />
         </div>
-        <BaseButton 
-          label={dexLoading ? "Swapping..." : "Swap"} 
+        <BaseButton
+          label={dexLoading ? "Swapping..." : "Swap"}
           onClick={onSwap}
           disabled={
-            dexLoading || 
+            dexLoading ||
             !isConnected ||
             (isReversed ? (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) : (!solAmount || parseFloat(solAmount) <= 0))
           }
+          large={true}
         ></BaseButton>
-        {swapInfo.map((item) => (
-          <LabelValueBox key={generateId()} label={item.label} value={item.value}></LabelValueBox>
-        ))}
-        <br/>
+        <CardView>
+          {swapInfo.map((item) => (
+            <LabelValueBox key={generateId()} label={item.label} value={item.value}></LabelValueBox>
+          ))}
+        </CardView>
         <DividerLink
           label=" Using Solana Valley DEX! "
           link="https://solana.com/"
