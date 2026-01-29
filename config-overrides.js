@@ -11,6 +11,7 @@ module.exports = function override(config, env) {
     "util": require.resolve("util"),
     "assert": require.resolve("assert"),
     "url": require.resolve("url"),
+    "vm": require.resolve("vm-browserify"),
     "fs": false,
     "net": false,
     "tls": false,
