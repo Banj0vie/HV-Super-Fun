@@ -199,7 +199,7 @@ const App = () => {
 
   const endpoint = useMemo(() => FINAL_RPC_ENDPOINT, []);
   const clusterDisplayName = getClusterDisplayName();
-
+  return<></>
   return (
     <Provider store={store}>
       <ConnectionProvider endpoint={endpoint}>
