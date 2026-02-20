@@ -126,7 +126,7 @@ const ReferralDialog = ({ onClose, label = "REFERRAL", header = "" }) => {
                   <div className="highlight">{ethers.decodeBytes32String(myReferralCode)}</div>
                 </div>
                 <div className="text-1.25 margin-bottom-1rem">
-                  Earn up to <span className="highlight">{Math.max(...Object.values(referralBpsByLevel)) / 100}%</span> of your
+                  Earn <span className="highlight">1%</span> of your
                   referrals' spendings!
                 </div>
                 <BaseButton
