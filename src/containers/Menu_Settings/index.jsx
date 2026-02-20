@@ -67,7 +67,7 @@ const SettingsDialog = ({ onClose }) => {
             primary={true}
           ></BaseInput>
         </div>
-        <div className="settings-row-input">
+        {/* <div className="settings-row-input">
           <div className="left">Base Gwei</div>
           <BaseInput
             className="right"
@@ -75,7 +75,7 @@ const SettingsDialog = ({ onClose }) => {
             setValue={setSetting("baseGwei")}
             primary={true}
           ></BaseInput>
-        </div>
+        </div> */}
       </div>
     </BaseDialog>
   );
