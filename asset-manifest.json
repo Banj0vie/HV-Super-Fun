@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/HV-Super-Fun/static/css/main.53c89020.css",
-    "main.js": "/HV-Super-Fun/static/js/main.05e1f023.js",
+    "main.js": "/HV-Super-Fun/static/js/main.50f97e2a.js",
     "static/js/918.46d8610a.chunk.js": "/HV-Super-Fun/static/js/918.46d8610a.chunk.js",
     "static/js/37.d4cdfa81.chunk.js": "/HV-Super-Fun/static/js/37.d4cdfa81.chunk.js",
     "static/js/52.3164032a.chunk.js": "/HV-Super-Fun/static/js/52.3164032a.chunk.js",
@@ -18,7 +18,7 @@
     "static/media/twitter.svg": "/HV-Super-Fun/static/media/twitter.b62cb4f11cb5a5a8d00e2194f61d9915.svg",
     "index.html": "/HV-Super-Fun/index.html",
     "main.53c89020.css.map": "/HV-Super-Fun/static/css/main.53c89020.css.map",
-    "main.05e1f023.js.map": "/HV-Super-Fun/static/js/main.05e1f023.js.map",
+    "main.50f97e2a.js.map": "/HV-Super-Fun/static/js/main.50f97e2a.js.map",
     "918.46d8610a.chunk.js.map": "/HV-Super-Fun/static/js/918.46d8610a.chunk.js.map",
     "37.d4cdfa81.chunk.js.map": "/HV-Super-Fun/static/js/37.d4cdfa81.chunk.js.map",
     "989.2453d2d8.chunk.js.map": "/HV-Super-Fun/static/js/989.2453d2d8.chunk.js.map",
@@ -26,6 +26,6 @@
   },
   "entrypoints": [
     "static/css/main.53c89020.css",
-    "static/js/main.05e1f023.js"
+    "static/js/main.50f97e2a.js"
   ]
 }
