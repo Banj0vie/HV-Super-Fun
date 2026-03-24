@@ -476,6 +476,20 @@ const AdminPanel = () => {
       return;
     }
 
+    const weatherMatch = cmd.match(/^weather (sunny|rain|storm|clear)$/);
+    if (weatherMatch) {
+      const weather = weatherMatch[1];
+      if (weather === 'clear') {
+        localStorage.removeItem('sandbox_weather_override');
+        show(`Executed: weather override cleared`, "success");
+      } else {
+        localStorage.setItem('sandbox_weather_override', weather);
+        show(`Executed: weather set to ${weather}`, "success");
+      }
+      setConsoleInput('');
+      return;
+    }
+
     if (cmd === 'delete spot') {
       window.dispatchEvent(new CustomEvent('adminDeleteSpot', { detail: { id: null } }));
       show("Executed: removed all scarecrows", "success");
@@ -850,6 +864,7 @@ const AdminPanel = () => {
       'wooden plank': (arg) => /^-?\d+$/.test(arg),
       'set bee level': (arg) => /^\d+$/.test(arg),
       'set contest': (arg) => arg.length > 0,
+      'weather': (arg) => /^(sunny|rain|storm|clear)?$/.test(arg),
       'clear farm': () => true,
       'reset forest': () => true,
       'reset mine': () => true,
@@ -1327,6 +1342,7 @@ const AdminPanel = () => {
             <li><strong style={{color: '#fff'}}>animal farm</strong>     - Unlocks the Animal Farm feature</li>
             <li><strong style={{color: '#fff'}}>skip time</strong>       - Fast forwards time by 24 hours</li>
             <li><strong style={{color: '#fff'}}>skip cat</strong>        - Skips the wait time for the cat to spawn</li>
+            <li><strong style={{color: '#fff'}}>weather [type]</strong>  - sunny, rain, storm, or clear</li>
             <li><strong style={{color: '#fff'}}>toc</strong>             - Opens this command list</li>
           </ul>
           <button onClick={() => setShowTOC(false)} style={{ backgroundColor: '#000', color: '#ff4444', border: '1px solid #ff4444', padding: '8px 12px', cursor: 'pointer', fontFamily: 'monospace', width: '100%', marginTop: '10px', transition: 'all 0.2s' }}>

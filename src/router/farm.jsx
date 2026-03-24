@@ -3336,6 +3336,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `${skillName.charAt(0).toUpperCase() + skillName.slice(1)} level set to ${level}!`, type: "success" } }));
         }
       }
+      if (cmd && cmd.startsWith('weather ')) {
+        const weather = cmd.split(' ')[1];
+        if (['sunny', 'rain', 'storm', 'clear'].includes(weather)) {
+          if (weather === 'clear') {
+            localStorage.removeItem('sandbox_weather_override');
+            window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `Weather override cleared!`, type: "success" } }));
+          } else {
+            localStorage.setItem('sandbox_weather_override', weather);
+            window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `Weather forced to ${weather}!`, type: "success" } }));
+          }
+        }
+      }
     };
 
     return () => {
@@ -3449,10 +3461,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         const skippedCrops = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
         
         // WEATHER BUFFS/NERFS
-        const weatherEmoji = getWeatherForDay(simulatedDate);
+        let weatherEmoji = getWeatherForDay(simulatedDate);
+        const wOverride = localStorage.getItem('sandbox_weather_override');
+        if (wOverride === 'sunny') weatherEmoji = '☀️';
+        else if (wOverride === 'rain') weatherEmoji = '🌧️';
+        else if (wOverride === 'storm') weatherEmoji = '⚡';
+
         let weatherMultiplier = 1;
-        if (weatherEmoji === '☀️') weatherMultiplier = 1.10; // 10% faster
-        else if (weatherEmoji === '🌧️' || weatherEmoji === '⚡') weatherMultiplier = 0.95; // 5% slower
+        const currentTutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+        if (currentTutorialStep >= 32) {
+          if (weatherEmoji === '☀️') weatherMultiplier = 1.10; // 10% faster
+          else if (weatherEmoji === '🌧️' || weatherEmoji === '⚡') weatherMultiplier = 0.95; // 5% slower
+        }
 
         let baseSpeedMultiplier = Number(localStorage.getItem('sandbox_crop_speed') || 100) / 100;
         if (isNaN(baseSpeedMultiplier) || baseSpeedMultiplier <= 0) baseSpeedMultiplier = 1;
@@ -4275,7 +4295,15 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       // Only update growth when not in farm menu to prevent flickering during harvest selection
       if (!isFarmMenu) {
         // Lightning mechanic
-        const currentWeather = getWeatherForDay(simulatedDateRef.current);
+        let currentWeather = getWeatherForDay(simulatedDateRef.current);
+        const wOverride = localStorage.getItem('sandbox_weather_override');
+        if (wOverride === 'sunny') currentWeather = '☀️';
+        else if (wOverride === 'rain') currentWeather = '🌧️';
+        else if (wOverride === 'storm') currentWeather = '⚡';
+
+        const currentTutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+        if (currentTutorialStep < 32) currentWeather = null;
+
         const isRainingNow = currentWeather === '⚡' || currentWeather === '🌧️';
         if (currentWeather === '⚡') {
           // ~5% chance every 1.5 hours (5400 seconds)
