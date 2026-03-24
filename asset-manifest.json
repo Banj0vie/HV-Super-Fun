@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/HV-Super-Fun/static/css/main.7f135c0c.css",
-    "main.js": "/HV-Super-Fun/static/js/main.051305c6.js",
+    "main.css": "/HV-Super-Fun/static/css/main.4db20291.css",
+    "main.js": "/HV-Super-Fun/static/js/main.4cf7ab6f.js",
     "static/js/918.46d8610a.chunk.js": "/HV-Super-Fun/static/js/918.46d8610a.chunk.js",
     "static/js/37.d4cdfa81.chunk.js": "/HV-Super-Fun/static/js/37.d4cdfa81.chunk.js",
     "static/js/52.3164032a.chunk.js": "/HV-Super-Fun/static/js/52.3164032a.chunk.js",
@@ -17,15 +17,15 @@
     "static/media/tutorial.svg": "/HV-Super-Fun/static/media/tutorial.386242561860ed75126f0c2eba1975c7.svg",
     "static/media/twitter.svg": "/HV-Super-Fun/static/media/twitter.b62cb4f11cb5a5a8d00e2194f61d9915.svg",
     "index.html": "/HV-Super-Fun/index.html",
-    "main.7f135c0c.css.map": "/HV-Super-Fun/static/css/main.7f135c0c.css.map",
-    "main.051305c6.js.map": "/HV-Super-Fun/static/js/main.051305c6.js.map",
+    "main.4db20291.css.map": "/HV-Super-Fun/static/css/main.4db20291.css.map",
+    "main.4cf7ab6f.js.map": "/HV-Super-Fun/static/js/main.4cf7ab6f.js.map",
     "918.46d8610a.chunk.js.map": "/HV-Super-Fun/static/js/918.46d8610a.chunk.js.map",
     "37.d4cdfa81.chunk.js.map": "/HV-Super-Fun/static/js/37.d4cdfa81.chunk.js.map",
     "989.2453d2d8.chunk.js.map": "/HV-Super-Fun/static/js/989.2453d2d8.chunk.js.map",
     "770.7609531e.chunk.js.map": "/HV-Super-Fun/static/js/770.7609531e.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.7f135c0c.css",
-    "static/js/main.051305c6.js"
+    "static/css/main.4db20291.css",
+    "static/js/main.4cf7ab6f.js"
   ]
 }
