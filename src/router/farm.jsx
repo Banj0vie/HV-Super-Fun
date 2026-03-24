@@ -1543,7 +1543,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
         id: 'plank',
         name: 'Wooden Plank',
         description: 'A refined wooden board used in advanced crafting.',
-        minLevel: 3,
+        minLevel: 1,
         image: ALL_ITEMS[9989]?.image || '/images/forest/wood.png',
         costFunc: (amt) => `${10 * amt} Wood`,
         canCraft: (amt) => woodCount >= 10 * amt,

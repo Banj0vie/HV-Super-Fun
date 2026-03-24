@@ -896,7 +896,7 @@ const AdminPanel = () => {
           style={{ position: 'fixed', top: '270px', right: '20px', zIndex: tutorialStep === 25 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 25 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
           >
           {(!seenCrafting && tutorialStep >= 25) && <div style={badgeStyle}>!</div>}
-          <img src="/images/Crafting/Crafting.png" alt="Crafting" style={{ height: '240px', objectFit: 'contain' }} onError={(e) => { e.target.src = '/images/crafting/crafting.png'; }} />
+          <img src="/images/crafting/crafting.png" alt="Crafting" style={{ height: '240px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/crafting/Crafting.png'; }} />
           </div>
 
           {/* Weight Contest Icon Overlay */}
