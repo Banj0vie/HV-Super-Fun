@@ -43,9 +43,8 @@ export const useSolanaWallet = () => {
       gameToken: storedHoney,
       stakedBalance: storedLockedHoney,
       xTokenShare: "0.00",
-      solBalance: "0.00"
-    });
-    return () => unsubscribe();
+      solBalance: "0.00",
+    }));
   }, [dispatch]);
 
   useEffect(() => {

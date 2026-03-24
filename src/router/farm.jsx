@@ -1008,10 +1008,6 @@ export const WeightContestDialog = ({ onClose, simulatedDay, targetProduceId, ta
           )}
         </div>
       </BaseDialog>
-      
-      {showChestDialog && chestResult && (
-
-      )}
     </>
   );
 };
