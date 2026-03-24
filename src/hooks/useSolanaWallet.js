@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { setHasProfile, fetchUserDataSuccess } from '../solana/store/slices/userSlice';
 import { fetchBalancesSuccess } from '../solana/store/slices/balanceSlice';
-import { auth } from '../firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-
 // --- SANDBOX HELPERS ---
 const generateFakeCrops = () => {
   return new Array(30).fill(null).map((_, i) => ({
@@ -28,30 +25,25 @@ export const useSolanaWallet = () => {
   const [publicKey] = useState("LoganSandboxAddress111111111111111111111111");
 
   // 2. Force the App to think we are logged in with a profile
+  const [hasProfile, setHasProfileState] = useState(true);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const storedLockedHoney = localStorage.getItem('sandbox_locked_honey') || "0.00";
-        dispatch(setHasProfile(true));
-        dispatch(fetchUserDataSuccess({
-          name: user.displayName || 'Player',
-          level: 1,
-          xp: 0,
-          active_plot_ids: [],
-          user_crops: generateFakeCrops(),
-          locked_tokens: (parseFloat(storedLockedHoney) * 1e9).toString(),
-          xtoken_share: "0"
-        }));
-        const storedHoney = localStorage.getItem('sandbox_honey') || "0.00";
-        dispatch(fetchBalancesSuccess({
-          gameToken: storedHoney,
-          stakedBalance: storedLockedHoney,
-          xTokenShare: "0.00",
-          solBalance: "0.00"
-        }));
-      } else {
-        dispatch(setHasProfile(false));
-      }
+    const storedLockedHoney = localStorage.getItem('sandbox_locked_honey') || "0.00";
+    dispatch(setHasProfile(true));
+    dispatch(fetchUserDataSuccess({
+      name: 'Player',
+      level: 1,
+      xp: 0,
+      active_plot_ids: [],
+      user_crops: generateFakeCrops(),
+      locked_tokens: (parseFloat(storedLockedHoney) * 1e9).toString(),
+      xtoken_share: "0"
+    }));
+    const storedHoney = localStorage.getItem('sandbox_honey') || "0.00";
+    dispatch(fetchBalancesSuccess({
+      gameToken: storedHoney,
+      stakedBalance: storedLockedHoney,
+      xTokenShare: "0.00",
+      solBalance: "0.00"
     });
     return () => unsubscribe();
   }, [dispatch]);
@@ -115,7 +107,7 @@ export const useSolanaWallet = () => {
     isDisconnecting: false,
     error: null,
     hasProfile: true,
-    loading: false,
+    loading: false,    
     
     // Wallet actions
     connect: connectWallet,

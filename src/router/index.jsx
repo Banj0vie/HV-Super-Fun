@@ -3,9 +3,6 @@ import { useNotification } from "../contexts/NotificationContext";
 import { useItems } from "../hooks/useItems";
 import { ALL_ITEMS } from "../constants/item_data";
 import { ID_PRODUCE_ITEMS, ID_FISH_ITEMS, ID_POTION_ITEMS, ID_CHEST_ITEMS, ID_SEEDS, ID_BAIT_ITEMS } from "../constants/app_ids";
-import { db, auth } from "../firebase";
-import { signOut, updateProfile } from "firebase/auth";
-import { doc, setDoc, deleteDoc } from "firebase/firestore";
 import { getSimulatedDateInfo, getWeatherForDay } from "../components/WeatherOverlay";
 import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../constants/item_seed";
 import { useLocation } from "react-router-dom";
@@ -341,16 +338,8 @@ const AdminPanel = () => {
     const setUsernameMatch = consoleInput.trim().match(/^set username\s+(.+)$/i);
     if (setUsernameMatch) {
       const newUsername = setUsernameMatch[1].trim();
-      if (auth.currentUser) {
-        updateProfile(auth.currentUser, { displayName: newUsername }).catch(console.error);
-        setDoc(doc(db, "Players", auth.currentUser.uid), {
-          username: newUsername,
-          name: newUsername
-        }, { merge: true }).catch(console.error);
-        show(`Executed: username set to ${newUsername}`, "success");
-      } else {
-        show("Error: Not signed in", "error");
-      }
+      localStorage.setItem('sandbox_username', newUsername);
+      show(`Executed: username set to ${newUsername}`, "success");
       setConsoleInput('');
       return;
     }
@@ -513,22 +502,13 @@ const AdminPanel = () => {
     }
     
     if (cmd === 'signout') {
-      if (auth.currentUser) {
-        setDoc(doc(db, "Players", auth.currentUser.uid), {
-          sandbox_loot: localStorage.getItem('sandbox_loot') || '{}',
-          sandbox_produce: localStorage.getItem('sandbox_produce') || '{}',
-          sandbox_honey: localStorage.getItem('sandbox_honey') || '0',
-          sandbox_locked_honey: localStorage.getItem('sandbox_locked_honey') || '0'
-        }, { merge: true });
-      }
-      
-      signOut(auth);
       localStorage.removeItem('sandbox_loot');
       localStorage.removeItem('sandbox_produce');
       localStorage.removeItem('sandbox_honey');
       localStorage.removeItem('sandbox_locked_honey');
-      localStorage.removeItem('sandbox_uid');
+      localStorage.removeItem('sandbox_username');
       show("Executed: signed out", "success");
+      window.location.reload();
       setConsoleInput('');
       return;
     }
@@ -562,17 +542,7 @@ const AdminPanel = () => {
         }
       });
       
-      if (auth.currentUser) {
-        // Completely delete the user from Firestore to force the new user journey
-        deleteDoc(doc(db, "Players", auth.currentUser.uid)).then(() => {
-          window.location.reload();
-        }).catch((err) => {
-          console.error("Error deleting document:", err);
-          window.location.reload();
-        });
-      } else {
-        window.location.reload();
-      }
+      window.location.reload();
       setConsoleInput('');
       return;
     }
@@ -1242,8 +1212,8 @@ const AdminPanel = () => {
           <div style={{ backgroundColor: 'rgba(0,0,0,0.9)', border: '2px solid #00ff41', padding: '15px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '200px' }}>
             <h3 style={{ color: '#00ff41', margin: '0 0 10px 0', borderBottom: '1px solid #00ff41', paddingBottom: '5px', fontFamily: 'monospace', fontSize: '16px' }}>ADMIN PANEL</h3>
             
-            <button onClick={() => signOut(auth)} style={{ backgroundColor: '#000', color: '#ff4444', border: '1px solid #ff4444', padding: '8px', cursor: 'pointer', fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold' }}>
-              [SIGN OUT FIREBASE]
+            <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ backgroundColor: '#000', color: '#ff4444', border: '1px solid #ff4444', padding: '8px', cursor: 'pointer', fontFamily: 'monospace', fontSize: '14px', fontWeight: 'bold' }}>
+              [WIPE SAVE DATA]
             </button>
             
             <button onClick={toggleAutoSpawn} style={{ backgroundColor: '#000', color: autoSpawnEnabled ? '#00ff41' : '#ff4444', border: `1px solid ${autoSpawnEnabled ? '#00ff41' : '#ff4444'}`, padding: '8px', cursor: 'pointer', fontFamily: 'monospace', fontSize: '14px' }}>

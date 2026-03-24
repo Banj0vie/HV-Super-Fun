@@ -20,7 +20,6 @@ import { selectSettings } from "../solana/store/slices/uiSlice";
 import { defaultSettings } from "../utils/settings";
 import BaseDialog from "../containers/_BaseDialog";
 import BaseButton from "../components/buttons/BaseButton";
-import ChestRollingDialog from "../containers/Menu_Inventory/ChestRollingDialog";
 import AdminPanel from "./index";
 import WeatherOverlay, { getSimulatedDateInfo, getWeatherForDay } from "../components/WeatherOverlay";
 import { useNavigate } from "react-router-dom";
@@ -1011,7 +1010,7 @@ export const WeightContestDialog = ({ onClose, simulatedDay, targetProduceId, ta
       </BaseDialog>
       
       {showChestDialog && chestResult && (
-        <ChestRollingDialog rollingInfo={chestResult} onClose={() => { setShowChestDialog(false); setChestResult(null); }} onBack={() => { setShowChestDialog(false); setChestResult(null); }} />
+
       )}
     </>
   );
