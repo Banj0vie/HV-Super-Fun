@@ -1329,11 +1329,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-        </div>
-      )}
-
-    </>
-  );
-};
-
-export default AdminPanel;
