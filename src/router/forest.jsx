@@ -112,7 +112,7 @@ const Forest = () => {
     const savedLayout = sessionStorage.getItem('forest_current_layout');
     if (savedLayout) {
       const parsed = JSON.parse(savedLayout);
-      setForestTrees(parsed.trees);
+      setForestTrees(parsed.trees || []);
       setForestBushes(parsed.bushes || []);
     } else {
       const spots = [...FOREST_SPOTS];
@@ -202,6 +202,12 @@ const Forest = () => {
 
   const startChopping = (treeId, isGrandtree = false) => {
     if (minigame) return;
+
+    if (isGrandtree && foragingLevel < 10) {
+      show("You need Foraging Level 10 to chop the Grand Tree!", "error");
+      return;
+    }
+
     if (axeCount <= 0) {
       show("You need an Axe to chop trees!", "error");
       return;
@@ -422,6 +428,7 @@ const Forest = () => {
       {/* Render trees directly onto the viewport canvas */}
       {forestTrees.filter(t => !clearedTrees.includes(t.id)).map((tree) => {
         const isFlashing = flashingTarget === tree.id;
+        const isLocked = tree.type === 'grandtree' && foragingLevel < 10;
         return (
           <img
             key={tree.id}
@@ -434,13 +441,13 @@ const Forest = () => {
               width: `${tree.width}px`,
               height: 'auto',
               zIndex: tree.zIndex,
-              cursor: 'pointer',
+              cursor: isLocked ? 'not-allowed' : 'pointer',
               transition: 'transform 0.1s ease, filter 0.1s ease',
               filter: isFlashing ? 'brightness(2.5) drop-shadow(0px 0px 15px white)' : 'none',
               transform: isFlashing ? 'scale(1.1) rotate(5deg)' : 'scale(1)',
             }}
-            onMouseEnter={(e) => { if (!isFlashing) { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(0, 255, 65, 0.8))'; } }}
-            onMouseLeave={(e) => { if (!isFlashing) { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'none'; } }}
+            onMouseEnter={(e) => { if (!isFlashing && !isLocked) { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(0, 255, 65, 0.8))'; } }}
+            onMouseLeave={(e) => { if (!isFlashing && !isLocked) { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'none'; } }}
             onPointerDown={(e) => { e.stopPropagation(); startChopping(tree.id, tree.type === 'grandtree'); }}
           />
         );
@@ -561,7 +568,7 @@ const Forest = () => {
                         alt="Bee" 
                         onError={(e) => {
                           e.target.onerror = null; 
-                          e.target.src = '/images/farm/bee.png'; // Failsafe just in case the image isn't found
+                          e.target.src = '/images/farm/bee.png';
                         }}
                         style={{ width: '240px', transform: 'scaleX(1)', filter: minigame.beeState === 'full' ? 'drop-shadow(0 0 10px #ffea00)' : 'none', transition: 'filter 0.2s' }} 
                       />

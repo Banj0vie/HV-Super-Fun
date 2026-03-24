@@ -37,11 +37,26 @@ if (!ALL_ITEMS[9964]) ALL_ITEMS[9964] = { id: 9964, label: 'Sailboat', image: '/
 if (!ALL_ITEMS[9963]) ALL_ITEMS[9963] = { id: 9963, label: 'Trawler', image: '/images/items/trawler.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.LEGENDARY, usable: false, iconSize: 'text' };
 if (!ALL_ITEMS[9962]) ALL_ITEMS[9962] = { id: 9962, label: 'Engine', image: '/images/crafting/engine.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.EPIC, usable: false, iconSize: 'text' };
 if (!ALL_ITEMS[9956]) ALL_ITEMS[9956] = { id: 9956, label: 'Leaves', image: '/images/items/seeds.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9991]) ALL_ITEMS[9991] = { id: 9991, label: 'Axe', image: '/images/forest/axe.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.COMMON, usable: true, iconSize: 'text' };
+if (!ALL_ITEMS[9992]) ALL_ITEMS[9992] = { id: 9992, label: 'Pickaxe', image: '/images/forest/picaxe.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.COMMON, usable: true, iconSize: 'text' };
+if (!ALL_ITEMS[9981]) ALL_ITEMS[9981] = { id: 9981, label: 'Iron Pickaxe', image: '/images/forest/picaxe.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.COMMON, usable: true, iconSize: 'text' };
+if (!ALL_ITEMS[9993]) ALL_ITEMS[9993] = { id: 9993, label: 'Wood Log', image: '/images/forest/wood.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9942]) ALL_ITEMS[9942] = { id: 9942, label: 'Special Wood', image: '/images/forest/wood.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9994]) ALL_ITEMS[9994] = { id: 9994, label: 'Stone', image: '/images/forest/rock.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9995]) ALL_ITEMS[9995] = { id: 9995, label: 'Sticks', image: '/images/forest/wood.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9989]) ALL_ITEMS[9989] = { id: 9989, label: 'Wooden Plank', image: '/images/forest/wood.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9990]) ALL_ITEMS[9990] = { id: 9990, label: 'Stone Pipe', image: '/images/forest/rock.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9996]) ALL_ITEMS[9996] = { id: 9996, label: 'Iron Ore', image: '/images/forest/ironrock.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9997]) ALL_ITEMS[9997] = { id: 9997, label: 'Gold Ore', image: '/images/forest/goldrock.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9960]) ALL_ITEMS[9960] = { id: 9960, label: 'Blue Gem', image: '/images/items/seeds.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.RARE, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9961]) ALL_ITEMS[9961] = { id: 9961, label: 'Red Gem', image: '/images/items/seeds.png', category: SB_CAT, subCategory: "MATERIALS", type: ID_RARE_TYPE.RARE, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9953]) ALL_ITEMS[9953] = { id: 9953, label: 'Bucket', image: '/images/forest/wood.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.COMMON, usable: false, iconSize: 'text' };
+if (!ALL_ITEMS[9954]) ALL_ITEMS[9954] = { id: 9954, label: 'Magic Ring', image: '/images/items/seeds.png', category: SB_CAT, subCategory: "FARM_GEAR", type: ID_RARE_TYPE.EPIC, usable: false, iconSize: 'text' };
 
 // Create an instant lookup map for labels to avoid repetitive loops
 const REVERSE_LABEL_MAP = Object.fromEntries(
   Object.entries({
-    ...ID_CHEST_ITEMS, ...ID_BAIT_ITEMS, ...ID_FISH_ITEMS, ...ID_POTION_ITEMS
+    ...ID_CHEST_ITEMS, ...ID_BAIT_ITEMS, ...ID_FISH_ITEMS, ...ID_POTION_ITEMS, ...ID_SEEDS
   }).map(([key, value]) => [value, key])
 );
 
@@ -153,6 +168,8 @@ export const useItems = () => {
             } else if (itemId === ID_POTION_ITEMS.LADYBUG) {
               subCategory = ID_POTION_CATEGORIES.LADYBUG;
             }
+          } else if (Object.values(ID_SEEDS || {}).includes(itemId)) {
+            category = ID_ITEM_CATEGORIES?.SEED || 'ID_ITEM_SEED';
           }
 
           // Get proper label from constants
@@ -487,14 +504,14 @@ export const useItems = () => {
 
   // Legacy flat structure for backward compatibility
   const itemsByCategory = {
-    seeds: items.filter(item => item.category === ID_ITEM_CATEGORIES.SEED),
-    productions: items.filter(item => item.category === ID_ITEM_CATEGORIES.PRODUCE),
-    baits: items.filter(item => item.category === ID_ITEM_CATEGORIES.BAIT),
-    fish: items.filter(item => item.category === ID_ITEM_CATEGORIES.FISH),
-    chests: items.filter(item => item.category === ID_ITEM_CATEGORIES.CHEST),
-    potions: items.filter(item => item.category === ID_ITEM_CATEGORIES.POTION),
-    items: items.filter(item => item.category === ID_ITEM_CATEGORIES.LOOT || item.label?.includes('CHEST') || item.category === 'ITEM' || item.category === SB_CAT),
-    loot: items.filter(item => item.category === ID_ITEM_CATEGORIES.LOOT || item.category === 'ITEM' || item.category === SB_CAT),
+    seeds: items.filter(item => item.category === ID_ITEM_CATEGORIES?.SEED || item.category === 'ID_ITEM_SEED'),
+    productions: items.filter(item => item.category === ID_ITEM_CATEGORIES?.PRODUCE || item.category === 'ID_ITEM_CROP'),
+    baits: items.filter(item => item.category === ID_ITEM_CATEGORIES?.BAIT || (item.category === 'ID_ITEM_LOOT' && item.subCategory === 'ID_LOOT_CATEGORY_BAIT')),
+    fish: items.filter(item => item.category === ID_ITEM_CATEGORIES?.FISH || (item.category === 'ID_ITEM_LOOT' && item.subCategory === 'ID_LOOT_CATEGORY_FISH')),
+    chests: items.filter(item => item.category === ID_ITEM_CATEGORIES?.CHEST || (item.category === 'ID_ITEM_LOOT' && item.subCategory === 'ID_LOOT_CATEGORY_CHEST') || item.label?.includes('CHEST')),
+    potions: items.filter(item => item.category === ID_ITEM_CATEGORIES?.POTION || item.category === 'ID_ITEM_POTION'),
+    items: items.filter(item => item.category === ID_ITEM_CATEGORIES?.LOOT || item.label?.includes('CHEST') || item.category === 'ITEM' || item.category === 'ID_ITEM_LOOT' || item.category === SB_CAT),
+    loot: items.filter(item => item.category === ID_ITEM_CATEGORIES?.LOOT || item.category === 'ITEM' || item.category === 'ID_ITEM_LOOT' || item.category === SB_CAT),
   };
 
   return {

@@ -39,9 +39,9 @@ export const getQuestData = () => [
       "Also before I left the cat ran away again, please leave him a bowl of water and a nice fish, he should come back when he smells it, thank you and enjoy the wonders of being a farmer!"
     ],
     rewards: [
-      { id: 9993, count: 12, name: "Wood Logs", image: "/images/forest/wood.png" },
-      { id: 9994, count: 6, name: "Stones", image: "/images/forest/rock.png" },
-      { id: ID_SEEDS?.PUMPKIN || 131846, count: 1, name: "Pumpkin Seed", image: "/images/items/seeds.png" }
+      { id: 9993, count: 12, name: "Wood Logs", image: ALL_ITEMS?.[9993]?.image || "/images/forest/wood.png" },
+      { id: 9994, count: 6, name: "Stones", image: ALL_ITEMS?.[9994]?.image || "/images/forest/rock.png" },
+      { id: ID_SEEDS?.PUMPKIN || 131846, count: 1, name: "Pumpkin Seed", image: ALL_ITEMS?.[ID_SEEDS?.PUMPKIN || 131846]?.image || "/images/items/seeds.png" }
     ],
     reqs: [],
     unlockCondition: (step, completed) => true
@@ -404,7 +404,7 @@ export const getQuestData = () => [
       { id: 'honey', count: 200, name: "Honey", image: "/images/items/honey.png" }
     ],
     reqs: [
-      { id: ID_POTION_ITEMS?.SCARECROW || 132102, count: 1, name: "Scarecrow", image: ALL_ITEMS[ID_POTION_ITEMS?.SCARECROW]?.image || '/images/scarecrow/Scarecrow1.png' }
+      { id: ID_POTION_ITEMS?.SCARECROW || 132102, count: 1, name: "Scarecrow", image: ALL_ITEMS[ID_POTION_ITEMS?.SCARECROW]?.image || '/images/scarecrow/scarecrow1.png' }
     ],
     unlockCondition: (step, completed) => completed.includes("q9b_ladybug_basics")
   },
@@ -993,9 +993,17 @@ export const WeightContestDialog = ({ onClose, simulatedDay, targetProduceId, ta
                                  transform: 'scale(0.6)', backgroundRepeat: 'no-repeat'
                              }} />
                           ) : targetCropData?.image && targetCropData.image.includes('seeds') ? (
-                             <div className="item-icon item-icon-seeds" style={{ transform: 'scale(0.8)', backgroundPositionY: targetCropData.pos ? `-${targetCropData.pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
+                             <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(0.8)', backgroundPositionY: targetCropData.pos ? `-${targetCropData.pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
                           ) : (
-                             <img src={targetCropData?.image} alt={targetCropName} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                             <img src={targetCropData?.image} alt={targetCropName} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => {
+                               if (!e.target.dataset.retried) {
+                                 e.target.dataset.retried = "true";
+                                 const parts = e.target.src.split('/');
+                                 const filename = parts.pop();
+                                 parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                                 e.target.src = parts.join('/');
+                               }
+                             }} />
                           )}
                         </div>
                         <span style={{ color: '#00ff41', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{crop.name} - <span style={{ color: '#fff' }}>{crop.weight}kg</span></span>
@@ -1092,7 +1100,15 @@ export const CalendarDialog = ({ onClose, simulatedDay, simulatedDate, refetch, 
                return (
                   <div key={idx} style={{ gridColumn: idx === 6 ? 'span 2' : 'span 1', backgroundColor: isToday ? 'rgba(0,255,65,0.2)' : (isClaimed ? 'rgba(0,0,0,0.8)' : 'rgba(31, 22, 16, 0.8)'), border: `2px solid ${isToday ? '#00ff41' : (isClaimed ? '#444' : '#5a402a')}`, borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isClaimed ? 0.6 : 1, position: 'relative' }}>
                      <div style={{ color: isToday ? '#00ff41' : '#ccc', fontWeight: 'bold', marginBottom: '5px' }}>Day {reward.day}</div>
-                        <div style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src={reward.image} alt={reward.name} className="reward-icon" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/forest/rock.png'; }} /></div>
+                        <div style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src={reward.image} alt={reward.name} className="reward-icon" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onError={(e) => { 
+                          if (!e.target.dataset.retried) {
+                             e.target.dataset.retried = "true";
+                             const parts = e.target.src.split('/');
+                             const filename = parts.pop();
+                             parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                             e.target.src = parts.join('/');
+                          } else { e.target.onerror = null; e.target.src = '/images/forest/Rock.png'; } 
+                        }} /></div>
                      <div style={{ color: '#ffea00', fontSize: '10px', marginTop: '5px', textAlign: 'center' }}>{reward.count}x<br/>{reward.name}</div>
                      {isClaimed && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '30px', color: '#00ff41', textShadow: '0 0 10px #000' }}>✓</div>}
                   </div>
@@ -1584,7 +1600,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
         name: 'Scarecrow',
         description: 'Protects the specific plot it is placed on from crows.',
         minLevel: 1,
-        image: ALL_ITEMS[ID_POTION_ITEMS?.SCARECROW]?.image || '/images/scarecrow/Scarecrow1.png',
+        image: ALL_ITEMS[ID_POTION_ITEMS?.SCARECROW]?.image || '/images/scarecrow/scarecrow1.png',
         costFunc: (amt) => `${3 * amt} Sticks, ${1 * amt} Pumpkin`,
         canCraft: (amt) => sticksCount >= 3 * amt && pumpkinCount >= 1 * amt,
         onCraft: (amt) => handleCraftScarecrow(amt),
@@ -1996,7 +2012,22 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
                    </div>
                 )}
                 <div style={{ height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img src={recipe.image} alt={recipe.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: recipe.imageFilter || 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} />
+                  <img src={recipe.image} alt={recipe.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: recipe.imageFilter || 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} 
+                    onError={(e) => {
+                      if (!e.target.dataset.retried) {
+                        e.target.dataset.retried = "true";
+                        const parts = e.target.src.split('/');
+                        const filename = parts.pop();
+                        parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                        e.target.src = parts.join('/');
+                      } else if (!e.target.dataset.retriedTwice) {
+                        e.target.dataset.retriedTwice = "true";
+                        let src = e.target.src;
+                        src = src.replace('Picaxe', 'Pickaxe').replace('Watercan', 'WateringCan').replace('Watersprinkler', 'WaterSprinkler').replace('Ironrock', 'IronRock').replace('Goldrock', 'GoldRock').replace('Copperrock', 'CopperRock').replace('Coalrock', 'CoalRock');
+                        e.target.src = src;
+                      }
+                    }}
+                  />
                 </div>
                 <div style={{ fontSize: '14px', color: '#ffea00', fontWeight: 'bold', minHeight: '34px', display: 'flex', alignItems: 'center' }}>{recipe.name}</div>
                 
@@ -2109,13 +2140,13 @@ const ProtectorSpot = ({ spotId, pos, offsetX, offsetY, placingType, placedItem,
   if (isPlaced) {
     if (placedItem.type.includes('tier') || placedItem.type === 'ladybug_scarecrow') {
       textColor = '#00ff41';
-      imageSrc = `/images/scarecrow/Scarecrow${frame}.png`;
+      imageSrc = `/images/scarecrow/scarecrow${frame}.png`;
       imageStyle.width = '200%';
       imageStyle.height = '200%';
       topOffset = '-25px';
       
       if (placedItem.type === 'tier1') {
-        imageSrc = `/images/scarecrow/Scarecrow${frame}.png`;
+        imageSrc = `/images/scarecrow/scarecrow${frame}.png`;
       } else if (placedItem.type === 'tier2') {
         imageSrc = `/images/scarecrow/tier2.png`;
       } else if (placedItem.type === 'tier3') {
@@ -2223,8 +2254,8 @@ const ProtectorSpot = ({ spotId, pos, offsetX, offsetY, placingType, placedItem,
               src={imageSrc} 
               alt={placedItem.type} 
               onError={(e) => { 
-                if (placedItem.type === 'scarecrow') e.target.src = `/images/scarecrow/Scarecrow${frame}.jpg`; 
-                if (placedItem.type === 'tier1') e.target.src = `/images/scarecrow/Scarecrow${frame}.jpg`; 
+                if (placedItem.type === 'scarecrow') e.target.src = `/images/scarecrow/scarecrow${frame}.jpg`; 
+                if (placedItem.type === 'tier1') e.target.src = `/images/scarecrow/scarecrow${frame}.jpg`; 
                 else e.target.style.display = 'none'; 
               }}
               style={imageStyle}
@@ -2388,9 +2419,9 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                     {rew.image && rew.image.includes('seeds') ? (
-                       <div className="item-icon item-icon-seeds" style={{ transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
+                       <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos !== undefined ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
                     ) : (
-                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2417,7 +2448,15 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   {reqCounts.map((req, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
-                      {req.image && <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} />}
+                      {req.image && <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { 
+                        if (!e.target.dataset.retried) {
+                          e.target.dataset.retried = "true";
+                          const parts = e.target.src.split('/');
+                          const filename = parts.pop();
+                          parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                          e.target.src = parts.join('/');
+                        } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
+                      }} />}
                       <span style={{ color: req.current >= req.count ? '#006400' : '#8b0000', fontWeight: 'bold' }}>
                         {req.name}: {req.current}/{req.count}
                       </span>
@@ -2649,9 +2688,17 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                     {rew.image && rew.image.includes('seeds') ? (
-                       <div className="item-icon item-icon-seeds" style={{ transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
+                       <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos !== undefined ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
                     ) : (
-                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { 
+                         if (!e.target.dataset.retried) {
+                           e.target.dataset.retried = "true";
+                           const parts = e.target.src.split('/');
+                           const filename = parts.pop();
+                           parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                           e.target.src = parts.join('/');
+                         } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
+                       }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2693,7 +2740,15 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   {reqCounts.map((req, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
-                      <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} />
+                      <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { 
+                        if (!e.target.dataset.retried) {
+                          e.target.dataset.retried = "true";
+                          const parts = e.target.src.split('/');
+                          const filename = parts.pop();
+                          parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
+                          e.target.src = parts.join('/');
+                        } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
+                      }} />
                       <span style={{ color: req.current >= req.count ? '#006400' : '#8b0000', fontWeight: 'bold' }}>
                         {req.name}: {req.current}/{req.count}
                       </span>
@@ -3946,13 +4001,33 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   }, []);
 
   const getAvailableSeeds = useCallback(() => {
-    return (currentSeeds || [])
+    const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+    const seedIds = Object.values(ID_SEEDS || {});
+    let seedsList = [...(currentSeeds || [])];
+    
+    if (allItems) {
+      allItems.forEach(item => {
+        if (seedIds.includes(item.id)) {
+          const localCount = sandboxLoot[item.id] || 0;
+          if (localCount > 0) {
+            const existing = seedsList.find(s => s.id === item.id);
+            if (!existing) {
+              seedsList.push({ ...item, count: localCount });
+            } else {
+              existing.count = Math.max(existing.count, localCount);
+            }
+          }
+        }
+      });
+    }
+
+    return seedsList
       .map((seed) => ({
         ...seed,
         count: Math.max(0, seed.count - (usedSeedsInPreview[seed.id] || 0)),
       }))
       .filter((seed) => seed.count > 0);
-  }, [currentSeeds, usedSeedsInPreview]);
+  }, [currentSeeds, allItems, usedSeedsInPreview]);
 
   const playPlantConfirmSound = useCallback(() => {
     if (!plantConfirmAudioRef.current) {
@@ -5995,7 +6070,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               starvingTime > 0 
                 ? "/images/pets/catangry.png" 
                 : catState === 'walk' 
-                  ? "/images/pets/cat walk.png" 
+                  ? "/images/pets/cat_walk.png" 
                   : catState === 'sleep' 
                     ? "/images/pets/catsleep.png" 
                     : "/images/pets/catsit.png"
@@ -6374,7 +6449,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/items/hoe.png" alt="Hoe" style={{ height: '80px', objectFit: 'contain' }} />
+          <img src="/images/items/hoe.png" alt="Hoe" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/items/Hoe.png';} }} />
         </div>
         )}
 
@@ -6423,7 +6498,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/forest/watercan.png" alt="Watering Can" style={{ height: '80px', objectFit: 'contain' }} />
+          <img src="/images/forest/watercan.png" alt="Watering Can" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/forest/Watercan.png';}else if(!e.target.dataset.retriedTwice){e.target.dataset.retriedTwice="true";e.target.src='/images/forest/WateringCan.png';} }} />
           {tutorialStep === 8 && (
             <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
               <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
@@ -6477,7 +6552,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/farm/shovel.png" alt="Shovel" style={{ height: '80px', objectFit: 'contain' }} />
+          <img src="/images/farm/shovel.png" alt="Shovel" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/farm/Shovel.png';} }} />
           {tutorialStep === 5 && (
             <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
               <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>

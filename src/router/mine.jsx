@@ -442,7 +442,18 @@ const Mine = () => {
             key={rock.id}
             src={rock.image}
             alt="Rock"
-            onError={(e) => { e.target.src = '/images/forest/rock.png'; }}
+            onError={(e) => { 
+              if (!e.target.dataset.retried) {
+                e.target.dataset.retried = "true";
+                let newSrc = e.target.src;
+                newSrc = newSrc.replace('rock.png', 'Rock.png')
+                               .replace('goldrock', 'GoldRock')
+                               .replace('coalrock', 'CoalRock')
+                               .replace('copperrock', 'CopperRock')
+                               .replace('ironrock', 'IronRock');
+                e.target.src = newSrc;
+              } else { e.target.src = '/images/forest/Rock.png'; }
+            }}
             style={{
               position: 'absolute',
               left: `${rock.x}px`,
@@ -487,11 +498,11 @@ const Mine = () => {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: 'rgba(31, 22, 16, 0.9)', padding: '10px 20px', borderRadius: '12px', border: '3px solid #5a402a', boxShadow: '0 4px 8px rgba(0,0,0,0.5)', pointerEvents: 'auto' }}>
-          <img src="/images/forest/picaxe.png" alt="Pickaxe" style={{ width: '40px', height: '40px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} />
+          <img src="/images/forest/picaxe.png" alt="Pickaxe" style={{ width: '40px', height: '40px', objectFit: 'contain', filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} onError={(e) => { if (!e.target.dataset.retried) { e.target.dataset.retried="true"; e.target.src='/images/forest/Picaxe.png'; } else if (!e.target.dataset.retriedTwice) { e.target.dataset.retriedTwice="true"; e.target.src='/images/forest/Pickaxe.png'; } }} />
           <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: '24px', fontWeight: 'bold' }}>x {pickaxeCount}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', backgroundColor: 'rgba(31, 22, 16, 0.9)', padding: '10px 20px', borderRadius: '12px', border: '3px solid #5a402a', boxShadow: '0 4px 8px rgba(0,0,0,0.5)', pointerEvents: 'auto' }}>
-          <img src="/images/forest/picaxe.png" alt="Iron Pickaxe" style={{ width: '40px', height: '40px', objectFit: 'contain', filter: 'drop-shadow(0px 0px 5px #00ff41) brightness(1.2)' }} />
+          <img src="/images/forest/picaxe.png" alt="Iron Pickaxe" style={{ width: '40px', height: '40px', objectFit: 'contain', filter: 'drop-shadow(0px 0px 5px #00ff41) brightness(1.2)' }} onError={(e) => { if (!e.target.dataset.retried) { e.target.dataset.retried="true"; e.target.src='/images/forest/Picaxe.png'; } else if (!e.target.dataset.retriedTwice) { e.target.dataset.retriedTwice="true"; e.target.src='/images/forest/Pickaxe.png'; } }} />
           <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: '24px', fontWeight: 'bold' }}>x {ironPickaxeCount}</span>
         </div>
       </div>
@@ -588,7 +599,20 @@ const Mine = () => {
                   <img 
                     src={rockSrc} 
                     alt="Target" 
-                    onError={(e) => { e.target.src = '/images/forest/rock.png'; }}
+                    onError={(e) => { 
+                      if (!e.target.dataset.retried) {
+                        e.target.dataset.retried = "true";
+                        let newSrc = e.target.src;
+                        newSrc = newSrc.replace('rock.png', 'Rock.png')
+                                       .replace('goldrock', 'GoldRock')
+                                       .replace('coalrock', 'CoalRock')
+                                       .replace('copperrock', 'CopperRock')
+                                       .replace('ironrock', 'IronRock');
+                        e.target.src = newSrc;
+                      } else {
+                        e.target.src = '/images/forest/Rock.png'; 
+                      }
+                    }}
                     style={{ height: '800px', width: 'auto', animation: minigame.status === 'success' ? 'rockSmash 0.2s forwards' : (flashingTarget === minigame.targetId ? 'chopShake 0.3s' : 'none') }} 
                   />
 

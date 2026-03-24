@@ -894,9 +894,6 @@ const AdminPanel = () => {
   return (
     <>
       <style>{`
-        img[src*="wood.png"] {
-          transform: scale(0.15);
-        }
         @keyframes pulse-dot { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         @keyframes mailboxAlert { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); } 50% { transform: scale(0.9); filter: drop-shadow(0 0 12px rgba(255,255,255,1)); } }
         @keyframes mailboxHover { 0% { transform: scale(1.1) rotate(0deg); } 25% { transform: scale(1.1) rotate(-5deg); } 50% { transform: scale(1.1) rotate(5deg); } 75% { transform: scale(1.1) rotate(-5deg); } 100% { transform: scale(1.1) rotate(0deg); } }
