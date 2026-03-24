@@ -21,9 +21,6 @@ import { defaultSettings } from "../utils/settings";
 import BaseDialog from "../containers/_BaseDialog";
 import BaseButton from "../components/buttons/BaseButton";
 import ChestRollingDialog from "../containers/Menu_Inventory/ChestRollingDialog";
-import Forest from "./forest";
-import Mine from "./mine";
-import AnimalFarm from "./animal";
 import AdminPanel from "./index";
 import WeatherOverlay, { getSimulatedDateInfo, getWeatherForDay } from "../components/WeatherOverlay";
 
@@ -995,15 +992,7 @@ export const WeightContestDialog = ({ onClose, simulatedDay, targetProduceId, ta
                           ) : targetCropData?.image && targetCropData.image.includes('seeds') ? (
                              <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(0.8)', backgroundPositionY: targetCropData.pos ? `-${targetCropData.pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
                           ) : (
-                             <img src={targetCropData?.image} alt={targetCropName} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => {
-                               if (!e.target.dataset.retried) {
-                                 e.target.dataset.retried = "true";
-                                 const parts = e.target.src.split('/');
-                                 const filename = parts.pop();
-                                 parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                                 e.target.src = parts.join('/');
-                               }
-                             }} />
+                             <img src={targetCropData?.image} alt={targetCropName} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
                           )}
                         </div>
                         <span style={{ color: '#00ff41', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{crop.name} - <span style={{ color: '#fff' }}>{crop.weight}kg</span></span>
@@ -1100,15 +1089,7 @@ export const CalendarDialog = ({ onClose, simulatedDay, simulatedDate, refetch, 
                return (
                   <div key={idx} style={{ gridColumn: idx === 6 ? 'span 2' : 'span 1', backgroundColor: isToday ? 'rgba(0,255,65,0.2)' : (isClaimed ? 'rgba(0,0,0,0.8)' : 'rgba(31, 22, 16, 0.8)'), border: `2px solid ${isToday ? '#00ff41' : (isClaimed ? '#444' : '#5a402a')}`, borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isClaimed ? 0.6 : 1, position: 'relative' }}>
                      <div style={{ color: isToday ? '#00ff41' : '#ccc', fontWeight: 'bold', marginBottom: '5px' }}>Day {reward.day}</div>
-                        <div style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src={reward.image} alt={reward.name} className="reward-icon" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onError={(e) => { 
-                          if (!e.target.dataset.retried) {
-                             e.target.dataset.retried = "true";
-                             const parts = e.target.src.split('/');
-                             const filename = parts.pop();
-                             parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                             e.target.src = parts.join('/');
-                          } else { e.target.onerror = null; e.target.src = '/images/forest/Rock.png'; } 
-                        }} /></div>
+                        <div style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src={reward.image} alt={reward.name} className="reward-icon" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/forest/rock.png'; }} /></div>
                      <div style={{ color: '#ffea00', fontSize: '10px', marginTop: '5px', textAlign: 'center' }}>{reward.count}x<br/>{reward.name}</div>
                      {isClaimed && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '30px', color: '#00ff41', textShadow: '0 0 10px #000' }}>✓</div>}
                   </div>
@@ -2012,22 +1993,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
                    </div>
                 )}
                 <div style={{ height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img src={recipe.image} alt={recipe.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: recipe.imageFilter || 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} 
-                    onError={(e) => {
-                      if (!e.target.dataset.retried) {
-                        e.target.dataset.retried = "true";
-                        const parts = e.target.src.split('/');
-                        const filename = parts.pop();
-                        parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                        e.target.src = parts.join('/');
-                      } else if (!e.target.dataset.retriedTwice) {
-                        e.target.dataset.retriedTwice = "true";
-                        let src = e.target.src;
-                        src = src.replace('Picaxe', 'Pickaxe').replace('Watercan', 'WateringCan').replace('Watersprinkler', 'WaterSprinkler').replace('Ironrock', 'IronRock').replace('Goldrock', 'GoldRock').replace('Copperrock', 'CopperRock').replace('Coalrock', 'CoalRock');
-                        e.target.src = src;
-                      }
-                    }}
-                  />
+                  <img src={recipe.image} alt={recipe.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: recipe.imageFilter || 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} />
                 </div>
                 <div style={{ fontSize: '14px', color: '#ffea00', fontWeight: 'bold', minHeight: '34px', display: 'flex', alignItems: 'center' }}>{recipe.name}</div>
                 
@@ -2448,15 +2414,7 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   {reqCounts.map((req, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
-                      {req.image && <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { 
-                        if (!e.target.dataset.retried) {
-                          e.target.dataset.retried = "true";
-                          const parts = e.target.src.split('/');
-                          const filename = parts.pop();
-                          parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                          e.target.src = parts.join('/');
-                        } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
-                      }} />}
+                      {req.image && <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />}
                       <span style={{ color: req.current >= req.count ? '#006400' : '#8b0000', fontWeight: 'bold' }}>
                         {req.name}: {req.current}/{req.count}
                       </span>
@@ -2690,15 +2648,7 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                     {rew.image && rew.image.includes('seeds') ? (
                        <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos !== undefined ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
                     ) : (
-                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { 
-                         if (!e.target.dataset.retried) {
-                           e.target.dataset.retried = "true";
-                           const parts = e.target.src.split('/');
-                           const filename = parts.pop();
-                           parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                           e.target.src = parts.join('/');
-                         } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
-                       }} />
+                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2740,15 +2690,7 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   {reqCounts.map((req, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'monospace', fontSize: '14px' }}>
-                      <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { 
-                        if (!e.target.dataset.retried) {
-                          e.target.dataset.retried = "true";
-                          const parts = e.target.src.split('/');
-                          const filename = parts.pop();
-                          parts.push(filename.charAt(0).toUpperCase() + filename.slice(1));
-                          e.target.src = parts.join('/');
-                        } else { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }
-                      }} />
+                      <img src={req.image} style={{ width: '24px', height: '24px', objectFit: 'contain' }} alt={req.name} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />
                       <span style={{ color: req.current >= req.count ? '#006400' : '#8b0000', fontWeight: 'bold' }}>
                         {req.name}: {req.current}/{req.count}
                       </span>
@@ -3105,10 +3047,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     show("Growth skipped! Crop is ready to harvest.", "success");
     setSkipGrowTarget(null);
   };
-
-  const isForest = new URLSearchParams(window.location.search).get('scene') === 'forest';
-  const isMine = new URLSearchParams(window.location.search).get('scene') === 'mine';
-  const isAnimal = new URLSearchParams(window.location.search).get('scene') === 'animal';
 
   // Plot Preparation State (0: Red X, 1: Hole, 2: Hole+Fish, 3: Dirt Pile)
   const [plotPrep, setPlotPrep] = useState(() => JSON.parse(localStorage.getItem('sandbox_plot_prep') || '{}'));
@@ -5955,19 +5893,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   ];
 
   const bees = FARM_BEES;
-  return isForest ? (
-    <>
-      <Forest />
-    </>
-  ) : isMine ? (
-    <>
-      <Mine />
-    </>
-  ) : isAnimal ? (
-    <>
-      <AnimalFarm />
-    </>
-  ) : (
+  return (
     <div className={isCatShaking ? "shake-screen" : ""}>
       <style>{`
         @keyframes crazyCatShake {
@@ -6265,7 +6191,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               show(`The forest is resting! Come back in ${m}m ${s}s.`, "error");
               return;
             }
-            window.location.href = '/farm?scene=forest';
+            window.location.href = '/forest';
           }}
           style={{ position: 'absolute', bottom: 'calc(100% - 110px)', right: 'calc(15% - 900px)', zIndex: 9998, cursor: forestLockTime > 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', opacity: forestLockTime > 0 ? 0.6 : 1 }}
         >
@@ -6324,7 +6250,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               show(`The mine is resting! Come back in ${m}m ${s}s.`, "error");
               return;
             }
-            window.location.href = '/farm?scene=mine';
+            window.location.href = '/mine';
           }}
           style={{ position: 'absolute', top: '518px', left: '938px', zIndex: 9998, cursor: mineLockTime > 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', opacity: mineLockTime > 0 ? 0.6 : 1 }}
         >
@@ -6356,7 +6282,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             onPointerDown={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              window.location.href = '/farm?scene=animal';
+              window.location.href = '/animal';
             }}
             style={{ position: 'absolute', top: '518px', left: '200px', zIndex: 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }}
           >
@@ -6449,7 +6375,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/items/hoe.png" alt="Hoe" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/items/Hoe.png';} }} />
+          <img src="/images/items/hoe.png" alt="Hoe" style={{ height: '80px', objectFit: 'contain' }} />
         </div>
         )}
 
@@ -6498,7 +6424,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/forest/watercan.png" alt="Watering Can" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/forest/Watercan.png';}else if(!e.target.dataset.retriedTwice){e.target.dataset.retriedTwice="true";e.target.src='/images/forest/WateringCan.png';} }} />
+          <img src="/images/forest/watercan.png" alt="Watering Can" style={{ height: '80px', objectFit: 'contain' }} />
           {tutorialStep === 8 && (
             <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
               <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
@@ -6552,7 +6478,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             pointerEvents: isToolsOpen ? 'auto' : 'none'
           }}
         >
-          <img src="/images/farm/shovel.png" alt="Shovel" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { if(!e.target.dataset.retried){e.target.dataset.retried="true";e.target.src='/images/farm/Shovel.png';} }} />
+          <img src="/images/farm/shovel.png" alt="Shovel" style={{ height: '80px', objectFit: 'contain' }} />
           {tutorialStep === 5 && (
             <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
               <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>

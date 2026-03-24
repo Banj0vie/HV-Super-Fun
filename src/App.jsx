@@ -16,6 +16,9 @@ import {
 } from "./constants/_baseimages.js";
 import Farm from "./router/farm.jsx";
 import House from "./router/house.jsx";
+import Forest from "./router/forest.jsx";
+import Mine from "./router/mine.jsx";
+import AnimalFarm from "./router/animal.jsx";
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { FINAL_RPC_ENDPOINT } from './solana/constants/programId';
@@ -119,6 +122,9 @@ const AppContent = () => {
             <Route path="/farm" element={<Farm isFarmMenu={isFarmMenu} setIsFarmMenu={setIsFarmMenu} />} />
             <Route path="/tavern" element={<Tavern />} />
             <Route path="/valley" element={<Valley />} />
+            <Route path="/forest" element={<Forest />} />
+            <Route path="/mine" element={<Mine />} />
+            <Route path="/animal" element={<AnimalFarm />} />
           </Routes>
         </div>
       </div>

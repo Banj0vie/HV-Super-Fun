@@ -35,8 +35,7 @@ const AdminPanel = () => {
   const [simulatedDay, setSimulatedDay] = useState(() => getSimulatedDateInfo().day);
   const [simulatedDate, setSimulatedDate] = useState(() => getSimulatedDateInfo().date);
   const [hasUnclaimedDaily, setHasUnclaimedDaily] = useState(() => localStorage.getItem('sandbox_last_claim_date') !== new Date().toDateString());
-  const urlParams = new URLSearchParams(window.location.search);
-  const isForagingOrMining = urlParams.get('scene') === 'forest' || urlParams.get('scene') === 'mine';
+  const isForagingOrMining = window.location.pathname === '/forest' || window.location.pathname === '/mine';
   const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
   const [completedQuests, setCompletedQuests] = useState(() => JSON.parse(localStorage.getItem('sandbox_completed_quests') || '[]'));
   const [levelUpData, setLevelUpData] = useState(null);
@@ -1322,6 +1321,14 @@ const AdminPanel = () => {
           <button onClick={() => setShowTOC(false)} style={{ backgroundColor: '#000', color: '#ff4444', border: '1px solid #ff4444', padding: '8px 12px', cursor: 'pointer', fontFamily: 'monospace', width: '100%', marginTop: '10px', transition: 'all 0.2s' }}>
             [CLOSE]
           </button>
+        </div>
+      )}
+
+    </>
+  );
+};
+
+export default AdminPanel;
         </div>
       )}
 
