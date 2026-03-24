@@ -213,7 +213,7 @@ const InventoryDialog = ({ onClose }) => {
         return;
       }
       
-      if (itemId === 9955) {
+      if (Number(itemId) === 9955) {
         if (isOnFarmPage()) {
           // Directly trigger yarn interaction mode
           window.dispatchEvent(new CustomEvent('startPotionUsage', {
@@ -278,8 +278,14 @@ const InventoryDialog = ({ onClose }) => {
           transform: scale(1.1);
           filter: drop-shadow(0px 0px 8px rgba(0, 255, 65, 0.8));
         }
-        img[src*="rock.png"] {
-          transform: scale(0.2);
+          img[src*="rock.png"],
+          img[src*="wood.png"],
+          img[src*="axe.png"],
+          img[src*="picaxe.png"] {
+            transform: scale(0.1);
+        }
+        img[src*="yarn.png"] {
+            transform: scale(0.5);
         }
       `}</style>
       <BaseDialog onClose={onClose} title="INVENTORY" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
