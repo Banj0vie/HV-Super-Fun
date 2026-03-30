@@ -1,0 +1,285 @@
+/* Global styles for CryptoValley */
+
+:root {
+  --primary-dlg-bg: #99633f;
+  --secondary-dlg-bg: #d89875;
+  --error-color: #e12237;
+  --warning-color: #ffab00;
+}
+
+/* GROBOLD Font Setup */
+@font-face {
+  font-family: "GROBOLD";
+  src: url("./assets/fonts/GROBOLD.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Cartoonist Font Setup */
+@font-face {
+  font-family: "Cartoonist";
+  src: url("./assets/fonts/cartoonist.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Global font application */
+* {
+  font-family: "GROBOLD", "Courier New", monospace;
+}
+
+/* Cartoonist font for Menu and Tooltips */
+.game-menu,
+.game-menu *,
+.tooltip-btn,
+.tooltip-btn * {
+  font-family: "Cartoonist", "GROBOLD", "Courier New", monospace !important;
+}
+
+.modal * {
+  font-family: "GROBOLD", "Courier New", monospace !important;
+}
+
+body {
+  font-family: "GROBOLD", "Courier New", monospace;
+  margin: 0;
+  letter-spacing: 0.05em;
+  padding: 0;
+  background-color: #2f2f2f;
+  color: #ffffff;
+}
+
+/* Remove default button and input styling for game aesthetic */
+button,
+input,
+select,
+textarea {
+  font-family: "GROBOLD", "Courier New", monospace;
+}
+
+/* Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global text styling for all elements */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+div,
+span,
+a,
+button {
+  color: white;
+}
+
+div,
+p {
+  font-size: 1.25rem;
+}
+
+/* disable text selection globally */
+html,
+body {
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE/Edge */
+  user-select: none;
+  /* standard */
+}
+
+/* allow selection for controls like inputs/links */
+input,
+textarea,
+select,
+button,
+a {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+input:not([type="image" i], [type="range" i], [type="checkbox" i], [type="radio" i]) {
+  overflow-clip-margin: 0px !important;
+  overflow: clip !important;
+}
+
+input[type="number" i] {
+  padding-block: 1px;
+  padding-inline: 2px;
+}
+
+input:not([type="image" i]) {
+  box-sizing: border-box;
+}
+
+input {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+input::placeholder {
+  color: #fff9;
+}
+
+a {
+  color: #ffd664;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.relative {
+  position: relative;
+}
+
+.highlight {
+  color: #eaac2f;
+}
+
+.error {
+  color: rgb(223, 84, 74);
+}
+
+.success {
+  color: #66e46a;
+}
+
+.h-2\.5rem {
+  height: 2.5rem;
+}
+
+.h-3rem {
+  height: 3rem;
+}
+
+.h-3\.5rem {
+  height: 3.5rem;
+}
+
+.h-4rem {
+  height: 4rem;
+}
+
+.h-4\.5rem {
+  height: 4.5rem;
+}
+
+.min-h-0 {
+  min-height: 0;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.w-fit {
+  width: fit-content;
+}
+
+.w-50 {
+  width: 50%;
+}
+
+.w-70 {
+  width: 70%;
+}
+
+.w-75 {
+  width: 75%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.h-fit {
+  height: fit-content;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-1\.25 {
+  font-size: 1.25rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-strike {
+  text-decoration: line-through;
+}
+
+.p-0 {
+  padding: 0;
+}
+
+.px-2rem {
+  padding: 0 2rem;
+}
+
+.mt-1rem {
+  margin-top: 1rem;
+}
+
+.mt-1\.5rem {
+  margin-top: 1.5rem;
+}
+
+.opacity-7 {
+  opacity: 0.7;
+}
+
+::-webkit-scrollbar {
+  width: 1rem;
+}
+
+::-webkit-scrollbar-track {
+  background: #7f3f2e;
+  border-radius: 5rem;
+  border: 2px solid #26120f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e7b486;
+  border-radius: 5rem;
+  border: 2px solid #26120f;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e69c69;
+  border: 2px solid #302b28;
+}
+
+/* profile bar container */
+.profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 8px;
+}
+
+.game-menu > * {
+  pointer-events: auto;
+}
+
+.custom-modal-background .modal-body {
+  background-color: #b18060;
+  padding: 0rem;
+}

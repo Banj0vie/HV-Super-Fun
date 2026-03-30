@@ -424,6 +424,7 @@ const Forest = () => {
         dialogs={[]}
         width={width}
         height={height}
+        disablePanZoom
       >
       {/* Render trees directly onto the viewport canvas */}
       {forestTrees.filter(t => !clearedTrees.includes(t.id)).map((tree) => {

@@ -1,0 +1,15 @@
+.wallet-icon {
+  cursor: pointer;
+  height: fit-content;
+  display: inline-flex;
+  align-items: center;
+}
+
+.wallet-icon img {
+  width: auto;
+  display: block;
+}
+
+.wallet-icon:hover {
+  transform: scale(1.1);
+}

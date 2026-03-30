@@ -1,0 +1,49 @@
+.item-combination-header .header-wrapper {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-right: auto;
+}
+
+.item-combination-header .header-icon {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.item-combination-header .header-icon img {
+  height: 80%;
+}
+
+.item-combination-header .header-wrapper {
+  z-index: 1;
+}
+
+.item-combination-header .header-wrapper div {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.item-combination-header .header-wrapper .experience {
+  margin-left: auto;
+  opacity: 0.9;
+  color: #9f7cf1;
+  margin-right: 0.5rem;
+  text-align: start;
+  font-size: 1.45rem;
+}
+
+.item-combination-header .combination-header-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}

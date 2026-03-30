@@ -65,7 +65,7 @@ export const useBanker = () => {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         });
-      
+
       await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       
       // Fetch updated banker data after successful stake
@@ -140,7 +140,7 @@ export const useBanker = () => {
           receiverWallet1: receiverWallet1,
           receiverWallet2: receiverWallet2,
         });
-      
+
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       
       // Fetch updated banker data after successful unstake

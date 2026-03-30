@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build
+build/
+dist/
+.next/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Generated / IDL (large JSON)
+src/solana/anchor/

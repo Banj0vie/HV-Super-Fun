@@ -1,0 +1,28 @@
+.rewards-dialog-content {
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rewards-item-wrapper {
+  text-align: center;
+}
+
+.rewards-item-card {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 1rem;
+  width: -webkit-fill-available;
+}
+
+.rewards-item-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: -1;
+  top: 0;
+  left: 0;
+}

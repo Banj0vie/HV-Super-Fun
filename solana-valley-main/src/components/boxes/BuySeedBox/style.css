@@ -1,0 +1,70 @@
+.buy-seed-box {
+  min-height: 2rem;
+  height: auto;
+}
+
+.buy-seed-box-wrapper {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100% !important;
+  gap: 1rem;
+}
+
+.buy-seed-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+  flex: 1;
+  padding: 0.5rem 1rem;
+}
+
+.buy-seed-info div {
+  z-index: 1;
+}
+
+.buy-seed-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.buy-seed-icon {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.buy-seed-label {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 300;
+  z-index: 1;
+}
+
+.buy-seed-price {
+  margin: 0;
+  font-size: 0.875rem;
+  z-index: 1;
+  text-shadow:
+    -1px -1px 0 white,
+    1px -1px 0 white,
+    -1px 1px 0 white,
+    1px 1px 0 white,
+    -1px 0 0 white,
+    1px 0 0 white,
+    0 -1px 0 white,
+    0 1px 0 white !important;
+}
+
+.buy-seed-button-wrapper {
+  height: 3.5rem;
+  width: 8rem;
+}

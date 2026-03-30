@@ -1,0 +1,21 @@
+.token-input-row {
+  position: relative;
+  height: 5rem;
+  gap: 0.5rem;
+  cursor: pointer;
+  width: -webkit-fill-available;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.token-input-row-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: -1;
+}

@@ -8,6 +8,7 @@ import AuthPage from "../AuthPage";
 import { useAppSelector } from "../../solana/store";
 import { selectSettings } from "../../solana/store/slices/uiSlice";
 import { defaultSettings } from "../../utils/settings";
+import BackgroundMusic from "../../components/audio/BackgroundMusic";
 
 if (typeof window !== 'undefined' && !window.__ls_patched_v2) {
   window.__ls_patched_v2 = true;
@@ -37,6 +38,8 @@ const PanZoomViewport = ({
   children,
   isBig = false,
   stuffs = [],
+  initialScale = 1,
+  disablePanZoom = false,
 }) => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -44,24 +47,80 @@ const PanZoomViewport = ({
   const anglerHoverAudioRef = useRef(null);
   const anglerClickAudioRef = useRef(null);
 
-  // Center the layer in the viewport: (viewportWidth - layerWidth) / 2
+  // Center the layer in the viewport accounting for initial scale
   const computeInitialTx = useCallback(() => {
     if (typeof width === "number") {
-      return (window?.innerWidth || 0) / 2 - width / 2;
+      return (window?.innerWidth || 0) / 2 - (width * initialScale) / 2;
     }
     return 0;
-  }, [width]);
+  }, [width, initialScale]);
   const computeInitialTy = useCallback(() => {
     if (typeof height === "number") {
-      return (window?.innerHeight || 0) / 2 - height / 2;
+      return (window?.innerHeight || 0) / 2 - (height * initialScale) / 2;
     }
     return 0;
-  }, [height]);
+  }, [height, initialScale]);
 
   const [tx, setTx] = useState(() => computeInitialTx());
   const [ty, setTy] = useState(() => computeInitialTy());
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(initialScale);
   const [activeModal, setActiveModal] = useState(null);
+
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+  const txRef = useRef(tx);
+  const tyRef = useRef(ty);
+  const scaleRef = useRef(scale);
+
+  useEffect(() => { txRef.current = tx; }, [tx]);
+  useEffect(() => { tyRef.current = ty; }, [ty]);
+  useEffect(() => { scaleRef.current = scale; }, [scale]);
+
+  const MIN_SCALE = 0.4;
+  const MAX_SCALE = 2.5;
+
+  const handleWheel = useCallback((e) => {
+    if (disablePanZoom) return;
+    if (e.target.closest('[data-hotspots="true"]') || e.target.closest('[data-hotspot="true"]')) return;
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scaleRef.current * zoomFactor));
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const newTx = mouseX - (mouseX - txRef.current) * (newScale / scaleRef.current);
+    const newTy = mouseY - (mouseY - tyRef.current) * (newScale / scaleRef.current);
+    setScale(newScale);
+    setTx(newTx);
+    setTy(newTy);
+  }, []);
+
+  const handleMouseDown = useCallback((e) => {
+    if (disablePanZoom) return;
+    if (e.target.closest('[data-hotspots="true"]') || e.target.closest('[data-hotspot="true"]') || e.button !== 0) return;
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, tx: txRef.current, ty: tyRef.current };
+    e.preventDefault();
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    setTx(dragStart.current.tx + dx);
+    setTy(dragStart.current.ty + dy);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDragging.current = false;
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
   
   const [isDockLocked, setIsDockLocked] = useState(
     () => localStorage.getItem("sandbox_dock_unlocked") !== "true"
@@ -113,8 +172,10 @@ const PanZoomViewport = ({
       anglerHoverAudioRef.current.loop = true;
     }
     const audio = anglerHoverAudioRef.current;
-    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
-    audio.volume = clampVolume(volumeSetting);
+    const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+    const volume = clampVolume(volumeSetting);
+    if (volume <= 0) return;
+    audio.volume = volume;
     audio.play().catch(() => {});
   }, [settings?.soundVolume]);
 
@@ -131,8 +192,10 @@ const PanZoomViewport = ({
       anglerClickAudioRef.current.preload = "auto";
     }
     const audio = anglerClickAudioRef.current;
-    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
-    audio.volume = clampVolume(volumeSetting);
+    const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+    const volume = clampVolume(volumeSetting);
+    if (volume <= 0) return;
+    audio.volume = volume;
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }, [settings?.soundVolume]);
@@ -168,13 +231,18 @@ const PanZoomViewport = ({
 
   return isWalletConnected() ? (
     <>
+      <BackgroundMusic />
       <div className="panzoom-root">
 
         {!hideMenu && <GameMenu key={`game-menu-${menuKey}`} />}
         <div
           ref={containerRef}
           className="panzoom-viewport"
-          style={{ touchAction: "none" }}
+          style={{ touchAction: "none", cursor: isDragging.current ? 'grabbing' : 'grab' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         >
           <div className="panzoom-layer" style={layerInlineStyle}>
             {backgroundSrc && (
@@ -223,6 +291,7 @@ const PanZoomViewport = ({
               className={`map-btn ${isBig ? "map-big-btn" : ""} ${isDockLocked && !seenDockPrompt && (h.id === "ID_HOUSE_HOTSPOTS_ANGLER" || h.id === "angler") ? "quest-active-hotspot" : ""}`}
                 label={h.label}
                 style={{ left: h.x, top: h.y, animationDelay: `${h.delay}s` }}
+                disableHoverSound={!!h.disableHoverSound}
                 onMouseEnter={() => {
                   if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER") {
                     playAnglerHoverSound();
@@ -234,6 +303,7 @@ const PanZoomViewport = ({
                   }
                 }}
                 onClick={() => {
+                  if (h.disabled) return;
                   if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER" || h.id === "angler") {
                     console.log("angler click");
                     playAnglerClickSound();

@@ -1,0 +1,88 @@
+.profile-btn {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.125rem;
+  margin-left: 1px;
+  margin-right: 1px;
+  color: #fff;
+  height: 44px;
+}
+
+.profile-btn:hover {
+  filter: brightness(1.1) contrast(1.05);
+}
+
+.profile-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.profile-btn.disabled:hover {
+  filter: grayscale(0.5);
+}
+
+.pb-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  object-fit: fill;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pb-bg-with-text {
+  position: absolute;
+  width: 100%;
+  object-fit: fill;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pb-icon {
+  font-size: 16px;
+}
+
+.pb-icon img {
+  height: 32px;
+  display: block;
+}
+
+.pb-text {
+  font-size: 1rem;
+}
+
+/* full-bleed icon variant */
+.profile-btn.only-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  cursor: pointer;
+}
+
+.profile-btn.with-text {
+  width: 130px;
+  cursor: help;
+  justify-content: start;
+  gap: 8px;
+}
+
+.profile-btn.with-text .pb-icon,
+.profile-btn.with-text .pb-icon img {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.profile-btn .pb-icon,
+.profile-btn .pb-text {
+  position: relative;
+  z-index: 1;
+}
+
+.profile-btn.with-text .pb-icon {
+  padding-left: 10px;
+}

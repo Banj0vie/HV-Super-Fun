@@ -149,7 +149,7 @@ export const useSage = () => {
           user: publicKey, 
           tokenProgram: TOKEN_PROGRAM_ID 
         });
-      
+
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       await fetchSageData();
       
@@ -199,7 +199,7 @@ export const useSage = () => {
           user: publicKey, 
           tokenProgram: TOKEN_PROGRAM_ID 
         });
-      
+
       const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
       await new Promise(r => setTimeout(r, 2000));
       await fetchSageData();
@@ -240,5 +240,3 @@ export const useSage = () => {
 
   return { sageData, fetchSageData, unlockWeeklyHarvest, unlockWeeklyWage, getTimeUntilNextWageUnlock, getTimeUntilNextHarvestUnlock, loading, error };
 };
-
-

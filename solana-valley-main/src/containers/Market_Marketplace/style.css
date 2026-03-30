@@ -1,0 +1,13 @@
+.marketplace-dialog {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.market-stats-card {
+  margin-top: 2rem;
+  padding-top: 2.5rem;
+  padding-bottom: 1.5rem;
+}

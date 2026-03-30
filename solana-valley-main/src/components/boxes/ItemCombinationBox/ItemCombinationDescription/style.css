@@ -1,0 +1,16 @@
+.item-combination-description {
+  padding: 0.5rem;
+  gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.item-combination-description div {
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.item-combination-description-top {
+  font-size: 1rem !important;
+}

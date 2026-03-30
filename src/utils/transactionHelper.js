@@ -260,7 +260,7 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
       if (typeof window !== 'undefined' && window?.solana?.signTransaction) {
         const signed = await window.solana.signTransaction(tx);
         signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3, preflightCommitment: 'processed' });
-      }
+        }
     } catch (rawSendErr) {
       if (isUserRejectError(rawSendErr)) throw rawSendErr; // do not retry on user reject
       console.warn('Raw send (non-skip) failed, falling back to wallet adapter:', rawSendErr?.message);
@@ -271,7 +271,7 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         signature = await sendTransactionFn(tx, connection, { 
           skipPreflight: false,
           maxRetries: 1,
-          preflightCommitment: 'processed'
+          preflightCommitment: 'processed',
         });
       } catch (adapterErr) {
         if (isUserRejectError(adapterErr)) throw adapterErr; // do not retry on user reject
@@ -326,7 +326,7 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
           if (typeof window !== 'undefined' && window?.solana?.signTransaction) {
             const signed = await window.solana.signTransaction(tx);
             signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, maxRetries: 3 });
-          }
+        }
         } catch (rawErr) {
           if (isUserRejectError(rawErr)) throw rawErr; // do not fallback on user reject
           console.warn('Raw sign/send failed, falling back to wallet adapter:', rawErr?.message);

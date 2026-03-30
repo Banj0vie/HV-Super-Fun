@@ -1,0 +1,40 @@
+.start-fishing {
+  width: 350px;
+  background: var(--secondary-dlg-bg);
+  border-radius: 11px;
+  padding: 1rem;
+}
+
+.start-fishing .tool-bar {
+  display: flex;
+  flex-direction: row;
+  flex: auto;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tool-bar .vs {
+  height: 32px;
+  margin-top: -50px;
+}
+
+.start-fishing .button-wrapper {
+  display: flex;
+  gap: 1rem;
+}
+
+.start-fishing .description {
+  background-color: #99633f;
+  border-radius: 11px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.start-fishing .description div {
+  font-size: 1rem;
+}

@@ -1,0 +1,41 @@
+.vendor-menu {
+  width: 360px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.vendor-menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--secondary-dlg-bg);
+  padding: 1rem;
+  border-radius: 11px;
+}
+
+.vendor-button {
+  height: 3.5rem !important;
+  width: -webkit-fill-available;
+  padding: 0 1rem;
+}
+
+.vendor-button-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.vendor-button-stars {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.vendor-button-star {
+  color: #ffd54a;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  font-size: 1rem;
+}

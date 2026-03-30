@@ -288,6 +288,22 @@ const House = () => {
         />
       )}
 
+      {/* Fish Banner */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
+        {/* PFP with border on top */}
+        <div style={{ position: 'relative', display: 'inline-block', left: '-10px' }}>
+          <img src="/images/fish/fisherpfp.png" alt="Fisher PFP" style={{ height: '80px', width: '80px', objectFit: 'contain', display: 'block' }} />
+          <img src="/images/fish/fisherpfpborder.png" alt="Fisher PFP Border" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', objectFit: 'contain' }} />
+        </div>
+        {/* Banner */}
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img src="/images/fish/fisherbanner.png" alt="Fisher Banner" style={{ height: '90px', objectFit: 'contain', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '8px', paddingBottom: '18px' }}>
+            <span style={{ fontFamily: 'Cartoonist', fontSize: '32px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>LEVEL {fishingLevel}</span>
+          </div>
+        </div>
+      </div>
+
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/house.webp"
         hotspots={getActiveHotspots()}
@@ -295,6 +311,7 @@ const House = () => {
         width={width}
         height={height}
         bees={bees}
+        disablePanZoom
       >
         {/* Fishing Board UI Overlay inside viewport */}
         {(tutorialStep >= 32 || localStorage.getItem('sandbox_dock_repaired') === 'true' || localStorage.getItem('sandbox_dock_unlocked') === 'true') && (
@@ -326,49 +343,66 @@ const House = () => {
       <AdminPanel />
       
       {tutorialStep >= 20 && tutorialStep <= 24 && (
-        <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+        <>
           <style>{`
             a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-            div[title], button[title], .hotspot, .map-btn { pointer-events: none !important; } /* Disable clicking on map hotspots during tutorial */
+            div[title], button[title], .hotspot, .map-btn { pointer-events: none !important; }
             @keyframes houseHighlightBox { 0%, 100% { box-shadow: 0 0 20px 5px #00ff41; background-color: rgba(0, 255, 65, 0.2); } 50% { box-shadow: 0 0 5px 2px #00ff41; background-color: transparent; } }
-            @keyframes mapIconHighlight { 0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); } 50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; } }
+            @keyframes mapIconHighlight { 0%, 100% { transform: scale(1.1); } 50% { transform: scale(1); } }
             ${tutorialStep === 20 ? `div[title*="POND" i], div[title*="ANGLER" i] { animation: houseHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 21 ? `div[title*="CHEST" i] { animation: houseHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 22 ? `div[title*="GARDNER" i] { animation: houseHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 23 ? `div[title*="REFERRAL" i] { animation: houseHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
-            ${tutorialStep === 24 ? `a[href*="/farm"], img[src*="farm" i] { animation: mapIconHighlight 1.5s infinite !important; border-radius: 12px; position: relative; z-index: 100001; pointer-events: auto !important; }` : ''}
+            ${tutorialStep === 24 ? `a[href*="/tavern"] { animation: mapIconHighlight 1.5s infinite !important; position: relative; z-index: 100001; pointer-events: auto !important; }` : ''}
           `}</style>
-          <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-              <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-              <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-                <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-                
+          <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+            <div style={{ position: 'relative', width: '666px' }}>
+              <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+              <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
                 {tutorialStep === 20 && (
-                  <p style={{ margin: 0, lineHeight: '1.5' }}>Welcome to your House! Down at the <strong>Quiet Pond</strong>, you can play the Angler minigame to catch fish!</p>
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Welcome to your House! Down at the Quiet Pond, you can play the Angler minigame to catch fish!
+                  </p>
                 )}
                 {tutorialStep === 21 && (
-                  <p style={{ margin: 0, lineHeight: '1.5' }}>Here is your <strong>Daily Chest</strong>. Don't forget to claim your free rewards every day!</p>
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Here is your Daily Chest. Don't forget to claim your free rewards every day!
+                  </p>
                 )}
                 {tutorialStep === 22 && (
-                  <p style={{ margin: 0, lineHeight: '1.5' }}>The <strong>Gardner</strong> can help you manage your land and plots.</p>
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    The Gardner can help you manage your land and plots.
+                  </p>
                 )}
                 {tutorialStep === 23 && (
-                  <p style={{ margin: 0, lineHeight: '1.5' }}>And finally, check the <strong>Referrals</strong> board to invite friends and earn rewards!</p>
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    And finally, check the Referrals board to invite friends and earn rewards!
+                  </p>
                 )}
                 {tutorialStep === 24 && (
-                  <p style={{ margin: 0, lineHeight: '1.5' }}>That's it for the town tour! Head back to the <strong>Farm</strong> to get started!</p>
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Next up is the Tavern! Click the Tavern icon to visit the Tavern.
+                  </p>
                 )}
               </div>
-              
-              {tutorialStep < 24 ? (
-                <button onClick={advanceTutorial} style={{ padding: '8px 16px', backgroundColor: '#00ff41', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', color: '#000', marginTop: '10px' }}>
-                  Next
-                </button>
-              ) : (
-                <button onClick={() => { setTutorialStep(25); localStorage.setItem('sandbox_tutorial_step', '25'); }} style={{ position: 'absolute', top: '15px', right: '15px', padding: '5px 12px', backgroundColor: '#ff4444', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', fontFamily: 'monospace', color: 'white' }}>X</button>
+              {tutorialStep >= 20 && tutorialStep <= 23 && (
+                <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+                  <div
+                    style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+                    onClick={advanceTutorial}
+                  >
+                    <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+                  </div>
+                </div>
               )}
+            </div>
           </div>
-        </div>
+        </>
       )}
       
       {/* Stardew Valley Fishing Minigame Overlay */}

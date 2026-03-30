@@ -7,10 +7,10 @@ export const HOUSE_VIEWPORT = {
 
 export const HOUSE_HOTSPOTS = [
   // { id: ID_HOUSE_HOTSPOTS.GOLD, label: "GOLD", x: 192, y: 140, delay: 0 },
-  { id: ID_HOUSE_HOTSPOTS.ANGLER, label: "ANGLER", x: 228, y: 327, delay: 0.2 },
-  { id: ID_HOUSE_HOTSPOTS.GOLD_CHEST, label: "DAILY CHEST", x: 378, y: 112, delay: 0.4 },
-  { id: ID_HOUSE_HOTSPOTS.GARDNER, label: "GARDENER", x: 634, y: 130, delay: 0.6 },
-  { id: ID_HOUSE_HOTSPOTS.REFERRALS, label: "REFERRALS", x: 419, y: 300, delay: 0.8 },
+  { id: ID_HOUSE_HOTSPOTS.ANGLER, label: "ANGLER", x: 228, y: 327, delay: 0.2, disableHoverSound: true },
+  { id: ID_HOUSE_HOTSPOTS.GOLD_CHEST, label: "DAILY CHEST", x: 378, y: 112, delay: 0.4, disableHoverSound: true },
+  { id: ID_HOUSE_HOTSPOTS.GARDNER, label: "GARDENER", x: 634, y: 130, delay: 0.6, disableHoverSound: true },
+  { id: ID_HOUSE_HOTSPOTS.REFERRALS, label: "REFERRALS", x: 419, y: 300, delay: 0.8, disableHoverSound: true },
 ];
 
 export const HOUSE_BEES = [

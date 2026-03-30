@@ -6,13 +6,13 @@ export const MARKET_VIEWPORT = {
 };
 
 export const MARKET_HOTSPOTS = [
-  { id: ID_MARKET_HOTSPOTS.VENDOR, label: 'VENDOR', x: 571, y: 265, delay: 0 },
-  { id: ID_MARKET_HOTSPOTS.DEX, label: 'DEX', x: 377, y: 222, delay: 0.4 },
-  { id: ID_MARKET_HOTSPOTS.BANKER, label: 'BANKER', x: 637, y: 79, delay: 0.6 },
+  { id: ID_MARKET_HOTSPOTS.VENDOR, label: 'VENDOR', x: 571, y: 265, delay: 0, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.DEX, label: 'DEX', x: 377, y: 222, delay: 0.4, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.BANKER, label: 'BANKER', x: 637, y: 79, delay: 0.6, disableHoverSound: true },
   // { id: ID_MARKET_HOTSPOTS.HELPER, label: 'HELPER', x: 360, y: 330, delay: 0.8 },
-  { id: ID_MARKET_HOTSPOTS.MARKET, label: 'MARKET', x: 148, y: 283, delay: 0.2 },
-  { id: ID_MARKET_HOTSPOTS.LEADERBOARD, label: 'LEADERBOARD', x: 487, y: 135, delay: 0.4 },
-  { id: ID_MARKET_HOTSPOTS.SAGE, label: 'QUEEN', x: 204, y: -10, delay: 0.6 },
+  { id: ID_MARKET_HOTSPOTS.MARKET, label: 'MARKET', x: 148, y: 283, delay: 0.2, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.LEADERBOARD, label: 'LEADERBOARD', x: 487, y: 135, delay: 0.4, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.SAGE, label: 'QUEEN', x: 204, y: -10, delay: 0.6, disableHoverSound: true },
 ];
 
 export const MARKET_STUFFS = [

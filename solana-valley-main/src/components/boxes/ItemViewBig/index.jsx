@@ -1,0 +1,25 @@
+import "./style.css";
+
+import React from "react";
+
+import { ALL_ITEMS } from "../../../constants/item_data";
+import { TYPE_LABEL_COLOR } from "../../../constants/item_seed";
+
+const ItemBigView = ({ itemId, onClick }) => {
+  return (
+    <div className="item-big-view">
+      <div className="icon" onClick={() => onClick()}>
+        <img src="/images/profile_bar/avatar_bg.png" className="icon-bg" alt="icon-bg" />
+        {itemId && <img src={ALL_ITEMS[itemId].image} alt="item" className="icon-content"></img>}
+      </div>
+      <br />
+      <div className="label">
+        {itemId && (
+          <div style={{ color: TYPE_LABEL_COLOR[ALL_ITEMS[itemId].type].color }}>{ALL_ITEMS[itemId].label}</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ItemBigView;

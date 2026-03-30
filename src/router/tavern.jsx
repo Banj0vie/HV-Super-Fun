@@ -6,6 +6,7 @@ import PotionDialog from "../containers/Tavern_Potion";
 import AdminPanel from "./index";
 import WeatherOverlay from "../components/WeatherOverlay";
 import { useItems } from "../hooks/useItems";
+import { ALL_ITEMS } from "../constants/item_data";
 import { useNotification } from "../contexts/NotificationContext";
 import "../styles/KitchenMinigame.css";
 
@@ -67,20 +68,20 @@ const KitchenMinigame = ({ onClose }) => {
   const handleSelectRecipe = (recipe) => {
     const matchedIngredients = [];
     for (const req of recipe.reqs) {
-      const item = allItems.find(i => i.label?.toLowerCase() === req.name.toLowerCase());
+      const item = allItems.find(i => i.label?.toLowerCase() === req.name.toLowerCase() || ALL_ITEMS[i.id]?.label?.toLowerCase() === req.name.toLowerCase());
       if (!item || item.count < req.count) return show(`You need ${req.count}x ${req.name}!`, "error");
       matchedIngredients.push({ item, req });
     }
     
     const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
     const sandboxProduce = JSON.parse(localStorage.getItem('sandbox_produce') || '{}');
-    
+
     for (const { item, req } of matchedIngredients) {
       let needed = req.count;
       let pVal = sandboxProduce[item.id];
       if (pVal !== undefined) {
         if (Array.isArray(pVal)) { while(needed > 0 && pVal.length > 0) { pVal.pop(); needed--; } }
-        else {
+        else if (typeof pVal === 'number') {
           const num = Number(pVal) || 0; const deduct = Math.min(num, needed);
           sandboxProduce[item.id] = num - deduct; needed -= deduct;
         }
@@ -446,12 +447,15 @@ const Tavern = () => {
   const [isTavernUnlocked, setIsTavernUnlocked] = useState(() => localStorage.getItem('quest_q2_rebuild_tavern_completed') === 'true');
 
   useEffect(() => {
-    // If somehow they get here during tutorial step 17 or 18, push them to house
+    // If somehow they get here too early in the tutorial, push them to house
     if (tutorialStep === 17 || tutorialStep === 18 || tutorialStep === 19) {
       setTutorialStep(20);
       localStorage.setItem('sandbox_tutorial_step', '20');
       window.location.href = '/house';
     }
+    const stepHandler = () => setTutorialStep(parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+    window.addEventListener('tutorialStepChanged', stepHandler);
+    return () => window.removeEventListener('tutorialStepChanged', stepHandler);
   }, [tutorialStep]);
 
   const advanceTutorial = () => {
@@ -462,6 +466,7 @@ const Tavern = () => {
 
   const getActiveHotspots = () => {
     if (tutorialStep >= 32) return hotspots;
+    if (tutorialStep >= 24) return hotspots.map(h => ({ ...h, disabled: true }));
     return [];
   };
 
@@ -475,22 +480,128 @@ const Tavern = () => {
   ];
 
   if (!isTavernUnlocked && tutorialStep >= 32) {
-    return (
-      <div style={{ width: '100vw', height: '100vh', backgroundColor: '#1a1008', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#fff', fontFamily: 'monospace' }}>
-        <h1 style={{ color: '#ffea00', fontSize: '48px', margin: '0 0 20px 0', textShadow: '0 4px 10px rgba(0,0,0,0.8)' }}>Tavern is Ruined!</h1>
-        <p style={{ fontSize: '20px', marginBottom: '30px', color: '#ccc', textAlign: 'center', maxWidth: '600px', lineHeight: '1.5' }}>
-          You must complete the <strong>"Rebuild the Tavern"</strong> quest in your Mailbox to enter.
-        </p>
-        <button 
-          onClick={() => window.location.href = '/farm'}
-          style={{ padding: '15px 30px', fontSize: '20px', backgroundColor: '#00ff41', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.5)', transition: 'transform 0.2s' }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          Return to Farm
-        </button>
-      </div>
-    );
+    const TAVERN_REQS = [
+      { id: 9993, name: "Wood Logs", count: 50, image: "/images/forest/wood.png" },
+      { id: 9994, name: "Stones", count: 50, image: "/images/forest/rock.png" },
+      { id: 131586, name: "Potatoes", count: 10, image: ALL_ITEMS[131586]?.image || "/images/items/potato.png" },
+    ];
+
+    const getItemCounts = () => {
+      const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+      const produce = JSON.parse(localStorage.getItem('sandbox_produce') || '{}');
+      return TAVERN_REQS.map(req => {
+        let current = 0;
+        if (Array.isArray(produce[req.id])) current += produce[req.id].length;
+        else current += (Number(produce[req.id]) || 0) + (Number(loot[req.id]) || 0);
+        return { ...req, current: Math.min(current, req.count) };
+      });
+    };
+
+    const TavernRebuildUI = () => {
+      const { show } = useNotification();
+      const [counts, setCounts] = React.useState(() => getItemCounts());
+
+      React.useEffect(() => {
+        const handler = () => setCounts(getItemCounts());
+        window.addEventListener('ls-update', handler);
+        return () => window.removeEventListener('ls-update', handler);
+      }, []);
+
+      const canRebuild = counts.every(r => r.current >= r.count);
+
+      const handleRebuild = () => {
+        if (!canRebuild) return;
+        const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+        const produce = JSON.parse(localStorage.getItem('sandbox_produce') || '{}');
+
+        for (const req of TAVERN_REQS) {
+          let remaining = req.count;
+          if (Array.isArray(produce[req.id])) {
+            while (remaining > 0 && produce[req.id].length > 0) { produce[req.id].pop(); remaining--; }
+          } else {
+            const fromProduce = Math.min(Number(produce[req.id]) || 0, remaining);
+            produce[req.id] = (Number(produce[req.id]) || 0) - fromProduce;
+            remaining -= fromProduce;
+          }
+          if (remaining > 0 && loot[req.id]) {
+            const fromLoot = Math.min(Number(loot[req.id]), remaining);
+            loot[req.id] -= fromLoot;
+          }
+        }
+
+        // Give 500 honey reward
+        const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
+        localStorage.setItem('sandbox_honey', (currentHoney + 500).toString());
+        window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: (currentHoney + 500).toString() }));
+
+        localStorage.setItem('sandbox_loot', JSON.stringify(loot));
+        localStorage.setItem('sandbox_produce', JSON.stringify(produce));
+        localStorage.setItem('quest_q2_rebuild_tavern_completed', 'true');
+
+        // Mark quest completed
+        const completed = JSON.parse(localStorage.getItem('sandbox_completed_quests') || '[]');
+        if (!completed.includes('q2_rebuild_tavern')) {
+          completed.push('q2_rebuild_tavern');
+          localStorage.setItem('sandbox_completed_quests', JSON.stringify(completed));
+        }
+
+        window.dispatchEvent(new CustomEvent('tavernUnlocked'));
+        setIsTavernUnlocked(true);
+        show('Tavern rebuilt! +500 Honey', 'success');
+      };
+
+      return (
+        <div style={{ width: '100vw', height: '100vh', backgroundColor: '#1a1008', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#fff', fontFamily: 'monospace', gap: '24px' }}>
+          <h1 style={{ color: '#ffea00', fontSize: '42px', margin: 0, textShadow: '0 4px 10px rgba(0,0,0,0.8)' }}>Tavern is Ruined!</h1>
+          <p style={{ fontSize: '16px', color: '#ccc', textAlign: 'center', maxWidth: '500px', lineHeight: '1.6', margin: 0 }}>
+            Gather the materials below and submit them here to rebuild the Tavern.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '12px', padding: '24px', minWidth: '340px' }}>
+            {counts.map((req) => {
+              const pct = Math.min(100, (req.current / req.count) * 100);
+              const done = req.current >= req.count;
+              return (
+                <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={req.image} alt={req.name} style={{ width: '32px', height: '32px', objectFit: 'contain', flexShrink: 0 }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/forest/rock.png'; }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '13px', color: done ? '#00ff41' : '#ccc' }}>{req.name}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: done ? '#00ff41' : '#ffea00' }}>{req.current}/{req.count}</span>
+                    </div>
+                    <div style={{ height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', backgroundColor: done ? '#00ff41' : '#ffea00', transition: 'width 0.3s', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <button
+              onClick={handleRebuild}
+              disabled={!canRebuild}
+              style={{ padding: '14px 32px', fontSize: '18px', backgroundColor: canRebuild ? '#ffea00' : '#444', color: canRebuild ? '#000' : '#888', border: 'none', borderRadius: '8px', cursor: canRebuild ? 'pointer' : 'not-allowed', fontWeight: 'bold', boxShadow: canRebuild ? '0 4px 12px rgba(255,234,0,0.4)' : 'none', transition: 'all 0.2s', fontFamily: 'monospace' }}
+              onMouseEnter={(e) => { if (canRebuild) e.currentTarget.style.transform = 'scale(1.05)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              Rebuild Tavern
+            </button>
+            <button
+              onClick={() => window.location.href = '/farm'}
+              style={{ padding: '14px 28px', fontSize: '16px', backgroundColor: 'transparent', color: '#ccc', border: '2px solid #5a402a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'monospace', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#ccc'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#5a402a'; }}
+            >
+              Return to Farm
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    return <TavernRebuildUI />;
   }
 
   return (
@@ -504,6 +615,7 @@ const Tavern = () => {
         height={height}
         stuffs={TAVERN_STUFFS}
         bees={TAVERN_BEES}
+        disablePanZoom
       />
       
       {/* KITCHEN BUTTON */}
@@ -523,6 +635,49 @@ const Tavern = () => {
       {/* KITCHEN MINIGAME OVERLAY */}
       {showKitchen && <KitchenMinigame onClose={() => setShowKitchen(false)} />}
       <AdminPanel />
+
+      {(tutorialStep === 24 || tutorialStep === 25) && (
+        <>
+          <style>{`
+            a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
+            div[title], button[title], .hotspot, .map-btn { pointer-events: none !important; }
+            @keyframes valleyIconPulse { 0%, 100% { transform: scale(1.1); } 50% { transform: scale(1); } }
+            ${tutorialStep === 25 ? `a[href*="/valley"] { animation: valleyIconPulse 1.5s infinite !important; position: relative; z-index: 100001; pointer-events: auto !important; }` : ''}
+          `}</style>
+          <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+            <div style={{ position: 'relative', width: '666px' }}>
+              <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+              <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+                {tutorialStep === 24 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Welcome to the Tavern! This is where you can brew powerful Potions using ingredients from your farm, and cook up delicious meals in the Kitchen. Both will give you helpful boosts as you grow your farm!
+                  </p>
+                )}
+                {tutorialStep === 25 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Now click the Valley icon to take a look at the whole valley!
+                  </p>
+                )}
+              </div>
+              {tutorialStep === 24 && (
+                <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+                  <div
+                    style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+                    onClick={advanceTutorial}
+                  >
+                    <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };

@@ -1,0 +1,13 @@
+.card-view {
+  min-height: 4rem;
+  height: auto;
+  width: -webkit-fill-available;
+  position: relative;
+  background: var(--primary-dlg-bg);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 1rem;
+}

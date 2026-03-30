@@ -1,0 +1,27 @@
+import "./style.css";
+
+import React, { useState } from "react";
+
+import WalletButton from "../../../../components/buttons/WalletButton";
+import WalletDialog from "../../../../containers/Menu_Wallet";
+
+const ProfileView = ({ username }) => {
+  const [isWalletDlg, setIsWalletDlg] = useState(false);
+
+  return (
+    <div className="name-pill">
+      <img src="/images/profile_bar/profile_bg.png" alt="name pill bg" className="name-pill-bg"></img>
+      <div className="name-pill-content">
+        <div>{username}</div>
+        <WalletButton
+          onClick={() => {
+            setIsWalletDlg(true);
+          }}
+        />
+      </div>
+      {isWalletDlg && <WalletDialog onClose={() => setIsWalletDlg(false)}></WalletDialog>}
+    </div>
+  );
+};
+
+export default ProfileView;

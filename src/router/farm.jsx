@@ -12,7 +12,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { CropItemArrayClass } from "../models/crop";
 import { handleContractError } from "../utils/errorHandler";
 import { ID_POTION_ITEMS, ID_PRODUCE_ITEMS, ID_CHEST_ITEMS, ID_FISH_ITEMS, ID_SEEDS, ID_BAIT_ITEMS } from "../constants/app_ids";
-import { ALL_ITEMS } from "../constants/item_data";
+import { ALL_ITEMS, IMAGE_URL_CROP } from "../constants/item_data";
 import { clampVolume, getGrowthTime, getSubtype } from "../utils/basic";
 import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../constants/item_seed";
 import { useAppSelector } from "../solana/store";
@@ -52,7 +52,7 @@ export const getQuestData = () => [
       "Nephew.",
       "The local Tavern has fallen into ruin. It's an absolute disgrace to our family name.",
       "I need you to gather materials to fix it up so the Potion Master can resume his brewing.",
-      "Bring me 50 Wood Logs, 50 Stones, and 10 Potatoes. Do not dawdle."
+      "Deliver 50 Wood Logs, 50 Stones, and 10 Potatoes to the Tavern. Do not dawdle."
     ],
     rewards: [
       { id: 'honey', count: 500, name: "Honey", image: "/images/items/honey.png" }
@@ -757,7 +757,7 @@ const SkipGrowthDialog = ({ onClose, onConfirm, tutorialStep }) => {
         <h2 style={{ color: '#ffea00', margin: '0', textAlign: 'center' }}>Speed Up Growth?</h2>
         <p style={{ margin: 0, color: '#ccc', textAlign: 'center' }}>Pay your Great Uncle 100 Honey to instantly grow this crop?</p>
         <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-          <BaseButton label={tutorialStep === 9 ? "Skip for Free!" : "Pay 100 Honey"} onClick={onConfirm} />
+          <BaseButton label="Pay 100 Honey" onClick={onConfirm} />
           <BaseButton label="Cancel" onClick={onClose} />
         </div>
       </div>
@@ -1021,42 +1021,41 @@ export const CalendarDialog = ({ onClose, simulatedDay, simulatedDate, refetch, 
   const month = estDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
-  const startOffset = (firstDay + 6) % 7; 
-  
+  const startOffset = (firstDay + 6) % 7;
+
   const blanks = Array.from({ length: startOffset }, (_, i) => null);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  // Daily Login Logic
   const [streak, setStreak] = useState(() => parseInt(localStorage.getItem('sandbox_login_streak') || '0', 10));
   const [lastClaimDate, setLastClaimDate] = useState(() => localStorage.getItem('sandbox_last_claim_date') || '');
-  
+
   const today = new Date().toDateString();
   const canClaim = lastClaimDate !== today;
 
   const DAILY_REWARDS = [
     { day: 1, id: 9993, name: "Wood", count: 10, image: "/images/forest/wood.png" },
     { day: 2, id: 9994, name: "Stone", count: 10, image: "/images/forest/rock.png" },
-    { day: 3, id: 'honey', name: "Honey", count: 100, image: "/images/items/honey.png" }, 
+    { day: 3, id: 'honey', name: "Honey", count: 100, image: "/images/items/honey.png" },
     { day: 4, id: 9995, name: "Sticks", count: 10, image: "/images/forest/wood.png" },
-    { day: 5, id: 9996, name: "Iron Ore", count: 5, image: "/images/forest/ironrock.png" }, 
-    { day: 6, id: 9997, name: "Gold Ore", count: 2, image: "/images/forest/goldrock.png" }, 
-    { day: 7, id: 'chest', name: "Bronze Chest", count: 1, image: "/images/items/chest.png" } 
+    { day: 5, id: 9996, name: "Iron Ore", count: 5, image: "/images/forest/ironrock.png" },
+    { day: 6, id: 9997, name: "Gold Ore", count: 2, image: "/images/forest/goldrock.png" },
+    { day: 7, id: 'chest', name: "Bronze Chest", count: 1, image: "/images/items/chest.png" }
   ];
 
   const handleClaim = () => {
     if (!canClaim) return;
-    const reward = DAILY_REWARDS[streak];
-    
+    const reward = DAILY_REWARDS[streak % 7];
+
     if (reward.id === 'honey') {
-       const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
-       const newHoney = currentHoney + reward.count;
-       localStorage.setItem('sandbox_honey', newHoney.toString());
-       window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+      const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
+      const newHoney = currentHoney + reward.count;
+      localStorage.setItem('sandbox_honey', newHoney.toString());
+      window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
     } else {
-       const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
-       const itemId = reward.id === 'chest' ? (ID_CHEST_ITEMS?.CHEST_BRONZE || 20001) : reward.id;
-       sandboxLoot[itemId] = (sandboxLoot[itemId] || 0) + reward.count;
-       localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
+      const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+      const itemId = reward.id === 'chest' ? (ID_CHEST_ITEMS?.CHEST_BRONZE || 20001) : reward.id;
+      sandboxLoot[itemId] = (sandboxLoot[itemId] || 0) + reward.count;
+      localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
     }
 
     const nextStreak = (streak + 1) % 7;
@@ -1064,85 +1063,107 @@ export const CalendarDialog = ({ onClose, simulatedDay, simulatedDate, refetch, 
     setLastClaimDate(today);
     localStorage.setItem('sandbox_login_streak', nextStreak.toString());
     localStorage.setItem('sandbox_last_claim_date', today);
-    
+
     show(`Claimed ${reward.count}x ${reward.name}!`, "success");
     if (refetch) refetch();
     if (onClaimed) onClaimed();
   };
 
+  const VISIBLE_WINDOW = 7;
+
   return (
     <BaseDialog onClose={onClose} title="CALENDAR" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
-      <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '15px', width: '550px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto' }}>
-        
-        {/* Daily Login Section */}
-        <div style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-          <h3 style={{ margin: 0, color: '#ffea00' }}>Daily Login Rewards</h3>
-          <style>{`.reward-icon { transform: none !important; }`}</style>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', width: '100%' }}>
-            {DAILY_REWARDS.map((reward, idx) => {
-               let isClaimed = (!canClaim && (streak === 0 || idx < streak)) || (canClaim && idx < streak);
-               let isToday = canClaim && idx === streak;
-               return (
-                  <div key={idx} style={{ gridColumn: idx === 6 ? 'span 2' : 'span 1', backgroundColor: isToday ? 'rgba(0,255,65,0.2)' : (isClaimed ? 'rgba(0,0,0,0.8)' : 'rgba(31, 22, 16, 0.8)'), border: `2px solid ${isToday ? '#00ff41' : (isClaimed ? '#444' : '#5a402a')}`, borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: isClaimed ? 0.6 : 1, position: 'relative' }}>
-                     <div style={{ color: isToday ? '#00ff41' : '#ccc', fontWeight: 'bold', marginBottom: '5px' }}>Day {reward.day}</div>
-                        <div style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src={reward.image} alt={reward.name} className="reward-icon" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/forest/rock.png'; }} /></div>
-                     <div style={{ color: '#ffea00', fontSize: '10px', marginTop: '5px', textAlign: 'center' }}>{reward.count}x<br/>{reward.name}</div>
-                     {isClaimed && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '30px', color: '#00ff41', textShadow: '0 0 10px #000' }}>✓</div>}
-                  </div>
-               );
-            })}
+      <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '15px', width: '700px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto' }}>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ color: '#00ff41', margin: 0 }}>{monthName} {year}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+            <span style={{ color: '#ccc', fontSize: '12px' }}>Login Streak: <span style={{ color: '#ffea00', fontWeight: 'bold' }}>{streak % 7 + 1}/7</span></span>
+            <BaseButton small label={canClaim ? "Claim Today's Reward" : "Come back tomorrow!"} disabled={!canClaim} onClick={handleClaim} />
           </div>
-          <BaseButton small label={canClaim ? "Claim Reward" : "Come back tomorrow!"} disabled={!canClaim} onClick={handleClaim} />
         </div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ color: '#00ff41', margin: '0 0 5px 0' }}>{monthName} Forecast</h2>
-          <p style={{ margin: 0, color: '#ccc', fontSize: '12px' }}>Track dates, weather, and weekly events!</p>
-        </div>
-        
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: '8px',
+          gap: '6px',
           backgroundColor: 'rgba(0,0,0,0.5)',
           border: '2px solid #5a402a',
           borderRadius: '8px',
-          padding: '15px'
+          padding: '12px'
         }}>
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-            <div key={d} style={{ textAlign: 'center', color: '#ccc', fontWeight: 'bold', paddingBottom: '10px', borderBottom: '1px solid #5a402a', marginBottom: '5px' }}>
+            <div key={d} style={{ textAlign: 'center', color: '#ccc', fontWeight: 'bold', paddingBottom: '8px', borderBottom: '1px solid #5a402a', marginBottom: '4px', fontSize: '12px' }}>
               {d}
             </div>
           ))}
           {blanks.map((_, i) => (
-            <div key={`blank-${i}`} style={{ height: '60px' }} />
+            <div key={`blank-${i}`} style={{ height: '88px' }} />
           ))}
           {days.map(day => {
-            const currentDayOfWeek = (startOffset + day - 1) % 7; // 0=Mon, ..., 6=Sun
+            const currentDayOfWeek = (startOffset + day - 1) % 7;
             const isSunday = currentDayOfWeek === 6;
-            
-            // Highlight the specific simulated date
             const isToday = day === simulatedDate;
+            const isPast = day < simulatedDate;
+            const daysFromToday = day - simulatedDate;
+            const isBeyondWindow = daysFromToday >= VISIBLE_WINDOW;
 
             const weatherEmoji = getWeatherForDay(day);
             const weatherTitle = weatherEmoji === '⚡' ? 'Lightning Storm' : weatherEmoji === '🌧️' ? 'Rainy' : weatherEmoji === '☁️' ? 'Cloudy' : 'Sunny';
 
+            // Which reward cycle position does this day map to?
+            const rewardIndex = ((streak % 7) + Math.max(0, daysFromToday)) % 7;
+            const reward = DAILY_REWARDS[rewardIndex];
+            const isClaimed = isPast || (isToday && !canClaim);
+            const showReward = !isPast;
+
             return (
               <div key={day} style={{
-                height: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '5px',
+                height: '88px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+                padding: '4px',
                 border: isToday ? '2px solid #00ff41' : '1px solid #5a402a',
-                backgroundColor: isToday ? 'rgba(0, 255, 65, 0.1)' : 'rgba(31, 22, 16, 0.8)',
-                color: isToday ? '#00ff41' : '#fff', borderRadius: '4px', position: 'relative'
+                backgroundColor: isToday ? 'rgba(0,255,65,0.12)' : isPast ? 'rgba(20,14,10,0.8)' : 'rgba(31,22,16,0.8)',
+                color: isToday ? '#00ff41' : isPast ? '#555' : '#fff',
+                borderRadius: '4px',
+                position: 'relative',
+                overflow: 'hidden',
+                filter: isBeyondWindow ? 'blur(4px)' : 'none',
+                pointerEvents: isBeyondWindow ? 'none' : 'auto',
+                userSelect: isBeyondWindow ? 'none' : 'auto',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', zIndex: 10 }}>
-                  <span style={{ fontSize: '14px', filter: 'drop-shadow(0px 1px 1px rgba(0,0,0,0.8))' }} title={weatherTitle}>{weatherEmoji}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{day}</span>
+                {/* Date + weather row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span style={{ fontSize: '12px', opacity: isBeyondWindow ? 0 : 1 }} title={weatherTitle}>{weatherEmoji}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold' }}>{day}</span>
                 </div>
-                {isSunday && (
-                  <img src="/images/weight/weightcontest.png" alt="Weigh-in" style={{ width: '80px', height: '80px', position: 'absolute', bottom: '2px', opacity: 0.9, filter: 'drop-shadow(0px 2px 2px black)', zIndex: 5 }} title="Weekly Weigh-In!" />
+
+                {/* Reward */}
+                {showReward && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', marginTop: '2px' }}>
+                    <img
+                      src={reward.image}
+                      alt={reward.name}
+                      style={{ width: '22px', height: '22px', objectFit: 'contain', opacity: isClaimed ? 0.4 : 1 }}
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/images/forest/rock.png'; }}
+                    />
+                    <span style={{ fontSize: '9px', color: isClaimed ? '#555' : '#ffea00', textAlign: 'center', lineHeight: 1.2 }}>
+                      {reward.count}x {reward.name}
+                    </span>
+                  </div>
+                )}
+
+                {/* Claimed checkmark */}
+                {isClaimed && (
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '22px', color: '#00ff41', textShadow: '0 0 6px #000', pointerEvents: 'none' }}>✓</div>
+                )}
+
+                {/* Sunday weigh-in icon */}
+                {isSunday && !isBeyondWindow && (
+                  <img src="/images/weight/weightcontest.png" alt="Weigh-in" style={{ width: '24px', height: '24px', position: 'absolute', bottom: '2px', right: '2px', opacity: 0.85, filter: 'drop-shadow(0px 1px 2px black)' }} title="Weekly Weigh-In!" />
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </div>
@@ -1480,7 +1501,8 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
         costFunc: (amt) => `${3 * amt} Sticks, ${3 * amt} Stone`,
         canCraft: (amt) => sticksCount >= 3 * amt && stoneCount >= 3 * amt,
         onCraft: (amt) => handleCraftAxe(amt),
-        highlight: highlightAxe
+        highlight: highlightAxe,
+        tutorialLocked: tutorialStep === 26 && axeCount > 0
       },
       {
         id: 'pickaxe',
@@ -1491,7 +1513,8 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
         costFunc: (amt) => `${3 * amt} Sticks, ${3 * amt} Stone`,
         canCraft: (amt) => sticksCount >= 3 * amt && stoneCount >= 3 * amt,
         onCraft: (amt) => handleCraftPickaxe(amt),
-        highlight: highlightPickaxe
+        highlight: highlightPickaxe,
+        tutorialLocked: tutorialStep === 26 && pickaxeCount > 0
       },
       {
         id: 'iron_pickaxe',
@@ -1877,6 +1900,48 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
   };
 
   return (
+    <>
+    {tutorialStep === 26 && (
+      <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100002 }}>
+        <div style={{ position: 'relative', width: '666px' }}>
+          <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+          <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+              {axeCount > 0 && pickaxeCount === 0
+                ? sticksCount >= 3 && activeTab !== 'tools'
+                  ? "Now head to the tools page to craft your Pickaxe!"
+                  : sticksCount >= 3 && activeTab === 'tools'
+                  ? "Great! Now craft your Pickaxe!"
+                  : sticksCount === 2
+                  ? "Just 1 more stick!"
+                  : sticksCount === 1
+                  ? "Create 2 more sticks!"
+                  : "Now craft 3 sticks so you can make your Pickaxe!"
+                : pickaxeCount > 0 && axeCount === 0
+                ? sticksCount >= 3 && activeTab !== 'tools'
+                  ? "Now head to the tools page to craft your Axe!"
+                  : sticksCount >= 3 && activeTab === 'tools'
+                  ? "Great! Now craft your Axe!"
+                  : sticksCount === 2
+                  ? "Just 1 more stick!"
+                  : sticksCount === 1
+                  ? "Create 2 more sticks!"
+                  : "Now craft 3 sticks so you can make your Axe!"
+                : sticksCount >= 3 && activeTab !== 'tools'
+                ? "Now head over to the tools page!"
+                : sticksCount >= 3 && activeTab === 'tools'
+                ? "Great! Now craft yourself an Axe or a Pickaxe using your sticks!"
+                : sticksCount === 2
+                ? "Just 1 more stick!"
+                : sticksCount === 1
+                ? "Create 2 more sticks!"
+                : "First, you'll need some Sticks. Craft 3 sticks with Wood Logs Pabee gave you!"
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
     <BaseDialog onClose={onClose} title="CRAFTING" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
       <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '20px', width: '600px', maxWidth: '90vw' }}>
         <h2 style={{ color: '#00ff41', margin: '0 0 10px 0', textAlign: 'center' }}>Crafting Workbench</h2>
@@ -1944,22 +2009,31 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
               </div>
             )}
           </button>
-          <button 
-            onClick={() => setActiveTab('buildings')} 
-            style={{ 
-              padding: '10px 20px', 
-              backgroundColor: activeTab === 'buildings' ? 'rgba(255, 165, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)', 
-              color: activeTab === 'buildings' ? '#ffa500' : '#ccc', 
-              border: `2px solid ${activeTab === 'buildings' ? '#ffa500' : '#5a402a'}`, 
-              borderRadius: '8px', 
-              cursor: 'pointer', 
-              fontFamily: 'monospace', 
-              fontWeight: 'bold',
-              fontSize: '16px'
-            }}
-          >
-            Buildings
-          </button>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              onClick={() => setActiveTab('buildings')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: activeTab === 'buildings' ? 'rgba(255, 165, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
+                color: activeTab === 'buildings' ? '#ffa500' : tutorialStep < 32 ? '#555' : '#ccc',
+                border: `2px solid ${activeTab === 'buildings' ? '#ffa500' : '#5a402a'}`,
+                borderRadius: '8px',
+                cursor: tutorialStep < 32 ? 'not-allowed' : 'pointer',
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                pointerEvents: tutorialStep < 32 ? 'none' : 'auto',
+                opacity: tutorialStep < 32 ? 0.5 : 1
+              }}
+            >
+              Buildings
+            </button>
+            {tutorialStep < 32 && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', pointerEvents: 'all', cursor: 'not-allowed' }}>
+                <span style={{ fontSize: '18px', filter: 'drop-shadow(0px 1px 2px black)' }}>🔒</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ 
@@ -1995,6 +2069,11 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
                 {recipe.used && (
                    <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%) rotate(-15deg)', backgroundColor: 'rgba(255, 68, 68, 0.9)', color: 'white', padding: '5px 15px', borderRadius: '4px', fontWeight: 'bold', fontSize: '24px', letterSpacing: '2px', border: '2px solid white', zIndex: 10, pointerEvents: 'none' }}>USED</div>
                 )}
+                {recipe.tutorialLocked && (
+                   <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'all' }}>
+                     <span style={{ color: '#aaa', fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', letterSpacing: '1px' }}>CRAFTED</span>
+                   </div>
+                )}
                 {recipe.highlight && (
                    <div style={{ position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
                      <span style={{ fontSize: '30px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬇️</span>
@@ -2019,7 +2098,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
                       style={{ width: '40px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#fff', border: '1px solid #5a402a', borderRadius: '4px', textAlign: 'center', fontFamily: 'monospace' }}
                     />
                   )}
-                  <BaseButton small label={recipe.used ? "Built" : "Craft"} onClick={() => recipe.onCraft(amt)} disabled={!recipe.canCraft(amt) || recipe.used} />
+                  <BaseButton small label={recipe.used ? "Built" : "Craft"} onClick={() => recipe.onCraft(amt)} disabled={!recipe.canCraft(amt) || recipe.used || recipe.tutorialLocked} />
                 </div>
               </div>
             );
@@ -2039,6 +2118,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
         </div>
       </div>
     </BaseDialog>
+    </>
   );
 };
 
@@ -2392,10 +2472,18 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
               {activeQuest.rewards.map((rew, idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                    {rew.image && rew.image.includes('seeds') ? (
-                       <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos !== undefined ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
+                    {ALL_ITEMS[rew.id]?.pos >= 0 ? (
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        backgroundImage: `url(/images/crops/seeds.webp)`,
+                        backgroundSize: `${(159 * 60 / 207.7647).toFixed(1)}px auto`,
+                        backgroundPositionX: 'center',
+                        backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 60).toFixed(1)}px`,
+                        backgroundRepeat: 'no-repeat',
+                      }} />
                     ) : (
-                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />
+                      <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2489,6 +2577,15 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
   const [animState, setAnimState] = useState(0); // 0: list, 1: opening, 2: reading, 3: claiming
   const [activeQuest, setActiveQuest] = useState(null);
   const [discardedQuests, setDiscardedQuests] = useState(() => JSON.parse(localStorage.getItem('sandbox_discarded_quests') || '[]'));
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  const confirmDiscard = () => {
+    const nextDiscarded = [...discardedQuests, activeQuest.id];
+    setDiscardedQuests(nextDiscarded);
+    localStorage.setItem('sandbox_discarded_quests', JSON.stringify(nextDiscarded));
+    setShowDiscardConfirm(false);
+    setAnimState(0);
+  };
 
   const allQuests = getQuestData();
   const availableQuests = allQuests.filter(q => (!q.type || q.type === 'main') && q.unlockCondition(tutorialStep, completedQuests));
@@ -2611,8 +2708,8 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
         xpSkill = 'Fishing';
         xpKey = 'sandbox_fishing_xp';
     }
-    
-    if (xpSkill) {
+
+    if (xpSkill && quest.id !== 'q1_pabee_intro') {
         const currentXp = parseInt(localStorage.getItem(xpKey) || '0', 10);
         const oldLevel = Math.floor(Math.sqrt((currentXp || 0) / 150)) + 1;
         const newXp = currentXp + 500;
@@ -2654,10 +2751,18 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
               {activeQuest.rewards.map((rew, idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                    {rew.image && rew.image.includes('seeds') ? (
-                       <div className="item-icon item-icon-seeds" style={{ width: '40px', height: '40px', transform: 'scale(1)', backgroundPositionY: ALL_ITEMS[rew.id]?.pos !== undefined ? `-${ALL_ITEMS[rew.id].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div>
+                    {ALL_ITEMS[rew.id]?.pos >= 0 ? (
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        backgroundImage: `url(/images/crops/seeds.webp)`,
+                        backgroundSize: `${(159 * 60 / 207.7647).toFixed(1)}px auto`,
+                        backgroundPositionX: 'center',
+                        backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 60).toFixed(1)}px`,
+                        backgroundRepeat: 'no-repeat',
+                      }} />
                     ) : (
-                       <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/items/seeds.png'; }} />
+                      <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2693,7 +2798,7 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
               ))}
             </div>
 
-            {activeQuest.reqs.length > 0 && !completedQuests.includes(activeQuest.id) && (
+            {activeQuest.reqs.length > 0 && !completedQuests.includes(activeQuest.id) && activeQuest.id !== 'q2_rebuild_tavern' && (
               <div style={{ backgroundColor: 'rgba(90, 64, 42, 0.1)', border: '1px solid #8c6b4a', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
                 <h4 style={{ margin: '0 0 10px 0', fontFamily: 'monospace' }}>Required Items:</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
@@ -2709,27 +2814,52 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
               </div>
             )}
 
+            {activeQuest.id === 'q2_rebuild_tavern' && !completedQuests.includes(activeQuest.id) && (
+              <div style={{ backgroundColor: 'rgba(90, 64, 42, 0.15)', border: '1px solid #8c6b4a', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>
+                <p style={{ margin: 0, fontFamily: 'monospace', color: '#8c6b4a', fontSize: '14px' }}>
+                  Head to the <strong>Tavern</strong> to submit your materials and rebuild it.
+                </p>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
               {completedQuests.includes(activeQuest.id) ? (
                 <>
-                  <BaseButton label="Discard" onClick={() => {
-                    const nextDiscarded = [...discardedQuests, activeQuest.id];
-                    setDiscardedQuests(nextDiscarded);
-                    localStorage.setItem('sandbox_discarded_quests', JSON.stringify(nextDiscarded));
-                    setAnimState(0);
-                  }} />
+                  <BaseButton label="Discard" onClick={() => setShowDiscardConfirm(true)} />
                   <BaseButton label="Fold Letter" onClick={() => setAnimState(0)} />
                 </>
               ) : (
                 <>
-                  {activeQuest.reqs.length > 0 ? (
+                  {activeQuest.id === 'q2_rebuild_tavern' ? (
+                    <>
+                      <BaseButton label="Discard" onClick={() => setShowDiscardConfirm(true)} />
+                      <BaseButton label="Fold Letter" onClick={() => setAnimState(0)} />
+                    </>
+                  ) : activeQuest.reqs.length > 0 ? (
                     <BaseButton label={isReadyToTurnIn ? "Turn In & Claim" : "Not Enough Items"} disabled={!isReadyToTurnIn} onClick={handleCompleteQuest} />
                   ) : (
                     <BaseButton label="Claim Gifts" onClick={handleCompleteQuest} />
                   )}
-                  <BaseButton label="Fold Letter" onClick={() => setAnimState(0)} />
+                  {activeQuest.id !== 'q2_rebuild_tavern' && (
+                    <BaseButton label="Fold Letter" onClick={() => setAnimState(0)} />
+                  )}
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Discard confirmation popup */}
+        {showDiscardConfirm && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100001, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ backgroundColor: '#2a1a0e', border: '2px solid #8c6b4a', borderRadius: '12px', padding: '28px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', maxWidth: '340px', textAlign: 'center' }}>
+              <p style={{ margin: 0, fontFamily: 'monospace', color: '#e8d5b0', fontSize: '16px', lineHeight: 1.5 }}>
+                Are you sure you want to discard this letter? This cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <BaseButton label="Yes, Discard" onClick={confirmDiscard} />
+                <BaseButton label="Cancel" onClick={() => setShowDiscardConfirm(false)} />
+              </div>
             </div>
           </div>
         )}
@@ -2738,49 +2868,37 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
   }
 
   return (
-    <BaseDialog onClose={onClose} title="" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
-      <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', minWidth: '400px', height: '85vh', maxHeight: '90vh', overflowY: 'auto' }}>
-        {activeQuestsList.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {activeQuestsList.map(quest => {
-              const isRead = readQuests.includes(quest.id);
-              return (
-                <div 
-                  key={quest.id}
-                  onClick={() => handleOpenLetter(quest)} 
-                  style={{ 
-                    backgroundColor: isRead ? 'rgba(0,0,0,0.5)' : 'rgba(0,255,65,0.1)', 
-                    border: `2px solid ${isRead ? '#5a402a' : '#00ff41'}`, 
-                    padding: '15px', 
-                    borderRadius: '8px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '15px', 
-                    cursor: 'pointer', 
-                    transition: 'all 0.2s' 
-                  }} 
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; }} 
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ fontSize: '36px' }}>{isRead ? '✉️' : '💌'}</span>
-                    {!isRead && <div style={{ position: 'absolute', top: '-5px', right: '-5px', width: '18px', height: '18px', backgroundColor: '#ff4444', borderRadius: '50%', border: '2px solid white', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px', fontFamily: 'monospace' }}>!</div>}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '18px', color: isRead ? '#ffea00' : '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{quest.subject}</span>
-                    <span style={{ fontSize: '14px', color: '#aaa', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>From: {quest.sender}</span>
-                  </div>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ position: 'relative', width: '500px' }}>
+        <img src="/images/mail/mailbox.png" alt="Mailbox" style={{ width: '100%', display: 'block', userSelect: 'none' }} draggable={false} />
+        {/* Close button over the X in top-right */}
+        <div onClick={onClose} style={{ position: 'absolute', top: '5%', right: '0%', width: '16%', height: '10%', cursor: 'pointer', zIndex: 1 }} />
+        {/* Mail list content area */}
+        <div style={{ position: 'absolute', top: '24%', left: '49%', transform: 'translateX(-50%)', width: '78%', bottom: '12%', overflowY: activeQuestsList.length > 5 ? 'auto' : 'visible', overflowX: 'visible', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+          {activeQuestsList.length > 0 ? activeQuestsList.map(quest => {
+            const isRead = readQuests.includes(quest.id);
+            return (
+              <div
+                key={quest.id}
+                onClick={() => handleOpenLetter(quest)}
+                style={{ position: 'relative', cursor: 'pointer', transition: 'transform 0.15s', marginTop: '10px', width: '100%', overflow: 'visible' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+              >
+                <img src="/images/mail/pabeebox.png" alt="" style={{ width: '88%', display: 'block', borderRadius: '10px', margin: '0 auto' }} draggable={false} />
+                {!isRead && <img src="/images/mail/!.png" alt="!" style={{ position: 'absolute', top: '-11px', right: '4px', width: '28px', height: '28px' }} draggable={false} />}
+                <div style={{ position: 'absolute', top: 0, left: '30%', right: '8%', bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
+                  <span style={{ fontFamily: 'Cartoonist', fontSize: '14px', color: '#FFFFFF', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{quest.subject}</span>
+                  <span style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#FFECDC', textShadow: '1px 1px 0 #000' }}>From: {quest.sender}</span>
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', color: '#aaa', fontStyle: 'italic', padding: '20px' }}>
-            No new mail.
-          </div>
-        )}
+              </div>
+            );
+          }) : (
+            <div style={{ textAlign: 'center', color: '#8c6b4a', fontStyle: 'italic', padding: '20px', fontFamily: 'monospace' }}>No new mail.</div>
+          )}
+        </div>
       </div>
-    </BaseDialog>
+    </div>
   );
 };
 
@@ -2830,6 +2948,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   const navigate = useNavigate();
 
   const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+  const [tutorialCrowSpawned, setTutorialCrowSpawned] = useState(false);
+  const [tutorialCrowDone, setTutorialCrowDone] = useState(false);
+  const [tutorialGrowSkipped, setTutorialGrowSkipped] = useState(false);
 
   const [farmingXp, setFarmingXp] = useState(() => parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10));
   const farmingLevel = getLevelFromXp(farmingXp);
@@ -3054,17 +3175,16 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
   const handleSkipGrowth = () => {
     const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
-    if (currentHoney < 100 && tutorialStep !== 9) {
+    if (currentHoney < 100) {
       show("You don't have enough Honey!", "error");
       return;
     }
     
+    const newHoney = currentHoney - 100;
+    localStorage.setItem('sandbox_honey', newHoney.toString());
+    window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
     if (tutorialStep === 9) {
-      show("I'll let you skip for free this time!", "success");
-    } else {
-      const newHoney = currentHoney - 100;
-      localStorage.setItem('sandbox_honey', newHoney.toString());
-      window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+      setTutorialGrowSkipped(true);
     }
     
     const skipped = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
@@ -4070,20 +4190,10 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       plantConfirmAudioRef.current.preload = "auto";
     }
     const audio = plantConfirmAudioRef.current;
-    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
-    audio.volume = clampVolume(volumeSetting);
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  }, [settings?.soundVolume]);
-
-  const playHarvestConfirmSound = useCallback(() => {
-    if (!harvestConfirmAudioRef.current) {
-      harvestConfirmAudioRef.current = new Audio("/sounds/FinalHarvestConfirmButton.wav");
-      harvestConfirmAudioRef.current.preload = "auto";
-    }
-    const audio = harvestConfirmAudioRef.current;
-    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
-    audio.volume = clampVolume(volumeSetting);
+      const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+      const volume = clampVolume(volumeSetting);
+      if (volume <= 0) return;
+      audio.volume = volume;
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }, [settings?.soundVolume]);
@@ -4097,10 +4207,26 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     }
   }, [waterEffects]);
 
+  const playHarvestConfirmSound = useCallback(() => {
+    if (!harvestConfirmAudioRef.current) {
+      harvestConfirmAudioRef.current = new Audio("/sounds/FinalHarvestConfirmButton.wav");
+      harvestConfirmAudioRef.current.preload = "auto";
+    }
+    const audio = harvestConfirmAudioRef.current;
+    const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+    const volume = clampVolume(volumeSetting);
+    if (volume <= 0) return;
+    audio.volume = volume;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }, [settings?.soundVolume]);
+
   const playWaterSound = useCallback(() => {
     const audio = new Audio("/sounds/water.mp3");
-    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
-    audio.volume = clampVolume(volumeSetting);
+    const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+    const volume = clampVolume(volumeSetting);
+    if (volume <= 0) return;
+    audio.volume = volume;
     audio.currentTime = 0;
     audio.play().catch(() => {});
   }, [settings?.soundVolume]);
@@ -4238,7 +4364,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     const handleSquashBug = (event) => {
       const { plotIndex } = event.detail;
       delete bugsRef.current[plotIndex];
-      
+
       setCropArray(prev => {
         const newArr = new CropItemArrayClass(30);
         newArr.copyFrom(prev);
@@ -4255,12 +4381,29 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         return newArr;
       });
       show("Bug squashed!", "success");
+
+      // During tutorial: spawn a crow after squashing the bug
+      const currentStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+      if (currentStep === 9) {
+        setTimeout(() => {
+          crowsRef.current[plotIndex] = 30;
+          setCropArray(prev => {
+            const newArr = new CropItemArrayClass(30);
+            newArr.copyFrom(prev);
+            const item = newArr.getItem(plotIndex);
+            if (item) item.crowCountdown = 30;
+            return newArr;
+          });
+          // Show crow tutorial message
+          setTutorialCrowSpawned(true);
+        }, 1500);
+      }
     };
 
     const handleScareCrow = (event) => {
       const { plotIndex } = event.detail;
       delete crowsRef.current[plotIndex];
-      
+
       setCropArray(prev => {
         const newArr = new CropItemArrayClass(30);
         newArr.copyFrom(prev);
@@ -4277,6 +4420,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         return newArr;
       });
       show("Crow scared away!", "success");
+
+      // During tutorial: after scaring crow, block all future pest spawns and give 100 Honey
+      const currentStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+      if (currentStep === 9) {
+        setTutorialCrowSpawned(false);
+        setTutorialCrowDone(true);
+        localStorage.setItem('sandbox_tutorial_pests_done', 'true');
+        const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
+        const newHoney = currentHoney + 100;
+        localStorage.setItem('sandbox_honey', newHoney.toString());
+        window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+      }
     };
 
     const handleScareRat = (event) => {
@@ -4410,13 +4565,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           }
         }
         for (const idx in currentCrows) {
-          currentCrows[idx] -= 1;
-          pestsChanged = true;
-          if (currentCrows[idx] <= 0) {
-            if (!cropsToDestroy.includes(Number(idx))) {
-              cropsToDestroy.push(Number(idx));
+          if (currentTutorialStep > 0 && currentTutorialStep < 32) {
+            // During tutorial: freeze crow countdown so it never destroys the crop
+            pestsChanged = true;
+          } else {
+            currentCrows[idx] -= 1;
+            pestsChanged = true;
+            if (currentCrows[idx] <= 0) {
+              if (!cropsToDestroy.includes(Number(idx))) {
+                cropsToDestroy.push(Number(idx));
+              }
+              delete currentCrows[idx];
             }
-            delete currentCrows[idx];
           }
         }
         for (const idx in currentRats) {
@@ -4592,18 +4752,23 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
                 hasChanges = true;
               }
 
-              if (autoSpawnRef.current && bugsRef.current[i] === undefined && crowsRef.current[i] === undefined) {
+              const tutPestsDone = localStorage.getItem('sandbox_tutorial_pests_done') === 'true';
+              const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+              const inTutorial = tutStep > 0 && tutStep < 32;
+              if (autoSpawnRef.current && bugsRef.current[i] === undefined && crowsRef.current[i] === undefined && !(inTutorial && tutPestsDone)) {
                 const roll = Math.random();
                 if (roll < 0.005) { // 0.5% chance per second for a crow
-                  if (!isProtectedFromCrows) {
+                  if (!isProtectedFromCrows && !inTutorial) {
                     crowsRef.current[i] = 30; // 30 seconds to click
                     item.crowCountdown = 30;
                     hasChanges = true;
                   }
                 } else if (roll < 0.015) { // 1% chance per second for a bug
-                  bugsRef.current[i] = 60; // 60 seconds to click
-                  item.bugCountdown = 60;
-                  hasChanges = true;
+                  if (!inTutorial) {
+                    bugsRef.current[i] = 60; // 60 seconds to click
+                    item.bugCountdown = 60;
+                    hasChanges = true;
+                  }
                 }
               }
               if (autoSpawnRef.current && Object.keys(ratsRef.current).length === 0 && !ratJustSpawned && Math.random() < 0.000385) { // 50% chance every 30 minutes
@@ -5720,6 +5885,14 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         if (fishId) show("Dirt removed. Fish returned!", "success");
         playPlantConfirmSound();
       } else if (pStatus === 0) {
+        // During tutorial, only allow digging one hole
+        if (tutorialStep > 0 && tutorialStep < 32) {
+          const existingHoles = Object.values(plotPrep).filter(p => p.status === 1 || p.status === 3).length;
+          if (existingHoles >= 1 && tutorialStep !== 5) {
+            show("Finish the tutorial before digging more holes!", "info");
+            return;
+          }
+        }
         playPlantConfirmSound();
         updatePlotPrep(index, { status: 1 });
           if (tutorialStep === 5) {
@@ -5756,6 +5929,17 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           setTutorialStep(9);
           localStorage.setItem('sandbox_tutorial_step', '9');
           setIsWatering(false);
+          // Spawn a tutorial bug on the watered plot
+          setTimeout(() => {
+            bugsRef.current[index] = 60;
+            setCropArray(prev => {
+              const newArr = new CropItemArrayClass(30);
+              newArr.copyFrom(prev);
+              const item = newArr.getItem(index);
+              if (item) item.bugCountdown = 60;
+              return newArr;
+            });
+          }, 1500);
         }
       } else {
         show("This plot doesn't need water right now.", "info");
@@ -6058,32 +6242,21 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         </div>
       </div>
 
-      {/* Farming Board Overlay */}
-      {tutorialStep >= 32 && !hideIcons && (
-        <div
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setShowFarmingBoard(true);
-            const allSeen = Array.from(new Set([...seenFarmingIds, ...activeFarmingIds]));
-            localStorage.setItem('seen_farming_missions_ids', allSeen.join(','));
-            window.dispatchEvent(new CustomEvent('questsRead'));
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(255, 234, 0, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
-          }}
-          style={{ position: 'fixed', left: '620px', top: '20px', zIndex: 100000, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'visible' }}
-        >
-          {hasNewFarmingMissions && <div style={{position:'absolute', top:'-5px', right:'-5px', width:'20px', height:'20px', backgroundColor:'#ff4444', borderRadius:'50%', border:'2px solid white', zIndex:11, display:'flex', justifyContent:'center', alignItems:'center', color:'white', fontWeight:'bold', fontSize:'12px', fontFamily:'monospace', animation:'pulse-dot 1s infinite'}}>!</div>}
-          <div style={{ fontSize: '40px', backgroundColor: 'rgba(90, 64, 42, 0.9)', padding: '5px 10px', borderRadius: '8px', border: '2px solid #ffea00' }}>📋</div>
-          <div style={{ backgroundColor: 'rgba(0,0,0,0.7)', color: '#ffea00', padding: '2px 5px', borderRadius: '4px', fontSize: '10px', marginTop: '5px', fontFamily: 'monospace', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>MISSIONS</div>
+      {/* Farming Level Banner - Top Center */}
+      <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
+        <div style={{ position: 'relative', display: 'inline-block', left: '-10px' }}>
+          <img src="/images/farming/farmpfp.png" style={{ height: '80px', width: '80px', objectFit: 'contain', display: 'block' }} />
+          <img src="/images/fish/fisherpfpborder.png" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', objectFit: 'contain' }} />
         </div>
-      )}
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img src="/images/fish/fisherbanner.png" style={{ height: '90px', objectFit: 'contain', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '18px' }}>
+            <span style={{ fontFamily: 'Cartoonist', fontSize: '32px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>LEVEL {farmingLevel}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Farming Board Overlay */}
 
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/farm.webp"
@@ -6093,6 +6266,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         dialogs={dialogs}
         hideMenu={isFarmMenu || tutorialStep < 10}
         bees={bees}
+        disablePanZoom
       >
         <FarmInterface
           key={isFarmMenu ? `preview-${previewUpdateKey}` : "main"}
@@ -6358,7 +6532,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           </div>
         )}
 
-        {tutorialStep >= 11 && (
+        {tutorialStep >= 32 && (
           <>
         {/* Forest Label Overlay - Now inside PanZoomViewport */}
         <div 
@@ -6867,7 +7041,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       )}
 
       {/* Interactive Bowls */}
-      {tutorialStep >= 11 && !hideIcons && (
+      {tutorialStep >= 32 && !hideIcons && (
         <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'flex-end', gap: '15px', zIndex: 9999 }}>
           
           {/* Tamagotchi Pet Device */}
@@ -6932,103 +7106,141 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     />
   )}
 
+  <style>{`.tutorial-img { transition: transform 0.08s, filter 0.08s; cursor: pointer; } .tutorial-img:active { transform: scale(0.96); filter: brightness(0.8); }`}</style>
+
   {tutorialStep === 3 && (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '80%', maxWidth: '800px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '30px', gap: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '120px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '24px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Hey its me your very wealthy Great uncle, it was a shame your grandfather left you alone with this sad excuse for a farm but he is dealing with the sickness</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>I hate to get my clothes dirty and even more hate to have anyone see me hear and start getting any ideas so how about I do you a favor as family and give a rundown on how to work the farmer. I had the curse of being raised on a farm so let me teach out the basics </p>
-           <button 
-             onClick={() => {
-               setTutorialStep(4);
-               localStorage.setItem('sandbox_tutorial_step', '4');
-             }}
-             style={{ padding: '10px 20px', backgroundColor: '#00ff41', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', color: '#000', marginTop: '20px', alignSelf: 'flex-end' }}
-           >
-             Let's get started
-           </button>
-         </div>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000, cursor: 'pointer' }}
+      onClick={() => { setTutorialStep(4); localStorage.setItem('sandbox_tutorial_step', '4'); }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Hey its me your very wealthy Great uncle, it was a shame your grandfather left you alone with this sad excuse for a farm but he is dealing with the sickness. I hate to get my clothes dirty and even more hate to have anyone see me here and start getting any ideas so how about I do you a favor as family and give a rundown on how to work the farm. I had the curse of being raised on a farm so let me teach you the basics.
+          </p>
+        </div>
+        {/* Blue bar at bottom */}
+        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+          <div
+            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+          >
+            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>LET'S DO THIS!</span>
+          </div>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 4 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-               <p style={{ margin: 0, lineHeight: '1.5' }}>First things first, click on your Farmer Bag! This bag holds all your essential tools: your Shovel, Bag of Dirt, Seed Bag, Watering Can, and Hoe.</p>
-         </div>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            First things first, click on your Farmer Bag! This bag holds all your essential tools: your Shovel, Bag of Dirt, Seed Bag, Watering Can, and Hoe.
+          </p>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 5 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Now, grab your Shovel and click on an empty spot (the Red X) to dig a hole.</p>
-         </div>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Now, grab your Shovel and click on an empty spot (the Red X) to dig a hole.
+          </p>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 6 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Good job! Now click the Shovel again to put it away.</p>
-               <br/>
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Next, select the Bag of Dirt and click the hole you just dug to fill it.</p>
-             </div>
-          </div>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Good job! Now click the Shovel again to put it away. Next, select the Bag of Dirt and click the hole you just dug to fill it.
+          </p>
         </div>
-      )}
-
-      {tutorialStep === 7 && (
-        <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-             <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-             <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-               <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Perfect! Now select your Seed Bag and click the dirt plot to choose a seed to plant.</p>
-         </div>
       </div>
     </div>
   )}
-  
+
+  {tutorialStep === 7 && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Perfect! Now select your Seed Bag and click the dirt plot to choose a seed to plant.
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
+
   {tutorialStep === 8 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Excellent! Plants need water to grow. Grab your Watering Can and water the seed you just planted.</p>
-         </div>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Excellent! Plants need water to grow. Grab your Watering Can and water the seed you just planted.
+          </p>
+        </div>
       </div>
     </div>
   )}
 
-  {tutorialStep === 9 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Now we just have to wait for the plant to grow!</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Or... you can pay your favorite great uncle 100 Honey to speed up the process.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5', color: '#00ff41' }}>Click on your growing plant to instantly grow it, then click it again to harvest!</p>
-         </div>
+  {tutorialStep === 9 && !tutorialCrowDone && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          {tutorialCrowSpawned ? (
+            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+              Watch out! A crow has landed on your crop! Crows are dangerous — if left alone they will eat your entire plant and destroy it completely. Click on the crow to scare it away before it ruins your harvest!
+            </p>
+          ) : (
+            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+              Uh oh! A bug has appeared on your plant! Bugs are bad news — while one is on a crop, it completely stops all growth progress. Click on the bug to squash it quickly!
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {tutorialStep === 9 && tutorialCrowDone && !tutorialGrowSkipped && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Now we just have to wait for the plant to grow! Your grandfather told me to make sure you had some Honey so here is 100 Honey! Click on your growing plant and pay to instantly grow it!
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {tutorialStep === 9 && tutorialGrowSkipped && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            See that green checkmark on your crop? That means it is fully grown and ready to harvest! Click on the crop now to collect your very first harvest!
+          </p>
+        </div>
       </div>
     </div>
   )}
@@ -7040,35 +7252,33 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 10 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
       <style>{`
         a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         a[href*="/market"], img[src*="market"], img[src*="Market"] {
           animation: marketHighlight 1.5s infinite !important;
-          border-radius: 12px;
           position: relative;
           z-index: 100001;
           pointer-events: auto !important;
         }
         @keyframes marketHighlight {
-          0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); }
-          50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
+          0%, 100% { transform: scale(1.1); }
+          50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Amazing harvest! You are a natural.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Now you know how to grow produce, let's go and get you some more seeds for you to grow! Click the Marketplace icon on the left to visit the town market.</p>
-         </div>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Amazing harvest! You are a natural. Now you know how to grow produce, let's go and get you some more seeds to grow! Click the Marketplace icon on the left to visit the town market.
+          </p>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 25 && (
-    <div style={{ position: 'fixed', left: 'calc(50% - 220px)', top: '250px', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000, pointerEvents: 'none' }}>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
@@ -7076,166 +7286,148 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Your grandfather should have left you some materials in the mail you got earlier.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5', color: '#00ff41' }}>Click the <strong>Crafting icon</strong> at the top of your screen to make some items!</p>
-         </div>
-      </div>
+      <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', pointerEvents: 'auto' }} />
     </div>
   )}
 
   {tutorialStep === 26 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
-      <style>{`
-        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-      `}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           {tutAxe === 0 && tutPickaxe === 0 ? (
-             tutSticks < 3 ? (
-               tutSticks === 0 ? (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>First, you'll need to build 3 Sticks. Craft them from the Wood Logs Pabee gave you!</p>
-               ) : tutSticks === 1 ? (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Good job! You need to build 2 more Sticks.</p>
-               ) : (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Almost there, build 1 more Stick!</p>
-               )
-             ) : (
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Now that you have Sticks, craft an Axe or a Pickaxe using 3 Sticks and 3 Stones.</p>
-             )
-           ) : tutAxe > 0 && tutPickaxe === 0 ? (
-           tutSticks < 3 ? (
-             tutSticks === 0 ? (
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Great! You made an Axe. Now you need to build 3 more Sticks for your Pickaxe!</p>
-             ) : tutSticks === 1 ? (
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Good job! You need to build 2 more Sticks for your Pickaxe.</p>
-             ) : (
-               <p style={{ margin: 0, lineHeight: '1.5' }}>Almost there, build 1 more Stick for your Pickaxe!</p>
-             )
-           ) : (
-             <p style={{ margin: 0, lineHeight: '1.5' }}>Great! You have enough Sticks. Now make a Pickaxe using 3 Sticks and 3 Stones!</p>
-           )
-           ) : tutPickaxe > 0 && tutAxe === 0 ? (
-           tutSticks < 3 ? (
-             tutSticks === 0 ? (
-               <p style={{ margin: '0 0 10px 0', lineHeight: '1.5' }}>Great! You made a Pickaxe. Now you need to build 3 more Sticks for your Axe!</p>
-             ) : tutSticks === 1 ? (
-               <p style={{ margin: '0 0 10px 0', lineHeight: '1.5' }}>Good job! You need to build 2 more Sticks for your Axe.</p>
-             ) : (
-               <p style={{ margin: '0 0 10px 0', lineHeight: '1.5' }}>Almost there, build 1 more Stick for your Axe!</p>
-             )
-           ) : (
-             <p style={{ margin: '0 0 10px 0', lineHeight: '1.5' }}>Great! You have enough Sticks. Now make an Axe using 3 Sticks and 3 Stones!</p>
-           )
-           ) : (
-             <p style={{ margin: 0, lineHeight: '1.5' }}>Awesome! You have both tools. Let's head out!</p>
-           )}
-         </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 31 && (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ position: 'relative', width: '80%', maxWidth: '800px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', alignItems: 'center', padding: '30px', gap: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '120px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', flex: 1 }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '24px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Well it was fun catching up but I have some important things to do.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Now that you have tools, head over to the forest! It's great for finding materials. Don't forget to keep planting seeds on your farm.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Also have you seen Felix? I always hated how your grandfather let that cat roam free. Make sure to fill up his bowl and give him a nice fish please.</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>See ya!</p>
-         </div>
-         <button 
-           onClick={() => {
-             setTutorialStep(32);
-             localStorage.setItem('sandbox_tutorial_step', '32');
-           }}
-           style={{ position: 'absolute', top: '15px', right: '15px', padding: '5px 12px', backgroundColor: '#ff4444', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', fontFamily: 'monospace', color: 'white' }}
-         >
-           X
-         </button>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 27 && (
-    <div style={{ position: 'fixed', left: 'calc(50% + 220px)', top: '250px', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+    <>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
-          0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); }
-          50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
+          0%, 100% { transform: scale(1.1); }
+          50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Excellent!</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5', color: '#00ff41' }}>Now click the <strong>Calendar icon</strong> at the top of your screen so I can show you how to track time!</p>
-         </div>
+      <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+        <div style={{ position: 'relative', width: '666px' }}>
+          <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+          <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+              Your grandfather should have left you some materials in the mail you got earlier. Click the Crafting icon at the top of your screen to make some items!
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+
+  {tutorialStep === 27 && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <style>{`
+        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
+        @keyframes craftingGlow {
+          0%, 100% { transform: scale(1.1); }
+          50% { transform: scale(1); }
+        }
+      `}</style>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Well done! You just crafted your first tools! Your Axe and Pickaxe will let you gather wood and ore out in the world. Now click the Calendar icon to claim your daily rewards!
+          </p>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 28 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>The Calendar helps you keep track of the weather and events!</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Notice the Weight Contest that happens every Sunday? Let's check it out.</p>
-         </div>
-         <button onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }} style={{ padding: '8px 16px', backgroundColor: '#00ff41', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', color: '#000', marginTop: '10px' }}>Next</button>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            The Calendar lets you claim free daily rewards and see upcoming events. Make sure to check it every day so you never miss out!
+          </p>
+        </div>
+        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+          <div
+            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+            onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
+          >
+            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+          </div>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 29 && (
-    <div style={{ position: 'fixed', left: '50%', top: '250px', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
-          0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); }
-          50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
+          0%, 100% { transform: scale(1.1); }
+          50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5', color: '#00ff41' }}>Click the <strong>Trophy icon</strong> in the top center of your screen to open the Weight Contest!</p>
-         </div>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            Now check out the Weight Contest icon! You can compete with other players to grow the biggest produce or catch the biggest fish. Click it to take a look!
+          </p>
+        </div>
       </div>
     </div>
   )}
 
   {tutorialStep === 30 && (
-    <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-         <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-         <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-           <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Here you can submit your heaviest produce or fish!</p>
-           <br/>
-           <p style={{ margin: 0, lineHeight: '1.5' }}>Check back every Sunday to see the winners and claim your rewards if you place high enough.</p>
-         </div>
-         <button onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }} style={{ padding: '8px 16px', backgroundColor: '#00ff41', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', color: '#000', marginTop: '10px' }}>Finish Tour</button>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            The Weight Contest refreshes every week — keep farming, fishing, and growing to climb the leaderboard and win big prizes!
+          </p>
+        </div>
+        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+          <div
+            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+            onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
+          >
+            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {tutorialStep === 31 && (
+    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'relative', width: '666px' }}>
+        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+            That is everything for now! Your grandfather would be proud. Go explore the valley, gather resources, and make this farm your own. Good luck out there!
+          </p>
+        </div>
+        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+          <div
+            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+            onClick={() => { setTutorialStep(32); localStorage.setItem('sandbox_tutorial_step', '32'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
+          >
+            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>LET'S GO!</span>
+          </div>
+        </div>
       </div>
     </div>
   )}

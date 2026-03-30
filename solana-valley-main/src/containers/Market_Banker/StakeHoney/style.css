@@ -1,0 +1,17 @@
+.stake-honey {
+  width: 550px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.stake-unstake-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.stake-honey .hint {
+  text-align: center;
+  font-size: 0.875rem;
+}

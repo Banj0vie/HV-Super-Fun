@@ -45,7 +45,7 @@ export const useProfile = () => {
                   codeOwner: codeOwnerPda, 
                   systemProgram: SystemProgram.programId,
                 });
-            
+
             const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return tx;
         } catch (err) { 
@@ -68,5 +68,3 @@ export const useProfile = () => {
 
     return { getUserData, createProfile, loading, error };
 };
-
-

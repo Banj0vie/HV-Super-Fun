@@ -79,11 +79,14 @@ const AdminPanel = () => {
   useEffect(() => {
     const handlePetOpen = (e) => setIsPetOpen(e.detail);
     const handleSeedOpen = (e) => setIsSeedOpen(e.detail);
+    const handleOpenMailbox = () => setShowMailboxDialog(true);
     window.addEventListener('petDialogOpen', handlePetOpen);
     window.addEventListener('seedDialogOpen', handleSeedOpen);
+    window.addEventListener('openMailbox', handleOpenMailbox);
     return () => {
       window.removeEventListener('petDialogOpen', handlePetOpen);
       window.removeEventListener('seedDialogOpen', handleSeedOpen);
+      window.removeEventListener('openMailbox', handleOpenMailbox);
     };
   }, []);
 
@@ -92,6 +95,10 @@ const AdminPanel = () => {
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('globalDialogOpen', { detail: showCraftingDialog || showCalendar || showWeightContest }));
   }, [showCraftingDialog, showCalendar, showWeightContest]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mailUnreadChanged', { detail: hasUnreadMail }));
+  }, [hasUnreadMail]);
 
   const [targetProduceId, setTargetProduceId] = useState(() => {
     const saved = localStorage.getItem('weight_contest_produce');
@@ -827,6 +834,15 @@ const AdminPanel = () => {
       return;
     }
 
+    if (cmd === 'skip market') {
+      localStorage.setItem('sandbox_tutorial_step', '10');
+      setTutorialStep(10);
+      window.dispatchEvent(new CustomEvent('tutorialStepChanged', { detail: { step: 10 } }));
+      show('Executed: skipped to market tutorial (step 10)', 'success');
+      setConsoleInput('');
+      return;
+    }
+
     if (cmd !== '') show(`Unknown command: ${consoleInput}`, "error");
     setConsoleInput('');
   };
@@ -883,7 +899,9 @@ const AdminPanel = () => {
       'cord': () => true,
       'animal farm': () => true,
       'skip time': () => true,
+      'reset tavern': () => true,
       'skip cat': () => true,
+      'skip market': () => true,
     };
 
     for (const cmdPrefix in commands) {
@@ -925,8 +943,8 @@ const AdminPanel = () => {
         a[href*="/farm"] { order: 1; }
         a[href*="/market"] { order: 2; ${tutorialStep < 10 ? 'display: none !important;' : ''} }
         a[href*="/house"] { order: 3; ${tutorialStep < 17 ? 'display: none !important;' : ''} }
-        a[href*="/tavern" i] { order: 4; ${tutorialStep < 32 ? 'display: none !important;' : ''} }
-        a[href*="/valley"] { order: 5; ${tutorialStep < 32 ? 'display: none !important;' : ''} }
+        a[href*="/tavern" i] { order: 4; ${tutorialStep < 24 || (tutorialStep > 24 && tutorialStep < 32) ? 'display: none !important;' : ''} }
+        a[href*="/valley"] { order: 5; ${tutorialStep < 25 ? 'display: none !important;' : ''} }
 
         @keyframes pulse-dot { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
         @keyframes mailboxAlert { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); } 50% { transform: scale(0.9); filter: drop-shadow(0 0 12px rgba(255,255,255,1)); } }
@@ -934,20 +952,15 @@ const AdminPanel = () => {
       `}</style>
       {/* Global Persisted Elements */}
 
-      {!isPanelOpen && !isForagingOrMining && (
+      {!isPanelOpen && !isForagingOrMining && location.pathname === '/farm' && (
         <>
           {/* Crafting Icon Overlay */}
-          {tutorialStep >= 25 && (
-          <div 
+          {tutorialStep >= 26 && (
+          <div
             onClick={() => {
               setShowCraftingDialog(true);
               setSeenCrafting(true);
               localStorage.setItem('seen_crafting_step_' + tutorialStep, 'true');
-              if (tutorialStep === 25) {
-                setTutorialStep(26);
-                localStorage.setItem('sandbox_tutorial_step', '26');
-                window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
-              }
             }}
             onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.1)';
@@ -957,9 +970,9 @@ const AdminPanel = () => {
             e.currentTarget.style.transform = 'scale(1)';
               e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
             }}
-          style={{ position: 'fixed', top: '270px', right: '20px', zIndex: tutorialStep === 25 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 25 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
+          style={{ position: 'fixed', top: '270px', right: '20px', zIndex: tutorialStep === 26 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 26 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
           >
-          {(!seenCrafting && tutorialStep >= 25) && <div style={badgeStyle}>!</div>}
+          {(!seenCrafting && tutorialStep >= 26) && <div style={badgeStyle}>!</div>}
           <img src="/images/crafting/crafting.png" alt="Crafting" style={{ height: '240px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/crafting/Crafting.png'; }} />
           </div>
           )}
@@ -1053,34 +1066,6 @@ const AdminPanel = () => {
         </>
       )}
 
-      {/* Global Mailbox Icon Overlay */}
-      {tutorialStep >= 0 && !isPanelOpen && (
-        <div
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setShowMailboxDialog(true);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-            e.currentTarget.style.animation = 'mailboxHover 0.5s ease-in-out infinite alternate';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
-            e.currentTarget.style.animation = 'none';
-          }}
-          style={{ position: 'fixed', left: '540px', top: '20px', zIndex: 100000, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-        >
-          {hasUnreadMail && <div style={badgeStyle}>!</div>}
-          {mailboxImageError ? (
-            <span style={{ fontSize: '50px', filter: 'drop-shadow(0 2px 4px black)', animation: hasUnreadMail ? 'mailboxAlert 1.5s infinite ease-in-out' : 'none' }}>📬</span>
-          ) : (
-            <img src="/images/farm/mailbox.png" alt="Mailbox" style={{ height: '70px', objectFit: 'contain', animation: hasUnreadMail ? 'mailboxAlert 1.5s infinite ease-in-out' : 'none' }} onError={() => setMailboxImageError(true)} />
-          )}
-        </div>
-      )}
 
       {/* Dialogs */}
       <React.Suspense fallback={null}>

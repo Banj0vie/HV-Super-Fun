@@ -1,0 +1,337 @@
+import "./style.css";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import TooltipButton from "../../components/buttons/TooltipButton";
+import { useAppSelector } from "../../solana/store";
+import { selectSettings } from "../../solana/store/slices/uiSlice";
+import { clampVolume, isWalletConnected } from "../../utils/basic";
+import { defaultSettings } from "../../utils/settings";
+import AuthPage from "../AuthPage";
+import GameMenu from "../GameMenu";
+
+const defaultHotspots = [
+  { id: "gold", label: "GOLD", x: 210, y: 110, delay: 0 },
+  { id: "angler", label: "ANGLER", x: 70, y: 260, delay: 0.2 },
+  { id: "gold-chest", label: "DAILY CHEST", x: 500, y: 160, delay: 0.4 },
+  { id: "gardener", label: "GARDENER", x: 720, y: 100, delay: 0.6 },
+  { id: "referrals", label: "REFERRALS", x: 600, y: 240, delay: 0.8 },
+];
+
+const PanZoomViewport = ({
+  backgroundSrc,
+  hotspots = defaultHotspots,
+  dialogs = [],
+  width,
+  height,
+  hideMenu = false,
+  bees = [],
+  children,
+  isBig = false,
+  stuffs = [],
+  defaultScale = 1,
+  defaultTxRate = 0.9,
+  defaultTyRate = 0.9,
+}) => {
+  const containerRef = useRef(null);
+  const navigate = useNavigate();
+  const [scale, setScale] = useState(defaultScale);
+  const settings = useAppSelector(selectSettings) || defaultSettings;
+  const anglerHoverAudioRef = useRef(null);
+  const anglerClickAudioRef = useRef(null);
+
+  // Center the layer in the viewport: (viewportWidth - layerWidth) / 2
+  const computeInitialTx = useCallback(() => {
+    if (typeof width === "number") {
+      return (window?.innerWidth || 0) / 2 - (width / 2) * scale * defaultTxRate;
+    }
+    return 0;
+  }, [width, scale, defaultTxRate]);
+  const computeInitialTy = useCallback(() => {
+    if (typeof height === "number") {
+      return (window?.innerHeight || 0) / 2 - (height / 2) * scale * defaultTyRate;
+    }
+    return 0;
+  }, [height, scale, defaultTyRate]);
+
+  const [tx, setTx] = useState(() => computeInitialTx());
+  const [ty, setTy] = useState(() => computeInitialTy());
+  const [activeModal, setActiveModal] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (anglerHoverAudioRef.current) {
+        anglerHoverAudioRef.current.pause();
+        anglerHoverAudioRef.current.currentTime = 0;
+      }
+      if (anglerClickAudioRef.current) {
+        anglerClickAudioRef.current.pause();
+        anglerClickAudioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
+  const playAnglerHoverSound = useCallback(() => {
+    if (!anglerHoverAudioRef.current) {
+      anglerHoverAudioRef.current = new Audio("/sounds/FishingHoverLoop.wav");
+      anglerHoverAudioRef.current.preload = "auto";
+      anglerHoverAudioRef.current.loop = true;
+    }
+    const audio = anglerHoverAudioRef.current;
+    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
+    audio.volume = clampVolume(volumeSetting);
+    audio.play().catch(() => {});
+  }, [settings?.soundVolume]);
+
+  const stopAnglerHoverSound = useCallback(() => {
+    const audio = anglerHoverAudioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
+    audio.volume = clampVolume(volumeSetting);
+  }, [settings?.soundVolume]);
+
+  const playAnglerClickSound = useCallback(() => {
+    if (!anglerClickAudioRef.current) {
+      anglerClickAudioRef.current = new Audio("/sounds/AnglerButtonClick.wav");
+      anglerClickAudioRef.current.preload = "auto";
+    }
+    const audio = anglerClickAudioRef.current;
+    const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
+    audio.volume = clampVolume(volumeSetting);
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }, [settings?.soundVolume]);
+
+  const panState = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startTx: 0,
+    startTy: 0,
+  });
+
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+  const setScaleAroundPoint = useCallback(
+    (nextScale, clientX, clientY) => {
+      if (activeModal) return;
+      const el = containerRef.current;
+      if (!el) {
+        setScale(nextScale);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      const s = scale;
+      const sPrime = nextScale;
+      const newTx = px - (sPrime / s) * (px - tx);
+      const newTy = py - (sPrime / s) * (py - ty);
+
+      setTx(newTx);
+      setTy(newTy);
+      setScale(sPrime);
+    },
+    [scale, tx, ty, activeModal]
+  );
+
+  // Add wheel event listener with preventDefault capability
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = e => {
+      if (activeModal) return;
+      e.preventDefault();
+      const zoomIntensity = 0.0012;
+      const factor = Math.exp(-e.deltaY * zoomIntensity);
+      const desired = clamp(scale * factor, 0.2, 6);
+      setScaleAroundPoint(desired, e.clientX, e.clientY);
+    };
+
+    // Add event listener with passive: false to allow preventDefault
+    container.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [scale, setScaleAroundPoint, activeModal]);
+
+  const onPointerDown = e => {
+    if (activeModal) return;
+    const target = e.target;
+    if (target && target.closest && target.closest('[data-hotspot="true"]')) {
+      return;
+    }
+    e.preventDefault();
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    e.currentTarget?.setPointerCapture?.(e.pointerId);
+    panState.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startTx: tx,
+      startTy: ty,
+    };
+  };
+
+  const onPointerMove = e => {
+    if (activeModal) return;
+    if (!panState.current.active) return;
+    const dx = e.clientX - panState.current.startX;
+    const dy = e.clientY - panState.current.startY;
+    setTx(panState.current.startTx + dx);
+    setTy(panState.current.startTy + dy);
+  };
+
+  const endPan = useCallback(() => {
+    panState.current.active = false;
+  }, []);
+
+  const onDoubleClick = () => {
+    if (activeModal) return;
+    setTx(0);
+    setTy(0);
+    setScale(1);
+  };
+
+  useEffect(() => {
+    const handleUp = () => endPan();
+    const handleEsc = e => {
+      if (e.key === "Escape") setActiveModal(null);
+    };
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", handleUp);
+    window.addEventListener("keydown", handleEsc);
+    // Re-center when window resizes or layer size props change
+    const handleResize = () => {
+      setTx(computeInitialTx());
+      setTy(computeInitialTy());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleUp);
+      window.removeEventListener("keydown", handleEsc);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [endPan, computeInitialTx, computeInitialTy]);
+
+  const normalizeSize = v => {
+    if (v === undefined || v === null || v === false || v === true) return undefined;
+    return typeof v === "number" ? `${v}px` : v;
+  };
+
+  const layerInlineStyle = {
+    transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+    ...(normalizeSize(width) ? { width: normalizeSize(width) } : {}),
+    ...(normalizeSize(height) ? { height: normalizeSize(height) } : {}),
+  };
+
+  return isWalletConnected() ? (
+    <>
+      <div className="panzoom-root">
+        {!hideMenu && <GameMenu />}
+        <div
+          ref={containerRef}
+          className="panzoom-viewport"
+          style={{ touchAction: "none" }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onDoubleClick={onDoubleClick}
+        >
+          <div className="panzoom-layer" style={layerInlineStyle}>
+            {backgroundSrc && (
+              <img
+                className="img-scene"
+                src={backgroundSrc}
+                alt="Scene"
+                draggable={false}
+                onDragStart={e => e.preventDefault()}
+                loading="eager"
+                decoding="sync"
+              />
+            )}
+            {bees.map((b, index) => (
+              <div
+                key={`bee-${index}`}
+                className="bee-wrapper"
+                style={{
+                  left: b.x,
+                  top: b.y,
+                  transform: b.flip ? "scaleX(-1)" : "none",
+                  zIndex: b.zIndex ? b.zIndex : 0,
+                }}
+              >
+                <img src={b.image} alt="Bee" className="img-bee" style={{ animationDelay: `${b.delay}s` }} />
+              </div>
+            ))}
+            {stuffs.map((s, index) => (
+              <img
+                key={`stuff-${index}`}
+                src={s.image}
+                alt="Stuff"
+                className="img-stuff"
+                style={{ left: s.x, top: s.y, width: s.width, height: s.height, zIndex: s.zIndex ? s.zIndex : 0 }}
+              />
+            ))}
+            {hotspots.map(h => (
+              <TooltipButton
+                key={h.id}
+                data-hotspot="true"
+                className={`map-btn ${isBig ? "map-big-btn" : ""}`}
+                label={h.label}
+                style={{ left: h.x, top: h.y, animationDelay: `${h.delay}s` }}
+                onMouseEnter={() => {
+                  if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER") {
+                    playAnglerHoverSound();
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER") {
+                    stopAnglerHoverSound();
+                  }
+                }}
+                onClick={() => {
+                  if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER") {
+                    console.log("angler click");
+                    playAnglerClickSound();
+                  }
+                  if (h.link) {
+                    // External links open in a new tab, internal links use router navigation.
+                    if (typeof h.link === "string" && /^https?:\/\//i.test(h.link)) {
+                      window.open(h.link, "_blank", "noopener,noreferrer");
+                    } else {
+                      navigate(h.link);
+                    }
+                  } else {
+                    setActiveModal(dialogs.find(d => d.id === h.id) || dialogs[0]);
+                  }
+                }}
+              />
+            ))}
+            <div className="panzoom-children">{children}</div>
+          </div>
+        </div>
+        <div className="panzoom-sunlight"></div>
+      </div>
+      {activeModal && (
+        <activeModal.component
+          onClose={() => setActiveModal(null)}
+          label={activeModal.label}
+          header={activeModal.header}
+          headerOffset={activeModal.headerOffset}
+          actions={activeModal.actions}
+        />
+      )}
+    </>
+  ) : (
+    <AuthPage></AuthPage>
+  );
+};
+
+export default PanZoomViewport;

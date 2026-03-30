@@ -1,0 +1,29 @@
+.item-view-usable {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  justify-content: space-between;
+  width: -webkit-fill-available;
+}
+.item-view-usable .icon-and-label {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.item-view-usable .icon {
+  width: 64px;
+  height: 64px;
+}
+
+.item-view-usable .icon img {
+  scale: 0.5;
+}
+
+.item-view-usable .icon.base-image img {
+  scale: 0.2;
+}
+
+.item-view-usable .button {
+  width: 130px;
+}

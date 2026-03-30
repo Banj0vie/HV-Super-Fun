@@ -1,0 +1,83 @@
+import "./style.css";
+
+import React, { useState } from "react";
+
+import BaseButton from "../../../../components/buttons/BaseButton";
+import BaseDivider from "../../../../components/dividers/BaseDivider";
+import BaseInput from "../../../../components/inputs/BaseInput";
+import { useNotification } from "../../../../contexts/NotificationContext";
+import { useMarket } from "../../../../hooks/useMarket";
+import { handleContractError } from "../../../../utils/errorHandler";
+import BaseDialog from "../../../_BaseDialog";
+
+const BuyConfirmDialog = ({ onClose, onPurchaseSuccess, item }) => {
+  const [amount, setAmount] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  const { purchase } = useMarket();
+  const { show } = useNotification();
+
+  const handleConfirm = async () => {
+    if (!item || !item.id || !amount || amount <= 0) {
+      show("Invalid purchase parameters", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await purchase(item.listingId, amount);
+      show(`Purchase successful!`, "success");
+      if (onPurchaseSuccess) {
+        onPurchaseSuccess();
+      } else {
+        onClose();
+      }
+    } catch (error) {
+      const { message } = handleContractError(error);
+      show(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalCost = item ? item.price * amount : 0;
+
+  return (
+    <BaseDialog onClose={onClose} title="BUY ITEMS" header="/images/dialog/modal-header-vendor.png" headerOffset={10}>
+      <div className="buy-confirm-dialog">
+        {item && (
+          <>
+            <div className="text-center">
+              <h3>{item.label || item.name || "Unknown Item"}</h3>
+              <p>Price per item: {item.price} HNY</p>
+              <p>Available: {item.count} items</p>
+            </div>
+            <div className="row">
+              <div>Amount to purchase</div>
+              <BaseInput
+                className="input"
+                type="number"
+                min="1"
+                max={item.count}
+                value={amount}
+                setValue={val => setAmount(Math.max(1, Math.min(parseInt(val) || 1, item.count)))}
+              ></BaseInput>
+            </div>
+            <div className="row">
+              <div>Total cost</div>
+              <div className="total-cost">{totalCost} HNY</div>
+            </div>
+            <BaseDivider></BaseDivider>
+            <BaseButton
+              label={loading ? "Processing..." : "Confirm Purchase"}
+              onClick={handleConfirm}
+              disabled={loading || !item.id}
+            ></BaseButton>
+          </>
+        )}
+      </div>
+    </BaseDialog>
+  );
+};
+
+export default BuyConfirmDialog;

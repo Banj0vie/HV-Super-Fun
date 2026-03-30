@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import "./style.css";
 import Avatar from "./Avatar";
 import ProfileButton from "../../../components/buttons/ProfileButton";
@@ -17,6 +17,13 @@ const ProfileBar = ({ isFarmMenu }) => {
   const userData = useSelector((state) => state.user.userData);
   const [isInventoryDialog, setIsInventoryDialog] = useState(false);
   const [isSettingsDialog, setIsSettingsDialog] = useState(false);
+  const [hasUnreadMail, setHasUnreadMail] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => setHasUnreadMail(e.detail);
+    window.addEventListener('mailUnreadChanged', handler);
+    return () => window.removeEventListener('mailUnreadChanged', handler);
+  }, []);
   const { prodMint, loading: prodMintLoading } = useProdMint();
   const gameToken = useSelector((state) => state.balance.gameToken);
   const stakedBalance = useSelector((state) => state.balance.stakedBalance);
@@ -59,6 +66,24 @@ const ProfileBar = ({ isFarmMenu }) => {
             title="Inventory"
             bg="/images/profile_bar/profile_button_bg.png"
             onClick={() => setIsInventoryDialog(true)}
+          />
+          <ProfileButton
+            icon={
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <style>{`@keyframes mailShake { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 80%{transform:rotate(6deg)} }`}</style>
+                <img
+                  alt="Mail"
+                  src="/images/mail/realmail.png"
+                  style={{ width: '32px', height: '32px', objectFit: 'contain', animation: hasUnreadMail ? 'mailShake 1.2s infinite ease-in-out' : 'none' }}
+                />
+                {hasUnreadMail && (
+                  <img src="/images/mail/!.png" alt="!" style={{ position: 'absolute', top: '-14px', right: '-14px', width: '20px', height: '20px', pointerEvents: 'none' }} draggable={false} />
+                )}
+              </div>
+            }
+            title="Mail"
+            bg="/images/profile_bar/profile_button_bg.png"
+            onClick={() => window.dispatchEvent(new CustomEvent('openMailbox'))}
           />
           <div style={{ display: 'none' }}>
             <ProfileButton

@@ -1,0 +1,69 @@
+.base-button-wrapper {
+  width: 100%;
+  animation: popup 0.1s ease-in;
+}
+
+.base-button {
+  width: 100%;
+  height: 100%;
+  min-width: 8rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-size: 1.75rem;
+  font-weight: 600;
+  position: relative;
+}
+
+.base-button img {
+  width: 100%;
+  height: 100%;
+}
+
+.base-button p {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 100%;
+  height: fit-content;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  text-shadow:
+    -2px -2px 0 #031542,
+    2px -2px 0 #031542,
+    -2px 2px 0 #031542,
+    2px 2px 0 #031542,
+    -2px 0 0 #031542,
+    2px 0 0 #031542,
+    0 -2px 0 #031542,
+    0 2px 0 #031542 !important;
+  text-transform: uppercase;
+}
+
+.base-button:hover {
+  filter: brightness(1.2);
+}
+
+.base-button-focused {
+  filter: brightness(1.2);
+}
+
+@keyframes popup {
+  0% {
+    transform: scale(0.95);
+  }
+
+  to {
+    transform: scale(1.05);
+  }
+}
+
+.base-button-disabled:hover {
+  filter: none !important;
+  filter: brightness(0.5) !important;
+}
+
+.base-button-disabled {
+  cursor: not-allowed !important;
+  filter: brightness(0.5) !important;
+}

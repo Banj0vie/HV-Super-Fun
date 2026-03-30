@@ -1,0 +1,165 @@
+.crop-item {
+  width: 158.86px;
+  height: 207.76px;
+  position: absolute;
+  background: url(/public/images/crops/bigger_plants.webp);
+  scale: 0.45;
+  pointer-events: none;
+}
+
+.crop-item .bounding-box {
+  position: absolute;
+  top: 33%;
+  right: 1rem;
+  left: 1rem;
+  bottom: -10%;
+  z-index: 1000;
+  cursor: inherit;
+  pointer-events: auto;
+}
+
+.crop-item.selected {
+  filter: drop-shadow(1px 1px 0 white) drop-shadow(-1px 1px 0 white) drop-shadow(1px -1px 0 white)
+    drop-shadow(-1px -1px 0 white);
+}
+
+.crop-item.planted {
+  animation: planted 0.25s ease-in-out;
+}
+
+.crop-item.harvested {
+  animation: harvested 0.25s ease-in-out;
+}
+
+.crop-item.jiggling {
+  animation: jiggling 0.5s ease-in-out infinite;
+}
+
+@keyframes jiggling {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes planted {
+  0% {
+    transform: scaleX(1.15);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes harvested {
+  0% {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-16px);
+  }
+}
+
+/* Potion effect indicators */
+.crop-item .potion-effects {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.crop-item .potion-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 1px solid;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.crop-item .pesticide-indicator {
+  background: rgba(255, 165, 0, 0.8);
+  border-color: rgba(255, 165, 0, 1);
+  color: #fff;
+}
+
+.crop-item .fertilizer-indicator {
+  background: rgba(0, 255, 0, 0.8);
+  border-color: rgba(0, 255, 0, 1);
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Growth stage indicator - 5 segments */
+.growth-stage-indicator {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.growth-segment {
+  width: 4px;
+  height: 3px;
+  background-color: #743f39; /* Empty color from GrowStatusBox */
+  border-radius: 1px;
+  transition: background-color 0.2s ease;
+  border: 1px solid #3f2832; /* Empty border color from GrowStatusBox */
+}
+
+.growth-segment.filled {
+  background-color: #1fec0d; /* Active color from GrowStatusBox */
+  border: 1px solid #743f39; /* Active border color from GrowStatusBox */
+}
+
+/* Locked plot hover tooltip */
+.crop-item .locked-plot-tooltip {
+  position: absolute;
+  left: 50%;
+  top: 5.5rem;
+  transform: translate(-50%, -100%);
+  margin-top: -4px;
+  background: #723728;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 20px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(100, 68, 68, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 4px solid #f7d131;
+}

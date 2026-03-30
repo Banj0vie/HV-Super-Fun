@@ -392,6 +392,7 @@ const AnimalFarm = () => {
         width={width}
         height={height}
         isBig
+        disablePanZoom
       >
         {/* Solid Dark Forest Green Background Overlay */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: width, height: height, backgroundColor: '#1e4d2b', zIndex: 1 }} />

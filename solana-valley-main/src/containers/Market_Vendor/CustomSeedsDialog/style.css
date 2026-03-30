@@ -1,0 +1,17 @@
+.custom-seed-wrapper {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  background-color: var(--secondary-dlg-bg);
+  border-radius: 11px;
+  padding: 2rem 1rem;
+  margin-top: 1rem;
+}
+
+.custom-seed-text {
+  text-align: center;
+  margin-top: 1rem;
+}

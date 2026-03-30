@@ -1,0 +1,22 @@
+.wallet-dialog {
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wallet-address-box {
+  min-height: 4.5rem;
+  height: auto;
+  background-image: var(--primary-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-address-box div {
+  font-size: 1.75rem;
+}

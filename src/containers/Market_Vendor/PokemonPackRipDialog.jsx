@@ -140,28 +140,56 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
              <div style={{ textAlign: 'center', animation: 'popIn 0.3s ease-out' }}>
                <style>{`@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
                <h2 style={{ color: '#fff', marginBottom: '30px' }}>Card {revealedIndex + 1} of {revealedSeeds.length}</h2>
-               <div style={{ width: '300px', height: '450px', backgroundColor: '#1f1610', border: '6px solid #a67c52', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', boxShadow: '0 0 30px rgba(0, 255, 65, 0.4)', cursor: 'pointer' }}>
-                  <div style={{ alignSelf: 'flex-start', color: '#ffea00', fontWeight: 'bold', fontSize: '20px', marginBottom: '20px' }}>{ALL_ITEMS[revealedSeeds[revealedIndex]]?.label || "Mysterious Seed"}</div>
+               <div style={{ width: '300px', height: '450px', backgroundColor: '#1f1610', border: '6px solid #a67c52', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', boxShadow: '0 0 30px rgba(0, 255, 65, 0.4)', cursor: 'pointer' }}>                  <div style={{ alignSelf: 'flex-start', color: '#ffea00', fontWeight: 'bold', fontSize: '20px', marginBottom: '20px' }}>{ALL_ITEMS[revealedSeeds[revealedIndex]]?.label || "Mysterious Seed"}</div>
                   <div style={{ width: '200px', height: '200px', backgroundColor: '#000', borderRadius: '12px', border: '4px solid #5a402a', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '30px', overflow: 'hidden' }}>
-                    {ALL_ITEMS[revealedSeeds[revealedIndex]]?.image ? ( ALL_ITEMS[revealedSeeds[revealedIndex]].image.includes('crop') ? ( <div style={{ width: `${ONE_SEED_WIDTH}px`, height: `${ONE_SEED_HEIGHT}px`, backgroundImage: `url(${ALL_ITEMS[revealedSeeds[revealedIndex]].image})`, backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(ALL_ITEMS[revealedSeeds[revealedIndex]].pos || 0) * ONE_SEED_HEIGHT}px`, transform: 'scale(3)', backgroundRepeat: 'no-repeat' }} /> ) : ALL_ITEMS[revealedSeeds[revealedIndex]].image.includes('seeds') ? ( <div className="item-icon item-icon-seeds" style={{ transform: 'scale(3)', backgroundPositionY: ALL_ITEMS[revealedSeeds[revealedIndex]].pos ? `-${ALL_ITEMS[revealedSeeds[revealedIndex]].pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div> ) : ( <img src={ALL_ITEMS[revealedSeeds[revealedIndex]].image} alt="Seed" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> ) ) : ( <span style={{ fontSize: '40px' }}>?</span> )}
+                    {ALL_ITEMS[revealedSeeds[revealedIndex]]?.image ? ( 
+                      (ALL_ITEMS[revealedSeeds[revealedIndex]].image.includes('crop') || ALL_ITEMS[revealedSeeds[revealedIndex]].image.includes('seeds')) ? ( 
+                        <div style={{ 
+                            width: `${ONE_SEED_WIDTH}px`, 
+                            height: `${ONE_SEED_HEIGHT}px`, 
+                            backgroundImage: `url(${IMAGE_URL_CROP || '/images/farm/crop.png'})`, 
+                            backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(ALL_ITEMS[revealedSeeds[revealedIndex]].pos || 0) * ONE_SEED_HEIGHT}px`, 
+                            transform: 'scale(3)', 
+                            backgroundRepeat: 'no-repeat' 
+                        }} /> 
+                      ) : ( 
+                        <img src={ALL_ITEMS[revealedSeeds[revealedIndex]].image} alt="Seed" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> 
+                      ) 
+                    ) : ( <span style={{ fontSize: '40px' }}>?</span> )}
                     
                     {/* Produce Preview Badge */}
-                    <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '50px', height: '50px', backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: '50%', border: '2px solid #00ff41', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }} title="Grows into this produce!">
+                    <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '50px', height: '50px', backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: '50%', border: '2px solid #00ff41', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 8px rgba(0,0,0,0.5)' }} title="Grows into this produce!"> {/* This div was duplicated */}
                       <div style={{ width: `${ONE_SEED_WIDTH}px`, height: `${ONE_SEED_HEIGHT}px`, backgroundImage: `url(${IMAGE_URL_CROP || '/images/farm/crop.png'})`, backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(ALL_ITEMS[revealedSeeds[revealedIndex]]?.pos || 0) * ONE_SEED_HEIGHT}px`, transform: 'scale(1.3)', backgroundRepeat: 'no-repeat' }} />
                     </div>
                   </div>
+                  <div style={{ alignSelf: 'flex-start', color: '#ffea00', fontWeight: 'bold', fontSize: '20px', marginBottom: '20px' }}>{ALL_ITEMS[revealedSeeds[revealedIndex]]?.label || "Mysterious Seed"}</div>
+                  <div style={{ width: '200px', height: '200px', backgroundColor: '#000', borderRadius: '12px', border: '4px solid #5a402a', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '30px', overflow: 'hidden' }}>
                   <div style={{ width: '100%', height: '2px', backgroundColor: '#5a402a', marginBottom: '20px' }} />
                   <p style={{ color: '#aaa', fontSize: '14px', textAlign: 'center', fontStyle: 'italic', padding: '0 10px', lineHeight: '1.5' }}>{ALL_ITEMS[revealedSeeds[revealedIndex]]?.description || "A powerful seed ready to be planted on your farm. Nurture it to see what grows!"}</p>
                </div>
                <p style={{ color: '#00ff41', marginTop: '30px', animation: 'pulse 1s infinite' }}>Click anywhere for next card...</p>
              </div>
+           </div>
           ) : (
              <div style={{ backgroundColor: '#2c221a', border: '4px solid #a67c52', borderRadius: '16px', padding: '30px', textAlign: 'center', width: '80%', maxWidth: '600px', animation: 'popIn 0.3s ease-out' }}>
                <h2 style={{ color: '#00ff41', fontSize: '32px', margin: '0 0 20px 0', textShadow: '2px 2px 0 #000' }}>ALL SEEDS REVEALED!</h2>
                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center', marginBottom: '30px', maxHeight: '400px', overflowY: 'auto', padding: '10px' }}>
                  {revealedSeeds.map((seedId, idx) => {
-                   const itemData = ALL_ITEMS[seedId] || { label: "Unknown" };
-                   return ( <div key={idx} style={{ width: '100px', backgroundColor: 'rgba(0,0,0,0.6)', border: '2px solid #5a402a', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}> <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '5px' }}> {itemData.image && itemData.image.includes('crop') ? ( <div style={{ width: `${ONE_SEED_WIDTH}px`, height: `${ONE_SEED_HEIGHT}px`, backgroundImage: `url(${itemData.image})`, backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(itemData.pos || 0) * ONE_SEED_HEIGHT}px`, transform: 'scale(0.8)', backgroundRepeat: 'no-repeat' }} /> ) : itemData.image && itemData.image.includes('seeds') ? ( <div className="item-icon item-icon-seeds" style={{ transform: 'scale(0.8)', backgroundPositionY: itemData.pos ? `-${itemData.pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }}></div> ) : ( <img src={itemData.image} alt={itemData.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> )} </div> <div style={{ position: 'absolute', top: '5px', right: '5px', width: '20px', height: '20px', backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: '50%', border: '1px solid #00ff41', display: 'flex', justifyContent: 'center', alignItems: 'center' }}> <div style={{ width: `${ONE_SEED_WIDTH}px`, height: `${ONE_SEED_HEIGHT}px`, backgroundImage: `url(${IMAGE_URL_CROP || '/images/farm/crop.png'})`, backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(itemData.pos || 0) * ONE_SEED_HEIGHT}px`, transform: 'scale(0.5)', backgroundRepeat: 'no-repeat' }} /> </div> <div style={{ color: '#fff', fontSize: '10px', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{itemData.label}</div> </div> );
+                    const itemData = ALL_ITEMS[seedId] || { label: "Unknown" };
+                    return ( <div key={idx} style={{ width: '100px', backgroundColor: 'rgba(0,0,0,0.6)', border: '2px solid #5a402a', borderRadius: '8px', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}> <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '5px' }}>
+                      {itemData.image && (itemData.image.includes('crop') || itemData.image.includes('seeds')) ? (
+                        <div style={{
+                            width: `${ONE_SEED_WIDTH}px`,
+                            height: `${ONE_SEED_HEIGHT}px`,
+                            backgroundImage: `url(${IMAGE_URL_CROP || '/images/farm/crop.png'})`,
+                            backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(itemData.pos || 0) * ONE_SEED_HEIGHT}px`,
+                            transform: 'scale(0.8)',
+                            backgroundRepeat: 'no-repeat'
+                        }} />
+                      ) : (
+                        <img src={itemData.image} alt={itemData.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      )}
+                    </div> <div style={{ position: 'absolute', top: '5px', right: '5px', width: '20px', height: '20px', backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: '50%', border: '1px solid #00ff41', display: 'flex', justifyContent: 'center', alignItems: 'center' }}> <div style={{ width: `${ONE_SEED_WIDTH}px`, height: `${ONE_SEED_HEIGHT}px`, backgroundImage: `url(${IMAGE_URL_CROP || '/images/farm/crop.png'})`, backgroundPosition: `-${5 * ONE_SEED_WIDTH}px -${(itemData.pos || 0) * ONE_SEED_HEIGHT}px`, transform: 'scale(0.5)', backgroundRepeat: 'no-repeat' }} /> </div> <div style={{ color: '#fff', fontSize: '10px', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{itemData.label}</div> </div> );
                  })}
                </div>
                <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }} onClick={(e) => e.stopPropagation()}>

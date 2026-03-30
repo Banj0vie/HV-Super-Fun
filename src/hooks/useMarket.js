@@ -146,7 +146,7 @@ export const useMarket = () => {
                     systemProgram: SystemProgram.programId,
                 })
                 .remainingAccounts(remainingAccounts);
-            
+
             const sig = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return sig;
         } catch (error) {
@@ -209,7 +209,7 @@ export const useMarket = () => {
                     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
                     systemProgram: SystemProgram.programId 
                 });
-            
+
             const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return tx;
         } catch (error) {
@@ -258,7 +258,7 @@ export const useMarket = () => {
                     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
                     systemProgram: SystemProgram.programId 
                 });
-            
+
             const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return tx;
         } catch (error) {
@@ -319,7 +319,7 @@ export const useMarket = () => {
                     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
                     systemProgram: SystemProgram.programId 
                 })
-                .remainingAccounts(getRemainingAccounts({
+                .remainingAccounts(getRemainingAccounts({ // Pass publicKey to getRemainingAccounts if needed
                     listingPairs,
                     itemMintPda,
                     buyerItemAta,
@@ -327,7 +327,7 @@ export const useMarket = () => {
                     epochTop5Pda,
                     sponsorGameAta,
                 }));
-            
+
             const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return tx;
         } catch (error) {
@@ -379,7 +379,7 @@ export const useMarket = () => {
                     associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, 
                     systemProgram: SystemProgram.programId 
                 });
-            
+
             const tx = await sendTransactionForPhantom(method, connection, sendTransaction, publicKey);
             return tx;
         } catch (error) {

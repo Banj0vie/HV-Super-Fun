@@ -34,8 +34,10 @@ const Market = () => {
     };
   }, [tutorialStep]);
 
+  const NEXT_STEP_MAP = { 11: 13, 13: 14, 14: 15, 15: 16, 16: 12, 12: 17 };
+
   const advanceTutorial = () => {
-    const nextStep = tutorialStep + 1;
+    const nextStep = NEXT_STEP_MAP[tutorialStep] ?? tutorialStep + 1;
     setTutorialStep(nextStep);
     localStorage.setItem('sandbox_tutorial_step', nextStep.toString());
   };
@@ -44,11 +46,11 @@ const Market = () => {
     if (tutorialStep >= 32) return hotspots;
     const makeDummy = (arr) => arr.map(h => ({ ...h, id: h.id + '_dummy' }));
     if (tutorialStep === 11) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.DEX));
-    if (tutorialStep === 12) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.VENDOR));
     if (tutorialStep === 13) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.MARKET));
     if (tutorialStep === 14) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.SAGE));
     if (tutorialStep === 15) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.LEADERBOARD));
     if (tutorialStep === 16) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.BANKER));
+    if (tutorialStep === 12) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.VENDOR));
     return [];
   };
 
@@ -106,59 +108,101 @@ const Market = () => {
         height={height}
         stuffs={MARKET_STUFFS}
         bees={bees}
+        disablePanZoom
       />
       
       <AdminPanel />
 
       {tutorialStep >= 11 && tutorialStep <= 17 && (
-        <div style={{ position: 'fixed', right: '40px', top: '50%', transform: 'translateY(-50%)', zIndex: 100000, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+        <>
           <style>{`
             a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-            div[title], button[title], .hotspot, .map-btn { pointer-events: none !important; } /* Disable clicking on map hotspots during tutorial */
+            div[title], button[title], .hotspot, .map-btn { pointer-events: none !important; }
             @keyframes marketHighlightBox { 0%, 100% { box-shadow: 0 0 20px 5px #00ff41; background-color: rgba(0, 255, 65, 0.2); } 50% { box-shadow: 0 0 5px 2px #00ff41; background-color: transparent; } }
-            @keyframes mapIconHighlight { 0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); } 50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; } }
+            @keyframes mapIconHighlight { 0%, 100% { transform: scale(1.1); } 50% { transform: scale(1); } }
             ${tutorialStep === 11 ? `div[title*="EXCHANGE" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
-            ${tutorialStep === 12 ? `div[title*="VENDOR" i], div[title*="SEED" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 13 ? `div[title*="MARKET" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 14 ? `div[title*="QUEEN" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 15 ? `div[title*="LEADERBOARD" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
             ${tutorialStep === 16 ? `div[title*="BANKER" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
-            ${tutorialStep === 17 ? `a[href*="/house"], img[src*="house" i] { animation: mapIconHighlight 1.5s infinite !important; border-radius: 12px; position: relative; z-index: 100001; pointer-events: auto !important; }` : ''}
+            ${tutorialStep === 12 ? `div[title*="VENDOR" i], div[title*="SEED" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; }` : ''}
+            ${tutorialStep === 17 ? `a[href*="/house"], img[src*="house" i] { animation: mapIconHighlight 1.5s infinite !important; position: relative; z-index: 100001; pointer-events: auto !important; }` : ''}
           `}</style>
-          <div style={{ position: 'relative', width: '320px', backgroundColor: 'rgba(0,0,0,0.9)', border: '4px solid #ffea00', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '25px', gap: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', pointerEvents: 'auto' }}>
-             <img src="/images/bees/sir.png" alt="Sir" style={{ height: '100px', objectFit: 'contain' }} />
-             <div style={{ color: 'white', fontFamily: 'monospace', fontSize: '14px', textAlign: 'center' }}>
-               <h3 style={{ color: '#ffea00', margin: '0 0 10px 0', fontSize: '20px' }}>Great Uncle Sir Bee</h3>
-               {tutorialStep === 11 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Welcome to the Town Market! First, you'll need some Honey to buy things. Click on the <strong>DEX</strong> to exchange your tokens for Honey!</p>
-               )}
-               {tutorialStep === 12 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Next is the <strong>Vendor</strong>! Here you can buy Seed Packs to plant on your farm. Go ahead and take a look!</p>
-               )}
-               {tutorialStep === 13 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>This is the <strong>Marketplace</strong>. You can trade items with other players here!</p>
-               )}
-               {tutorialStep === 14 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>That's the <strong>Queen Sage</strong>. She can help you upgrade your Worker Bees!</p>
-               )}
-               {tutorialStep === 15 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Check the <strong>Leaderboard</strong> to see who the top farmers are!</p>
-               )}
-               {tutorialStep === 16 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>The <strong>Banker</strong> can securely store your tokens.</p>
-               )}
-               {tutorialStep === 17 && (
-                 <p style={{ margin: 0, lineHeight: '1.5' }}>Now, let's head to your <strong>House</strong>! Click the House icon on the map.</p>
-               )}
-             </div>
-             
-             {tutorialStep < 17 && (
-               <button onClick={advanceTutorial} style={{ padding: '8px 16px', backgroundColor: '#00ff41', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace', color: '#000', marginTop: '10px' }}>
-                 Next
-               </button>
-             )}
+          <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+            <div style={{ position: 'relative', width: '666px' }}>
+              <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
+              <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
+                {tutorialStep === 11 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Welcome to the Town Market! First, you'll need some Honey to buy things. Click on the DEX to exchange your tokens for Honey!
+                  </p>
+                )}
+              </div>
+              {tutorialStep === 11 && (
+                <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+                  <div
+                    style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+                    onClick={advanceTutorial}
+                  >
+                    <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+                  </div>
+                </div>
+              )}
+              <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: tutorialStep === 11 ? 'none' : 'flex', alignItems: 'flex-start' }}>
+                {tutorialStep === 12 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Finally, to wrap things up here is the Vendor! You can buy Seed Packs to plant on your farm.
+                  </p>
+                )}
+                {tutorialStep === 13 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    This is the Marketplace. You can trade items with other players here!
+                  </p>
+                )}
+                {tutorialStep === 14 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    That's the Queen Sage. She can help you upgrade your Worker Bees!
+                  </p>
+                )}
+                {tutorialStep === 15 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Check the Leaderboard to see who the top farmers are!
+                  </p>
+                )}
+                {tutorialStep === 16 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    The Banker can securely store your tokens.
+                  </p>
+                )}
+                {tutorialStep === 17 && (
+                  <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
+                    Now, let's head to your House! Click the House icon on the map.
+                  </p>
+                )}
+              </div>
+              {[12, 13, 14, 15, 16].includes(tutorialStep) && (
+                <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
+                  <div
+                    style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+                    onClick={advanceTutorial}
+                  >
+                    <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
+                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
     </>

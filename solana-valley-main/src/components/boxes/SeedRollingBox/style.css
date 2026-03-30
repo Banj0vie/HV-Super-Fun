@@ -1,0 +1,126 @@
+.seed-rolling-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seed-roller {
+  width: 6rem;
+  height: 6rem;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.seed-roller-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.seed-rolling-image {
+  width: 4rem;
+  height: 4rem;
+  background: url(/public/images/crops/seeds.webp) 0;
+  /* Scale from 159x207.7647 to fit 64px height: scale factor = 64/207.7647 ≈ 0.308 */
+  /* Scaled width = 159 * 0.308 ≈ 48.96px ≈ 3.06rem */
+  /* Scaled total height = 7076 * 0.308 ≈ 2179.4px */
+  background-size: 3.06rem auto;
+  background-repeat: no-repeat;
+  z-index: 1;
+  background-position-x: center;
+}
+
+.seed-rolling-image.rolling {
+  animation: scroll-bg 3s linear infinite;
+  filter: blur(0.25rem);
+}
+
+@keyframes scroll-bg {
+  from {
+    background-position-y: 0;
+  }
+  to {
+    background-position-y: calc(var(--all-seed-image-height, -2179.4px));
+  }
+}
+
+.seed-rolling-image.finish {
+  animation: seed-rolling-finish 0.25s ease-in-out;
+}
+
+.seed-rolling-image.start {
+  animation: seed-rolling-start 0.25s ease-in-out;
+}
+
+@keyframes seed-rolling-finish {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(15px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes seed-rolling-start {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-25px);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.seed-label {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 5rem;
+  padding: 0.25rem 0rem;
+  width: 7rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.seed-label p {
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 0.2rem;
+  font-size: 1rem;
+  animation: slide-in-9e8ec30a 0.15s ease-in-out;
+}
+
+@keyframes slide-in-9e8ec30a {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-9e8ec30a {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}

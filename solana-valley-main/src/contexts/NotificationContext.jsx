@@ -1,0 +1,77 @@
+import React, { createContext, useContext, useRef, useState } from "react";
+
+import { useAppSelector } from "../solana/store";
+import { selectSettings } from "../solana/store/slices/uiSlice";
+import { generateId } from "../utils/basic";
+import { clampVolume } from "../utils/basic";
+import { defaultSettings } from "../utils/settings";
+const NotificationContext = createContext(null);
+
+export const NotificationProvider = ({ children }) => {
+  const [toasts, setToasts] = useState([]);
+  const successAudioRef = useRef(null);
+  const settings = useAppSelector(selectSettings) || defaultSettings;
+
+  const show = (message, kind = "info", timeout = 3000) => {
+    const id = generateId();
+    if (kind === "success") {
+      if (!successAudioRef.current) {
+        successAudioRef.current = new Audio("/sounds/SuccessSFXTxnSignSuccess.wav");
+        successAudioRef.current.preload = "auto";
+      }
+      const audio = successAudioRef.current;
+      const volumeSetting = parseFloat(settings?.soundVolume ?? 0) / 100;
+      audio.volume = clampVolume(volumeSetting);
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+    setToasts(t => [...t, { id, message, kind }]);
+
+    let timeoutId;
+    if (timeout > 0) {
+      timeoutId = setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), timeout);
+    }
+
+    return {
+      id,
+      dismiss: () => {
+        setToasts(t => t.filter(x => x.id !== id));
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      },
+    };
+  };
+
+  const dismiss = id => {
+    setToasts(t => t.filter(x => x.id !== id));
+  };
+
+  const value = { show, dismiss, toasts };
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+      <div style={{ position: "fixed", top: 12, right: 12, zIndex: 30000 }}>
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            style={{
+              marginBottom: 8,
+              padding: "8px 12px",
+              borderRadius: 8,
+              background: t.kind === "error" ? "#ff3b30" : t.kind === "warning" ? "#ffcc00" : "#2ecc71",
+              color: "#fff",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            }}
+          >
+            {t.message}
+          </div>
+        ))}
+      </div>
+    </NotificationContext.Provider>
+  );
+};
+
+export const useNotification = () => {
+  return useContext(NotificationContext);
+};

@@ -7,7 +7,10 @@ import {
 import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../../../constants/item_seed";
 import { ALL_ITEMS } from "../../../constants/item_data";
 import CropTooltip from "./CropTooltip";
-import { getSetting } from "../../../utils/settings";
+import { getSetting, defaultSettings } from "../../../utils/settings";
+import { useAppSelector } from "../../../solana/store";
+import { selectSettings } from "../../../solana/store/slices/uiSlice";
+import { clampVolume } from "../../../utils/basic";
 
 const CropItem = ({
   data,
@@ -30,6 +33,7 @@ const CropItem = ({
   const rootRef = useRef(null);
   const [portalContainer, setPortalContainer] = useState(null);
   const clickAudioRef = useRef(null);
+  const settings = useAppSelector(selectSettings) || defaultSettings;
   const [showDebug, setShowDebug] = useState(() => localStorage.getItem('show_debug_labels') !== 'false');
   const [plotPrep, setPlotPrep] = useState(() => JSON.parse(localStorage.getItem('sandbox_plot_prep') || '{}'));
 
@@ -191,14 +195,17 @@ const CropItem = ({
   const FRAMES_PER_SEED = 6; // total frames across X for one seed line
   let frameIndex = 0;
   if (data.seedId && ALL_ITEMS[data.seedId]) {
-    if (data.growStatus === -1) {
-      frameIndex = 0; // newly planted (sign)
-    } else if (data.growStatus === 2) {
+    if (data.growStatus === 2) {
       frameIndex = FRAMES_PER_SEED - 1; // ready frame
+    } else if (data.growStatus === -1 || data.growStatus === 0) {
+      frameIndex = 0; // sign for newly planted and sprout stage
     } else {
-      // growing: interpolate frames based on progress, keep last frame for ready
       const clamped = Math.max(0, Math.min(0.999, growthProgress || 0));
-      frameIndex = Math.floor(clamped * (FRAMES_PER_SEED - 1));
+      if (clamped === 0) {
+        frameIndex = 0; // sign until growth actually begins
+      } else {
+        frameIndex = 1 + Math.floor(clamped * (FRAMES_PER_SEED - 2));
+      }
     }
   }
 
@@ -374,6 +381,8 @@ const CropItem = ({
 
           const clickAudio = clickAudioRef.current;
           if (clickAudio) {
+            const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
+            clickAudio.volume = clampVolume(volumeSetting);
             clickAudio.currentTime = 0;
             clickAudio.play().catch(() => {});
           }
@@ -410,16 +419,16 @@ const CropItem = ({
             pointerEvents: "auto" // Make sure it captures clicks
           }}
         >
-          <div style={{
+          {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && <div style={{
             color: '#ff4444',
             fontWeight: 'bold',
-            fontSize: '18px', // Slightly larger so it's easier to see
+            fontSize: '18px',
             textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
             marginBottom: '-5px',
             zIndex: 31
           }}>
             {data.bugCountdown}s
-          </div>
+          </div>}
           <img
             src="/images/bug/bug.jpg"
             alt="bug"
@@ -461,7 +470,7 @@ const CropItem = ({
               100% { top: 35%; left: 50%; transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
           `}</style>
-          <div style={{
+          {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && <div style={{
             color: '#ff4444',
             fontWeight: 'bold',
             fontSize: '18px',
@@ -470,7 +479,7 @@ const CropItem = ({
             zIndex: 31
           }}>
             {data.crowCountdown}s
-          </div>
+          </div>}
           <img
             src="/images/crow/crow.jpg"
             alt="crow"
@@ -527,17 +536,20 @@ const CropItem = ({
       {(data.needsWater || data.growStatus === 2) && (
         <div style={{
           position: "absolute",
-          top: "-25px",
-          left: "50%",
+          top: (data.growStatus === 2 && !data.needsWater) ? "60px" : "-25px",
+          left: (data.growStatus === 2 && !data.needsWater) ? "60%" : "50%",
           transform: "translateX(-50%)",
           zIndex: 9999,
           pointerEvents: "none",
           animation: "statusBounce 1.5s infinite"
         }}>
           <style>{`@keyframes statusBounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }`}</style>
-          <div style={{ fontSize: '28px', filter: 'drop-shadow(0px 2px 2px black)' }}>
-            {data.growStatus === 2 ? '✅' : ((data.bugCountdown > 0 || data.crowCountdown > 0 || data.ratCountdown > 0) ? '❗' : '💧')}
-          </div>
+          {data.needsWater
+            ? ((data.bugCountdown > 0 || data.crowCountdown > 0 || data.ratCountdown > 0)
+              ? <span style={{ fontSize: '28px', filter: 'drop-shadow(0px 2px 2px black)' }}>❗</span>
+              : <img src="/images/icons/needwater.png" alt="Needs Water" style={{ width: '28px', height: '28px', filter: 'drop-shadow(0px 2px 2px black)' }} />)
+            : <img src="/images/icons/checkmark.png" alt="Ready" style={{ width: '28px', height: '28px', filter: 'drop-shadow(0px 2px 2px black)' }} />
+          }
         </div>
       )}
     </div>

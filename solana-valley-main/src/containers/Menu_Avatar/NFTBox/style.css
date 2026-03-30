@@ -1,0 +1,80 @@
+.nft-box .nft-card {
+  width: 8rem;
+  height: 8rem;
+  padding: 10px;
+}
+
+.nft-box .nft-card img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.nft-box .name {
+  text-align: center;
+  min-height: 2rem;
+  line-height: 2rem;
+  font-size: 1.5rem;
+  background: var(--primary-dlg-bg);
+  border-radius: 0.5rem;
+  min-width: 8rem;
+  margin-top: 0.5rem;
+  color: #75514a;
+  text-shadow:
+    -1px -1px 0 #d89875,
+    1px -1px 0 #d89875,
+    -1px 1px 0 #d89875,
+    1px 1px 0 #d89875,
+    -1px 0 0 #d89875,
+    1px 0 0 #d89875,
+    0 -1px 0 #d89875,
+    0 1px 0 #d89875 !important;
+}
+
+.nft-box.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.nft-box.clickable:hover {
+  transform: scale(1.05);
+}
+
+.loading-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.boost-info {
+  text-align: center;
+  font-size: 1rem;
+  color: #90ee90;
+  background: rgba(0, 255, 0, 0.1);
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  margin-top: 0.25rem;
+  min-width: 8rem;
+}

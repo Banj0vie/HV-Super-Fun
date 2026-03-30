@@ -1,0 +1,15 @@
+.weekly-harvest-wrapper {
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  margin-top: 1rem;
+}
+
+.weekly-harvest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}

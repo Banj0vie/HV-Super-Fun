@@ -1,0 +1,19 @@
+.exchange-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  height: 2.25rem;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.exchange-button-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 5rem;
+  cursor: pointer;
+}

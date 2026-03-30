@@ -1,0 +1,19 @@
+.single-combi-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.single-combi-item-wrapper .crop-icon {
+  margin: -2rem;
+}
+
+.single-combi-item-wrapper .crop-label {
+  font-size: 1.25rem;
+}
+
+.single-combi-item-wrapper .crop-label-stars {
+  margin-left: 0.25rem;
+  font-size: 1rem;
+  color: #ffd54a;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
