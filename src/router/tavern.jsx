@@ -615,6 +615,7 @@ const Tavern = () => {
         height={height}
         stuffs={TAVERN_STUFFS}
         bees={TAVERN_BEES}
+        initialScale={1.3}
         disablePanZoom
       />
       

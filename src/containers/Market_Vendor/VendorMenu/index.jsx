@@ -98,9 +98,7 @@ const VendorMenu = ({
         }}
         disabled={hasPendingRequests || buyingItem !== null || isRevealing}
       ></BaseButton>
-      <ErrorLabel
-        text={<div>Caution: Please rip open <br/>within ~8 minutes!</div>}
-      ></ErrorLabel>
+
     </div>
   );
 };

@@ -424,6 +424,7 @@ const Forest = () => {
         dialogs={[]}
         width={width}
         height={height}
+        initialScale={1.3}
         disablePanZoom
       >
       {/* Render trees directly onto the viewport canvas */}

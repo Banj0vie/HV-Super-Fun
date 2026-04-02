@@ -205,6 +205,11 @@ const PanZoomViewport = ({
       if (e.key === "Escape") setActiveModal(null);
     };
     window.addEventListener("keydown", handleEsc);
+    const handleOpenDialog = (e) => {
+      const dialog = dialogs.find(d => d.id === e.detail);
+      if (dialog) setActiveModal(dialog);
+    };
+    window.addEventListener("openDialog", handleOpenDialog);
     // Re-center when window resizes or layer size props change
     const handleResize = () => {
       setTx(computeInitialTx());
@@ -214,8 +219,9 @@ const PanZoomViewport = ({
     return () => {
       window.removeEventListener("keydown", handleEsc);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("openDialog", handleOpenDialog);
     };
-  }, [computeInitialTx, computeInitialTy]);
+  }, [computeInitialTx, computeInitialTy, dialogs]);
 
   const normalizeSize = (v) => {
     if (v === undefined || v === null || v === false || v === true)

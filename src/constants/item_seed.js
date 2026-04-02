@@ -215,7 +215,7 @@ export const SEED_TREE = {
         },
         [ID_RARE_TYPE.UNCOMMON]: {
             count: 3,
-            list: [ID_SEEDS.PUMPKIN, ID_SEEDS.CHILI, ID_SEEDS.PARSNIP]
+            list: [ID_SEEDS.PUMPKIN, ID_SEEDS.PEPPER, ID_SEEDS.PARSNIP]
         },
         [ID_RARE_TYPE.RARE]: {
             count: 2,

@@ -132,18 +132,21 @@ export const ID_SEEDS = {
     CABBAGE: CAT_PICO_SEED << 8 | 3,
     ONION: CAT_PICO_SEED << 8 | 4,
     RADISH: CAT_PICO_SEED << 8 | 5,
+    TURNIP: CAT_PICO_SEED << 8 | 6,
     WHEAT: CAT_BASIC_SEED << 8 | 1,
     TOMATO: CAT_BASIC_SEED << 8 | 2,
     CARROT: CAT_BASIC_SEED << 8 | 3,
     CORN: CAT_BASIC_SEED << 8 | 4,
     PUMPKIN: CAT_BASIC_SEED << 8 | 5,
-    CHILI: CAT_BASIC_SEED << 8 | 6,
+    PEPPER: CAT_BASIC_SEED << 8 | 6,
     PARSNIP: CAT_BASIC_SEED << 8 | 7,
     CELERY: CAT_BASIC_SEED << 8 | 8,
     BROCCOLI: CAT_BASIC_SEED << 8 | 9,
     CAULIFLOWER: CAT_BASIC_SEED << 8 | 10,
     BERRY: CAT_BASIC_SEED << 8 | 11,
     GRAPES: CAT_BASIC_SEED << 8 | 12,
+    BOKCHOY: CAT_BASIC_SEED << 8 | 13,
+    EGGPLANT: CAT_BASIC_SEED << 8 | 14,
     BANANA: CAT_PREMIUM_SEED << 8 | 1,
     MANGO: CAT_PREMIUM_SEED << 8 | 2,
     AVOCADO: CAT_PREMIUM_SEED << 8 | 3,
@@ -155,7 +158,16 @@ export const ID_SEEDS = {
     LICHI: CAT_PREMIUM_SEED << 8 | 9,
     LAVENDER: CAT_PREMIUM_SEED << 8 | 10,
     DRAGON_FRUIT: CAT_PREMIUM_SEED << 8 | 11,
+    POMEGRANATE: CAT_PREMIUM_SEED << 8 | 12,
+    APPLE: CAT_PREMIUM_SEED << 8 | 13,
 }
+
+// Encodes a rarity level (1=Common, 2=Uncommon, 3=Rare, 4=Epic, 5=Legendary) into a seed ID.
+// Level 1 returns the base ID unchanged. Higher levels shift into bits 12-14.
+export const getRaritySeedId = (baseId, rarityLevel) => {
+    if (rarityLevel <= 1) return baseId;
+    return (rarityLevel << 12) | baseId;
+};
 
 export const ID_PRODUCE_ITEMS = {
     // Pico Produce
@@ -164,6 +176,7 @@ export const ID_PRODUCE_ITEMS = {
     CABBAGE: CAT_PICO_PRODUCE << 8 | 3,
     ONION: CAT_PICO_PRODUCE << 8 | 4,
     RADISH: CAT_PICO_PRODUCE << 8 | 5,
+    TURNIP: CAT_PICO_PRODUCE << 8 | 6,
 
     // Basic Produce
     WHEAT: CAT_BASIC_PRODUCE << 8 | 1,
@@ -171,13 +184,15 @@ export const ID_PRODUCE_ITEMS = {
     CARROT: CAT_BASIC_PRODUCE << 8 | 3,
     CORN: CAT_BASIC_PRODUCE << 8 | 4,
     PUMPKIN: CAT_BASIC_PRODUCE << 8 | 5,
-    CHILI: CAT_BASIC_PRODUCE << 8 | 6,
+    PEPPER: CAT_BASIC_PRODUCE << 8 | 6,
     PARSNAP: CAT_BASIC_PRODUCE << 8 | 7,
     CELERY: CAT_BASIC_PRODUCE << 8 | 8,
     BROCCOLI: CAT_BASIC_PRODUCE << 8 | 9,
     CAULIFLOWER: CAT_BASIC_PRODUCE << 8 | 10,
     BERRY: CAT_BASIC_PRODUCE << 8 | 11,
     GRAPES: CAT_BASIC_PRODUCE << 8 | 12,
+    BOKCHOY: CAT_BASIC_PRODUCE << 8 | 13,
+    EGGPLANT: CAT_BASIC_PRODUCE << 8 | 14,
 
     // Premium Produce
     BANANA: CAT_PREMIUM_PRODUCE << 8 | 1,
@@ -191,6 +206,8 @@ export const ID_PRODUCE_ITEMS = {
     LYCHEE: CAT_PREMIUM_PRODUCE << 8 | 9,
     LAVENDER: CAT_PREMIUM_PRODUCE << 8 | 10,
     DRAGONFRUIT: CAT_PREMIUM_PRODUCE << 8 | 11,
+    POMEGRANATE: CAT_PREMIUM_PRODUCE << 8 | 12,
+    APPLE: CAT_PREMIUM_PRODUCE << 8 | 13,
 }
 
 export const ID_BAIT_ITEMS = {

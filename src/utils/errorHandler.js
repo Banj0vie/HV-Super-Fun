@@ -138,7 +138,7 @@ export const handleContractError = (error, context = '') => {
           revertMessage.includes('berry') || revertMessage.includes('cauliflower') || revertMessage.includes('dragonfruit') ||
           revertMessage.includes('lavender') || revertMessage.includes('lychee') || revertMessage.includes('wheat') ||
           revertMessage.includes('tomato') || revertMessage.includes('carrot') || revertMessage.includes('corn') ||
-          revertMessage.includes('pumpkin') || revertMessage.includes('chili') || revertMessage.includes('parsnap') ||
+          revertMessage.includes('pumpkin') || revertMessage.includes('pepper') || revertMessage.includes('parsnap') ||
           revertMessage.includes('celery') || revertMessage.includes('broccoli') || revertMessage.includes('banana') ||
           revertMessage.includes('mango') || revertMessage.includes('avocado') || revertMessage.includes('pineapple') ||
           revertMessage.includes('blueberry') || revertMessage.includes('artichoke') || revertMessage.includes('papaya') ||

@@ -108,6 +108,7 @@ const Market = () => {
         height={height}
         stuffs={MARKET_STUFFS}
         bees={bees}
+        initialScale={1.3}
         disablePanZoom
       />
       

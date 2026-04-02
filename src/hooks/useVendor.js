@@ -1,5 +1,60 @@
 import { useState, useCallback } from 'react';
-import { ID_SEEDS, ID_CROP_CATEGORIES } from '../constants/app_ids';
+import { ID_SEEDS, ID_CROP_CATEGORIES, getRaritySeedId } from '../constants/app_ids';
+
+// Hidden crop pool per pack tier — player never sees these odds
+const CROP_POOLS = {
+  2: [ // Pico
+    { seeds: [ID_SEEDS.POTATO, ID_SEEDS.TURNIP], weight: 40 },
+    { seeds: [ID_SEEDS.LETTUCE],                 weight: 25 },
+    { seeds: [ID_SEEDS.CABBAGE],                 weight: 20 },
+    { seeds: [ID_SEEDS.ONION],                   weight: 10 },
+    { seeds: [ID_SEEDS.RADISH],                  weight:  5 },
+  ],
+  3: [ // Basic
+    { seeds: [ID_SEEDS.WHEAT, ID_SEEDS.TOMATO, ID_SEEDS.CARROT, ID_SEEDS.CORN],       weight: 40 },
+    { seeds: [ID_SEEDS.PUMPKIN, ID_SEEDS.PEPPER, ID_SEEDS.PARSNIP],                    weight: 25 },
+    { seeds: [ID_SEEDS.CELERY, ID_SEEDS.BROCCOLI, ID_SEEDS.BOKCHOY, ID_SEEDS.EGGPLANT], weight: 20 },
+    { seeds: [ID_SEEDS.CAULIFLOWER, ID_SEEDS.BERRY],                                   weight: 10 },
+    { seeds: [ID_SEEDS.GRAPES],                                                         weight:  5 },
+  ],
+  4: [ // Premium
+    { seeds: [ID_SEEDS.BANANA, ID_SEEDS.MANGO, ID_SEEDS.AVOCADO],                     weight: 40 },
+    { seeds: [ID_SEEDS.PINEAPPLE, ID_SEEDS.BLUEBERRY, ID_SEEDS.ARTICHOKE],            weight: 25 },
+    { seeds: [ID_SEEDS.PAPAYA, ID_SEEDS.FIG],                                          weight: 20 },
+    { seeds: [ID_SEEDS.LICHI, ID_SEEDS.LAVENDER],                                      weight: 10 },
+    { seeds: [ID_SEEDS.DRAGON_FRUIT, ID_SEEDS.POMEGRANATE, ID_SEEDS.APPLE],              weight:  5 },
+  ],
+};
+
+// Visible quality rarity roll — player sees this
+const RARITY_ROLL_TABLE = [
+  { level: 1, weight: 50 }, // Common    — 1 produce
+  { level: 2, weight: 25 }, // Uncommon  — 2 produce
+  { level: 3, weight: 15 }, // Rare      — 3 produce
+  { level: 4, weight:  7 }, // Epic      — 4 produce
+  { level: 5, weight:  3 }, // Legendary — 5 produce
+];
+
+function weightedPick(table) {
+  const total = table.reduce((s, t) => s + t.weight, 0);
+  let r = Math.random() * total;
+  for (const entry of table) {
+    r -= entry.weight;
+    if (r <= 0) return entry;
+  }
+  return table[table.length - 1];
+}
+
+function rollSeed(tier) {
+  const pool = CROP_POOLS[tier];
+  if (!pool) return null;
+  // Roll 1: which crop (hidden)
+  const cropTier = weightedPick(pool);
+  const baseSeedId = cropTier.seeds[Math.floor(Math.random() * cropTier.seeds.length)];
+  // Roll 2: which quality (visible)
+  const rarityRoll = weightedPick(RARITY_ROLL_TABLE);
+  return getRaritySeedId(baseSeedId, rarityRoll.level);
+}
 
 export const useVendor = () => {
   const [loading, setLoading] = useState(false);
@@ -63,28 +118,16 @@ export const useVendor = () => {
       if (!raw) throw new Error("No pending request");
       const { count, tier } = JSON.parse(raw);
       
-      const seedValues = Object.values(ID_SEEDS).filter(id => typeof id === 'number');
-      
-      let pool = [];
-      
-      if (tier === 1) pool = [ID_SEEDS.POTATO, ID_SEEDS.CORN, ID_SEEDS.TOMATO, ID_SEEDS.LETTUCE].filter(x => x);
-      else if (tier === 2) pool = [ID_SEEDS.CABBAGE, ID_SEEDS.ONION, ID_SEEDS.RADISH, ID_SEEDS.WHEAT, ID_SEEDS.CARROT].filter(x => x);
-      else if (tier === 3) pool = [ID_SEEDS.PUMPKIN, ID_SEEDS.CHILI, ID_SEEDS.PARSNAP, ID_SEEDS.CELERY, ID_SEEDS.BROCCOLI, ID_SEEDS.CAULIFLOWER, ID_SEEDS.BERRY, ID_SEEDS.GRAPES].filter(x => x);
-      else if (tier === 4) pool = [ID_SEEDS.BANANA, ID_SEEDS.MANGO, ID_SEEDS.AVOCADO, ID_SEEDS.PINEAPPLE, ID_SEEDS.BLUEBERRY, ID_SEEDS.ARTICHOKE, ID_SEEDS.PAPAYA, ID_SEEDS.FIG, ID_SEEDS.LYCHEE, ID_SEEDS.LAVENDER, ID_SEEDS.DRAGONFRUIT].filter(x => x);
-
-      // Fallback if specific seeds are undefined or pool is empty
-      if (!pool || pool.length === 0) {
-         const targetCategory = tier === 1 ? ID_CROP_CATEGORIES.FEEBLE_SEED : tier === 2 ? ID_CROP_CATEGORIES.PICO_SEED : tier === 3 ? ID_CROP_CATEGORIES.BASIC_SEED : ID_CROP_CATEGORIES.PREMIUM_SEED;
-         pool = seedValues.filter(id => (id >> 8) === targetCategory || ((id >> 16) & 0xFF) === targetCategory);
-      }
-      
-      if (!pool || pool.length === 0) {
-          pool = seedValues;
-      }
-
       const revealedSeeds = [];
       for (let i = 0; i < count; i++) {
-        revealedSeeds.push(pool[Math.floor(Math.random() * pool.length)]);
+        const seedId = rollSeed(tier);
+        // Fallback for tier 1 (Feeble) or unknown tiers — pick a random base seed
+        if (seedId === null) {
+          const fallback = Object.values(ID_SEEDS).filter(id => typeof id === 'number');
+          revealedSeeds.push(fallback[Math.floor(Math.random() * fallback.length)]);
+        } else {
+          revealedSeeds.push(seedId);
+        }
       }
 
       const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');

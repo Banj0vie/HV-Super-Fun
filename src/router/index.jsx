@@ -640,6 +640,15 @@ const AdminPanel = () => {
       return;
     }
 
+    if (cmd === 'onion pack') {
+      localStorage.setItem('admin_onion_pack_pending', '1');
+      window.dispatchEvent(new CustomEvent('openDialog', { detail: 'ID_MARKET_HOTSPOTS_VENDOR' }));
+      window.dispatchEvent(new CustomEvent('adminOnionPack'));
+      show("Executed: onion pack opened", "success");
+      setConsoleInput('');
+      return;
+    }
+
     if (cmd === 'crazycat') {
       window.dispatchEvent(new CustomEvent('crazyCatShake'));
       show("Executed: Crazy cat shake!", "success");
@@ -970,7 +979,7 @@ const AdminPanel = () => {
             e.currentTarget.style.transform = 'scale(1)';
               e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
             }}
-          style={{ position: 'fixed', top: '270px', right: '20px', zIndex: tutorialStep === 26 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 26 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
+          style={{ position: 'fixed', top: '420px', right: '20px', zIndex: tutorialStep === 26 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 26 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
           >
           {(!seenCrafting && tutorialStep >= 26) && <div style={badgeStyle}>!</div>}
           <img src="/images/crafting/crafting.png" alt="Crafting" style={{ height: '240px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src = '/images/crafting/Crafting.png'; }} />
@@ -998,7 +1007,7 @@ const AdminPanel = () => {
             e.currentTarget.style.transform = 'scale(1)';
               e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
             }}
-          style={{ position: 'fixed', top: '20px', right: '20px', zIndex: tutorialStep === 29 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 29 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
+          style={{ position: 'fixed', top: '170px', right: '20px', zIndex: tutorialStep === 29 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 29 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
           >
           {(!seenWeightContest && tutorialStep >= 29) && <div style={badgeStyle}>!</div>}
           <img src="/images/weight/weightcontest.png" alt="Weight Contest" style={{ height: '240px', objectFit: 'contain' }} />
@@ -1057,7 +1066,7 @@ const AdminPanel = () => {
             e.currentTarget.style.transform = 'scale(1)';
               e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
             }}
-          style={{ position: 'fixed', top: '520px', right: '20px', zIndex: tutorialStep === 27 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 27 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
+          style={{ position: 'fixed', top: '670px', right: '20px', zIndex: tutorialStep === 27 ? 100001 : 9998, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', animation: tutorialStep === 27 ? 'craftingGlow 1.5s infinite' : 'none', borderRadius: '12px' }}
           >
           {(hasUnclaimedDaily && !seenCalendar) && <div style={badgeStyle}>!</div>}
           <img src="/images/calendar/calendar.png" alt="Calendar" style={{ height: '240px', objectFit: 'contain' }} />

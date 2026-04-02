@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ID_PRODUCE_ITEMS } from '../constants/app_ids';
+import { ALL_ITEMS } from '../constants/item_data';
 import { getGrowthTime } from '../utils/basic';
 
 export const useFarming = () => {
@@ -74,7 +75,8 @@ export const useFarming = () => {
                     }
                     
                     const produceToGive = matchingProduce || Object.values(ID_PRODUCE_ITEMS).find(id => typeof id === 'number');
-                    if (produceToGive) sandboxProduce[produceToGive] = (sandboxProduce[produceToGive] || 0) + 3;
+                    const produceCount = ALL_ITEMS[crop.id]?.produceCount ?? 1;
+                    if (produceToGive) sandboxProduce[produceToGive] = (sandboxProduce[produceToGive] || 0) + produceCount;
                 }
                 crops[slot] = { id: 0, endTime: 0, prodMultiplier: 1000, tokenMultiplier: 1000, growthElixir: 0 };
             });

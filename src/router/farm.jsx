@@ -1902,7 +1902,7 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
   return (
     <>
     {tutorialStep === 26 && (
-      <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100002 }}>
+      <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100002 }}>
         <div style={{ position: 'relative', width: '666px' }}>
           <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
           <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -2870,9 +2870,14 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <div style={{ position: 'relative', width: '500px' }}>
-        <img src="/images/mail/mailbox.png" alt="Mailbox" style={{ width: '100%', display: 'block', userSelect: 'none' }} draggable={false} />
-        {/* Close button over the X in top-right */}
-        <div onClick={onClose} style={{ position: 'absolute', top: '5%', right: '0%', width: '16%', height: '10%', cursor: 'pointer', zIndex: 1 }} />
+        <img src="/images/mail/Mailboxx.png" alt="Mailbox" style={{ width: '100%', display: 'block', userSelect: 'none' }} draggable={false} />
+        {/* Close button - mailboxclose image at top right */}
+        <img src="/images/mail/mailboxclose.png" alt="Close" onClick={onClose} style={{ position: 'absolute', top: '11.2%', right: '-4.9%', width: '15%', cursor: 'pointer', zIndex: 2, userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }} draggable={false}
+          onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
+          onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
+          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
+          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+        />
         {/* Mail list content area */}
         <div style={{ position: 'absolute', top: '24%', left: '49%', transform: 'translateX(-50%)', width: '78%', bottom: '12%', overflowY: activeQuestsList.length > 5 ? 'auto' : 'visible', overflowX: 'visible', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
           {activeQuestsList.length > 0 ? activeQuestsList.map(quest => {
@@ -6233,17 +6238,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
       {tutorialStep >= 11 && <WeatherOverlay />}
       
-      {/* Farming Level HUD Overlay */}
-      <div style={{ position: 'absolute', top: '20px', left: isToolsOpen ? '120px' : '120px', zIndex: 9998, backgroundColor: 'rgba(31, 22, 16, 0.9)', padding: '10px 20px', borderRadius: '12px', border: '3px solid #5a402a', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.5)', pointerEvents: 'none', transition: 'all 0.3s ease', width: '150px' }}>
-        <span style={{ color: '#ccc', fontFamily: 'monospace', fontSize: '14px' }}>FARMING LEVEL</span>
-        <span style={{ color: '#00ff41', fontFamily: 'monospace', fontSize: '28px', fontWeight: 'bold' }}>{farmingLevel}</span>
-        <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '4px', marginTop: '5px', overflow: 'hidden' }}>
-          <div style={{ width: `${farmingProgress}%`, height: '100%', backgroundColor: '#00ff41', transition: 'width 0.3s' }} />
-        </div>
-      </div>
 
-      {/* Farming Level Banner - Top Center */}
-      <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
+      {/* Farming Level Banner - Top Right */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
         <div style={{ position: 'relative', display: 'inline-block', left: '-10px' }}>
           <img src="/images/farming/farmpfp.png" style={{ height: '80px', width: '80px', objectFit: 'contain', display: 'block' }} />
           <img src="/images/fish/fisherpfpborder.png" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', objectFit: 'contain' }} />
@@ -6264,8 +6261,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         width={width}
         height={height}
         dialogs={dialogs}
-        hideMenu={isFarmMenu || tutorialStep < 10}
+        hideMenu={isFarmMenu}
         bees={bees}
+        initialScale={1.3}
         disablePanZoom
       >
         <FarmInterface
@@ -7109,7 +7107,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   <style>{`.tutorial-img { transition: transform 0.08s, filter 0.08s; cursor: pointer; } .tutorial-img:active { transform: scale(0.96); filter: brightness(0.8); }`}</style>
 
   {tutorialStep === 3 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000, cursor: 'pointer' }}
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000, cursor: 'pointer' }}
       onClick={() => { setTutorialStep(4); localStorage.setItem('sandbox_tutorial_step', '4'); }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
@@ -7136,7 +7134,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 4 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7149,7 +7147,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 5 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7162,7 +7160,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 6 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7175,7 +7173,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 7 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7188,7 +7186,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 8 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7201,7 +7199,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 9 && !tutorialCrowDone && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7220,7 +7218,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 9 && tutorialCrowDone && !tutorialGrowSkipped && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7233,7 +7231,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 9 && tutorialGrowSkipped && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7252,7 +7250,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 10 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`
         a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         a[href*="/market"], img[src*="market"], img[src*="Market"] {
@@ -7278,7 +7276,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 25 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000, pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000, pointerEvents: 'none' }}>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
@@ -7299,7 +7297,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+      <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
         <div style={{ position: 'relative', width: '666px' }}>
           <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
           <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
@@ -7313,7 +7311,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 27 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
@@ -7333,7 +7331,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 28 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
@@ -7360,7 +7358,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 29 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`
         a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
         @keyframes craftingGlow {
@@ -7380,7 +7378,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 30 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
@@ -7407,7 +7405,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
   {tutorialStep === 31 && (
-    <div style={{ position: 'fixed', right: '0px', bottom: '0px', zIndex: 100000 }}>
+    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <div style={{ position: 'relative', width: '666px' }}>
         <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
         <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>

@@ -1,5 +1,5 @@
 import { baitImages, chestImages, fishImages, fishingRodImages, potionImages } from "./_baseimages";
-import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_LOOT_CATEGORIES, ID_FISHING_RODS } from "./app_ids";
+import { ID_SEEDS, ID_PRODUCE_ITEMS, ID_BAIT_ITEMS, ID_FISH_ITEMS, ID_CHEST_ITEMS, ID_POTION_ITEMS, ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_ITEM_CATEGORIES, ID_POTION_CATEGORIES, ID_LOOT_CATEGORIES, ID_FISHING_RODS, getRaritySeedId } from "./app_ids";
 
 export const IMAGE_URL_CROP = "/public/images/crops/seeds.webp";
 // All items data with categories
@@ -115,6 +115,17 @@ export const ALL_ITEMS = {
     honey: 108,
     lockedHoney: 162,
   },
+  [ID_SEEDS.TURNIP]: {
+    id: ID_SEEDS.TURNIP,
+    label: "TURNIP",
+    category: ID_ITEM_CATEGORIES.SEED,
+    subCategory: ID_CROP_CATEGORIES.PICO_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 29,
+    honey: 10,
+    lockedHoney: 15,
+  },
   [ID_SEEDS.WHEAT]: {
     id: ID_SEEDS.WHEAT,
     label: "WHEAT",
@@ -170,9 +181,9 @@ export const ALL_ITEMS = {
     honey: 90,
     lockedHoney: 135,
   },
-  [ID_SEEDS.CHILI]: {
-    id: ID_SEEDS.CHILI,
-    label: "CHILI",
+  [ID_SEEDS.PEPPER]: {
+    id: ID_SEEDS.PEPPER,
+    label: "PEPPER",
     category: ID_ITEM_CATEGORIES.SEED,
     subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
     type: ID_RARE_TYPE.UNCOMMON,
@@ -246,6 +257,28 @@ export const ALL_ITEMS = {
     pos: 12,
     honey: 540,
     lockedHoney: 810,
+  },
+  [ID_SEEDS.BOKCHOY]: {
+    id: ID_SEEDS.BOKCHOY,
+    label: "BOK CHOY",
+    category: ID_ITEM_CATEGORIES.SEED,
+    subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 30,
+    honey: 90,
+    lockedHoney: 135,
+  },
+  [ID_SEEDS.EGGPLANT]: {
+    id: ID_SEEDS.EGGPLANT,
+    label: "EGGPLANT",
+    category: ID_ITEM_CATEGORIES.SEED,
+    subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 33,
+    honey: 90,
+    lockedHoney: 135,
   },
   [ID_SEEDS.BANANA]: {
     id: ID_SEEDS.BANANA,
@@ -368,6 +401,28 @@ export const ALL_ITEMS = {
     honey: 4400,
     lockedHoney: 6600,
   },
+  [ID_SEEDS.POMEGRANATE]: {
+    id: ID_SEEDS.POMEGRANATE,
+    label: "POMEGRANATE",
+    category: ID_ITEM_CATEGORIES.SEED,
+    subCategory: ID_CROP_CATEGORIES.PREMIUM_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 31,
+    honey: 800,
+    lockedHoney: 1200,
+  },
+  [ID_SEEDS.APPLE]: {
+    id: ID_SEEDS.APPLE,
+    label: "APPLE",
+    category: ID_ITEM_CATEGORIES.SEED,
+    subCategory: ID_CROP_CATEGORIES.PREMIUM_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 32,
+    honey: 800,
+    lockedHoney: 1200,
+  },
 
   // Produce items
   [ID_PRODUCE_ITEMS.POTATO]: {
@@ -425,6 +480,17 @@ export const ALL_ITEMS = {
     honey: 108,
     lockedHoney: 162,
   },
+  [ID_PRODUCE_ITEMS.TURNIP]: {
+    id: ID_PRODUCE_ITEMS.TURNIP,
+    label: "Turnip",
+    category: ID_ITEM_CATEGORIES.PRODUCE,
+    subCategory: ID_CROP_CATEGORIES.PICO_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 29,
+    honey: 10,
+    lockedHoney: 15,
+  },
   [ID_PRODUCE_ITEMS.WHEAT]: {
     id: ID_PRODUCE_ITEMS.WHEAT,
     label: "Wheat",
@@ -480,9 +546,9 @@ export const ALL_ITEMS = {
     honey: 90,
     lockedHoney: 135,
   },
-  [ID_PRODUCE_ITEMS.CHILI]: {
-    id: ID_PRODUCE_ITEMS.CHILI,
-    label: "Chili",
+  [ID_PRODUCE_ITEMS.PEPPER]: {
+    id: ID_PRODUCE_ITEMS.PEPPER,
+    label: "Pepper",
     category: ID_ITEM_CATEGORIES.PRODUCE,
     subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
     type: ID_RARE_TYPE.UNCOMMON,
@@ -556,6 +622,28 @@ export const ALL_ITEMS = {
     pos: 12,
     honey: 540,
     lockedHoney: 810,
+  },
+  [ID_PRODUCE_ITEMS.BOKCHOY]: {
+    id: ID_PRODUCE_ITEMS.BOKCHOY,
+    label: "Bok Choy",
+    category: ID_ITEM_CATEGORIES.PRODUCE,
+    subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 30,
+    honey: 90,
+    lockedHoney: 135,
+  },
+  [ID_PRODUCE_ITEMS.EGGPLANT]: {
+    id: ID_PRODUCE_ITEMS.EGGPLANT,
+    label: "Eggplant",
+    category: ID_ITEM_CATEGORIES.PRODUCE,
+    subCategory: ID_CROP_CATEGORIES.BASIC_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 33,
+    honey: 90,
+    lockedHoney: 135,
   },
   [ID_PRODUCE_ITEMS.BANANA]: {
     id: ID_PRODUCE_ITEMS.BANANA,
@@ -677,6 +765,28 @@ export const ALL_ITEMS = {
     pos: 23,
     honey: 4400,
     lockedHoney: 6600,
+  },
+  [ID_PRODUCE_ITEMS.POMEGRANATE]: {
+    id: ID_PRODUCE_ITEMS.POMEGRANATE,
+    label: "Pomegranate",
+    category: ID_ITEM_CATEGORIES.PRODUCE,
+    subCategory: ID_CROP_CATEGORIES.PREMIUM_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 31,
+    honey: 800,
+    lockedHoney: 1200,
+  },
+  [ID_PRODUCE_ITEMS.APPLE]: {
+    id: ID_PRODUCE_ITEMS.APPLE,
+    label: "Apple",
+    category: ID_ITEM_CATEGORIES.PRODUCE,
+    subCategory: ID_CROP_CATEGORIES.PREMIUM_SEED,
+    type: ID_RARE_TYPE.COMMON,
+    image: IMAGE_URL_CROP,
+    pos: 32,
+    honey: 800,
+    lockedHoney: 1200,
   },
 
   // Bait items
@@ -999,6 +1109,33 @@ export const ALL_ITEMS = {
   },
 };
 
+// Generate rarity variant entries for all Pico, Basic, and Premium seeds.
+// Each variant shares the same sprite/label as its base seed but has a different type and produceCount.
+const _RARITY_VARIANT_SEEDS = [
+  ID_SEEDS.POTATO, ID_SEEDS.LETTUCE, ID_SEEDS.CABBAGE, ID_SEEDS.ONION, ID_SEEDS.RADISH, ID_SEEDS.TURNIP,
+  ID_SEEDS.WHEAT, ID_SEEDS.TOMATO, ID_SEEDS.CARROT, ID_SEEDS.CORN,
+  ID_SEEDS.PUMPKIN, ID_SEEDS.PEPPER, ID_SEEDS.PARSNIP,
+  ID_SEEDS.CELERY, ID_SEEDS.BROCCOLI,
+  ID_SEEDS.CAULIFLOWER, ID_SEEDS.BERRY, ID_SEEDS.GRAPES, ID_SEEDS.BOKCHOY, ID_SEEDS.EGGPLANT,
+  ID_SEEDS.BANANA, ID_SEEDS.MANGO, ID_SEEDS.AVOCADO,
+  ID_SEEDS.PINEAPPLE, ID_SEEDS.BLUEBERRY, ID_SEEDS.ARTICHOKE,
+  ID_SEEDS.PAPAYA, ID_SEEDS.FIG,
+  ID_SEEDS.LICHI, ID_SEEDS.LAVENDER, ID_SEEDS.DRAGON_FRUIT, ID_SEEDS.POMEGRANATE, ID_SEEDS.APPLE,
+];
+const _RARITY_VARIANTS = [
+  { type: ID_RARE_TYPE.UNCOMMON, level: 2, produceCount: 2 },
+  { type: ID_RARE_TYPE.RARE,     level: 3, produceCount: 3 },
+  { type: ID_RARE_TYPE.EPIC,     level: 4, produceCount: 4 },
+  { type: ID_RARE_TYPE.LEGENDARY, level: 5, produceCount: 5 },
+];
+_RARITY_VARIANT_SEEDS.forEach(baseId => {
+  _RARITY_VARIANTS.forEach(({ type, level, produceCount }) => {
+    const variantId = getRaritySeedId(baseId, level);
+    const base = ALL_ITEMS[baseId];
+    if (base) ALL_ITEMS[variantId] = { ...base, id: variantId, type, produceCount };
+  });
+});
+
 // Merged ALL_ITEM_TREE from item_all for filtering/navigation
 export const ALL_ITEM_TREE = [
   {
@@ -1016,6 +1153,7 @@ export const ALL_ITEM_TREE = [
               { id: ID_SEEDS.CABBAGE, label: "Cabbage" },
               { id: ID_SEEDS.ONION, label: "Onion" },
               { id: ID_SEEDS.RADISH, label: "Radish" },
+              { id: ID_SEEDS.TURNIP, label: "Turnip" },
             ]
           },
           {
@@ -1025,13 +1163,15 @@ export const ALL_ITEM_TREE = [
               { id: ID_SEEDS.CARROT, label: "Carrot" },
               { id: ID_SEEDS.CORN, label: "Corn" },
               { id: ID_SEEDS.PUMPKIN, label: "Pumpkin" },
-              { id: ID_SEEDS.CHILI, label: "Chili" },
+              { id: ID_SEEDS.PEPPER, label: "Pepper" },
               { id: ID_SEEDS.PARSNIP, label: "Parsnip" },
               { id: ID_SEEDS.CELERY, label: "Celery" },
               { id: ID_SEEDS.BROCCOLI, label: "Broccoli" },
               { id: ID_SEEDS.CAULIFLOWER, label: "Cauliflower" },
               { id: ID_SEEDS.BERRY, label: "Berry" },
               { id: ID_SEEDS.GRAPES, label: "Grapes" },
+              { id: ID_SEEDS.BOKCHOY, label: "Bok Choy" },
+              { id: ID_SEEDS.EGGPLANT, label: "Eggplant" },
             ]
           },
           {
@@ -1047,6 +1187,8 @@ export const ALL_ITEM_TREE = [
               { id: ID_SEEDS.LICHI, label: "Lichi" },
               { id: ID_SEEDS.LAVENDER, label: "Lavender" },
               { id: ID_SEEDS.DRAGON_FRUIT, label: "Dragon Fruit" },
+              { id: ID_SEEDS.POMEGRANATE, label: "Pomegranate" },
+              { id: ID_SEEDS.APPLE, label: "Apple" },
             ]
           },
         ],

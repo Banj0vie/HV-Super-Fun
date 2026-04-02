@@ -323,7 +323,7 @@ export const useItems = () => {
                   { id: ID_PRODUCE_ITEMS.CARROT, label: "Carrot" },
                   { id: ID_PRODUCE_ITEMS.CORN, label: "Corn" },
                   { id: ID_PRODUCE_ITEMS.PUMPKIN, label: "Pumpkin" },
-                  { id: ID_PRODUCE_ITEMS.CHILI, label: "Chili" },
+                  { id: ID_PRODUCE_ITEMS.PEPPER, label: "Pepper" },
                   { id: ID_PRODUCE_ITEMS.PARSNAP, label: "Parsnip" },
                   { id: ID_PRODUCE_ITEMS.CELERY, label: "Celery" },
                   { id: ID_PRODUCE_ITEMS.BROCCOLI, label: "Broccoli" },

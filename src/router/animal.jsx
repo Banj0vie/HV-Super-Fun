@@ -392,6 +392,7 @@ const AnimalFarm = () => {
         width={width}
         height={height}
         isBig
+        initialScale={1.3}
         disablePanZoom
       >
         {/* Solid Dark Forest Green Background Overlay */}

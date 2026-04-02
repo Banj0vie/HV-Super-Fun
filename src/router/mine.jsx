@@ -434,6 +434,7 @@ const Mine = () => {
         dialogs={[]}
         width={width}
         height={height}
+        initialScale={1.3}
         disablePanZoom
       >
       {mineRocks.filter(r => !clearedRocks.includes(r.id)).map((rock) => {

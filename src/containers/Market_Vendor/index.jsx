@@ -13,6 +13,8 @@ import RollChances from "./RollChances";
 import {
   ID_CROP_CATEGORIES,
   ID_SEED_SHOP_PAGES,
+  ID_SEEDS,
+  getRaritySeedId,
 } from "../../constants/app_ids";
 import { SEED_PACK_STATUS } from "../../constants/item_seed";
 import { useVendor, useFarming } from "../../hooks/useContracts";
@@ -73,6 +75,36 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
       window.isVendorOpen = false;
       window.dispatchEvent(new Event('vendorDialogToggled'));
     };
+  }, []);
+
+  useEffect(() => {
+    const triggerOnionPack = () => {
+      const onionSeeds = [
+        getRaritySeedId(ID_SEEDS.ONION, 1),
+        getRaritySeedId(ID_SEEDS.ONION, 2),
+        getRaritySeedId(ID_SEEDS.ONION, 3),
+        getRaritySeedId(ID_SEEDS.ONION, 4),
+        getRaritySeedId(ID_SEEDS.ONION, 5),
+      ];
+      localStorage.removeItem('admin_onion_pack_pending');
+      setRollingInfo({
+        id: 2,
+        count: onionSeeds.length,
+        isReveal: true,
+        isComplete: true,
+        isFallback: false,
+        revealedSeeds: onionSeeds,
+      });
+      setIsRollingDlg(true);
+    };
+
+    // Fire immediately if the flag was set before this dialog mounted
+    if (localStorage.getItem('admin_onion_pack_pending') === '1') {
+      triggerOnionPack();
+    }
+
+    window.addEventListener('adminOnionPack', triggerOnionPack);
+    return () => window.removeEventListener('adminOnionPack', triggerOnionPack);
   }, []);
 
   // Memoized initial seed status to prevent unnecessary re-renders
@@ -214,18 +246,6 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
         const tier = tierMap[id];
         const farmingLevel = Math.floor(Math.sqrt((parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10) || 0) / 150)) + 1;
 
-        if (tier === 2 && farmingLevel < 4) {
-           show("You need Farming Level 4 to unlock Pico Seed Packs!", "warning");
-           return;
-        }
-        if (tier === 3 && farmingLevel < 7) {
-           show("You need Farming Level 7 to unlock Basic Seed Packs!", "warning");
-           return;
-        }
-        if (tier === 4 && farmingLevel < 10) {
-           show("You need Farming Level 10 to unlock Premium Seed Packs!", "warning");
-           return;
-        }
       }
 
       setSelectedSeed(id);
@@ -403,18 +423,6 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
       const tier = tierMap[selectedSeed];
       const farmingLevel = Math.floor(Math.sqrt((parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10) || 0) / 150)) + 1;
 
-      if (tier === 2 && farmingLevel < 4) {
-         show("You need Farming Level 4 to buy Pico Seed Packs!", "error");
-         return;
-      }
-      if (tier === 3 && farmingLevel < 7) {
-         show("You need Farming Level 7 to buy Basic Seed Packs!", "error");
-         return;
-      }
-      if (tier === 4 && farmingLevel < 10) {
-         show("You need Farming Level 10 to buy Premium Seed Packs!", "error");
-         return;
-      }
 
       // Set buying state for this specific item
       setBuyingItem({

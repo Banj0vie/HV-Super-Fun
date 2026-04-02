@@ -311,6 +311,7 @@ const House = () => {
         width={width}
         height={height}
         bees={bees}
+        initialScale={1.3}
         disablePanZoom
       >
         {/* Fishing Board UI Overlay inside viewport */}

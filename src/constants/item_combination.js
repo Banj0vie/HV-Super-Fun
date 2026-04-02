@@ -31,7 +31,7 @@ export const ITEM_COMBI = {
                 count: 8,
             },
             {
-                ids: [ID_PRODUCE_ITEMS.PUMPKIN, ID_PRODUCE_ITEMS.CHILI, ID_PRODUCE_ITEMS.PARSNAP],
+                ids: [ID_PRODUCE_ITEMS.PUMPKIN, ID_PRODUCE_ITEMS.PEPPER, ID_PRODUCE_ITEMS.PARSNAP],
                 count: 4,
             },
             {
