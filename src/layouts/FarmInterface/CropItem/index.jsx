@@ -274,10 +274,10 @@ const CropItem = ({
       {!isDisabled && isPrepStage && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
           {prep.status === 0 && (
-            <div style={{ fontSize: '40px', color: '#ff4444', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>❌</div>
+            <img src="/images/farming/x.png" alt="X" style={{ width: '115px', height: '115px', objectFit: 'contain', marginTop: '115px', marginLeft: '-34px' }} />
           )}
           {prep.status === 1 && (
-            <div style={{ width: '40px', height: '15px', backgroundColor: '#1a1008', borderRadius: '50%', border: '2px solid #000', boxShadow: 'inset 0 5px 10px rgba(0,0,0,0.8)' }}></div>
+            <img src="/images/farming/hole.png" alt="Hole" style={{ width: '220px', height: '220px', objectFit: 'contain', marginTop: '115px', marginLeft: '-48px' }} />
           )}
           {prep.status === 2 && (
             <div style={{ position: 'relative', width: '40px', height: '15px', backgroundColor: '#1a1008', borderRadius: '50%', border: '2px solid #000', boxShadow: 'inset 0 5px 10px rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

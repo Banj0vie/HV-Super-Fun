@@ -852,6 +852,13 @@ const AdminPanel = () => {
       return;
     }
 
+    if (cmd === 'x') {
+      window.dispatchEvent(new CustomEvent('setAllPlotsX'));
+      show('Executed: all plots set to X state', 'success');
+      setConsoleInput('');
+      return;
+    }
+
     if (cmd !== '') show(`Unknown command: ${consoleInput}`, "error");
     setConsoleInput('');
   };
@@ -911,6 +918,7 @@ const AdminPanel = () => {
       'reset tavern': () => true,
       'skip cat': () => true,
       'skip market': () => true,
+      'x': () => true,
     };
 
     for (const cmdPrefix in commands) {

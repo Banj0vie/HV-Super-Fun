@@ -3905,6 +3905,13 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     };
     const onToggleAutoSpawn = (e) => autoSpawnRef.current = e.detail;
     const onResetPlotPrep = (e) => updatePlotPrep(e.detail.plotIndex, { status: 0 });
+    const onSetAllPlotsX = () => {
+      const next = {};
+      for (let i = 0; i < maxPlots; i++) next[i] = { status: 0 };
+      setPlotPrep(next);
+      localStorage.setItem('sandbox_plot_prep', JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent('plotPrepUpdated', { detail: next }));
+    };
     const onSkipTutorial = () => {
       setTutorialStep(7);
       localStorage.setItem('sandbox_tutorial_step', '7');
@@ -3963,6 +3970,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     window.addEventListener('changeSimulatedDate', onChangeSimulatedDate);
     window.addEventListener('toggleAutoSpawn', onToggleAutoSpawn);
     window.addEventListener('resetPlotPrep', onResetPlotPrep);
+    window.addEventListener('setAllPlotsX', onSetAllPlotsX);
     window.addEventListener('skipTutorial', onSkipTutorial);
     window.addEventListener('skipTime', onSkipTime);
     window.addEventListener('skipCatTime', onSkipCatTime);
@@ -3982,6 +3990,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       window.removeEventListener('changeSimulatedDate', onChangeSimulatedDate);
       window.removeEventListener('toggleAutoSpawn', onToggleAutoSpawn);
       window.removeEventListener('resetPlotPrep', onResetPlotPrep);
+      window.removeEventListener('setAllPlotsX', onSetAllPlotsX);
       window.removeEventListener('skipTutorial', onSkipTutorial);
       window.removeEventListener('skipTime', onSkipTime);
       window.removeEventListener('skipCatTime', onSkipCatTime);
@@ -6292,7 +6301,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           style={{
             position: 'absolute',
             top: '518px',
-            left: '876px',
+            left: '874px',
             width: '28px',
             zIndex: 6,
             cursor: 'pointer',
@@ -6318,7 +6327,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           style={{
             position: 'absolute',
             top: '508px',
-            left: '790px',
+            left: '618px',
             width: '52px',
             zIndex: 6,
             cursor: 'pointer',
@@ -6369,8 +6378,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           onClick={() => { toggleTool('bucket'); const next = selectedTool !== 'bucket'; setIsWatering(next); setIsHoeing(false); setIsDigging(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
           style={{
             position: 'absolute',
-            top: '507px',
-            left: '615px',
+            top: '508px',
+            left: '785px',
             width: '63px',
             zIndex: 6,
             cursor: 'pointer',
@@ -6408,10 +6417,57 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         />
         {/* Well */}
         <img src="/images/land/well.png" alt="Well" style={{ position: 'absolute', top: '410px', left: '250px', width: '190px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
-        <img src="/images/label/welllabel.png" alt="Well Label" style={{ position: 'absolute', top: '360px', left: '265px', width: '68px', pointerEvents: 'none', zIndex: 11, animation: 'mapFloat 2.6s ease-in-out infinite' }} draggable={false} />
+        <img
+          src="/images/label/welllabel.png"
+          alt="Well Label"
+          draggable={false}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(0,191,255,0.8))';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = 'none';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            e.currentTarget.style.transform = 'scale(0.9)';
+            handleWellDrop();
+            setTimeout(() => { if (e.currentTarget) e.currentTarget.style.transform = 'scale(1)'; }, 150);
+          }}
+          style={{ position: 'absolute', top: '425px', left: '325px', width: '68px', zIndex: 11, cursor: 'pointer', animation: 'mapFloat 2.6s ease-in-out infinite', transition: 'filter 0.2s ease' }}
+        />
         {/* Mine */}
         <img src="/images/land/mine.png" alt="Mine" style={{ position: 'absolute', top: '417px', left: '1023.5px', width: '235px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
-        <img src="/images/label/mineslabel.png" alt="Mine Label" style={{ position: 'absolute', top: '367px', left: '1055px', width: '78px', pointerEvents: 'none', zIndex: 11, animation: 'mapFloat 2.6s ease-in-out infinite' }} draggable={false} />
+        <img
+          src="/images/label/mineslabel.png"
+          alt="Mine Label"
+          draggable={false}
+          onMouseEnter={(e) => {
+            if (mineLockTime <= 0) {
+              e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(255,255,255,0.8))';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = 'none';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (mineLockTime > 0) {
+              const m = Math.floor(mineLockTime / 60000);
+              const s = Math.floor((mineLockTime % 60000) / 1000);
+              show(`The mine is resting! Come back in ${m}m ${s}s.`, "error");
+              return;
+            }
+            e.currentTarget.style.transform = 'scale(0.9)';
+            setTimeout(() => { navigate('/mine'); }, 150);
+          }}
+          style={{ position: 'absolute', top: '377px', left: '1145px', width: '78px', zIndex: 11, cursor: mineLockTime > 0 ? 'not-allowed' : 'pointer', animation: 'mapFloat 2.6s ease-in-out infinite', transition: 'filter 0.2s ease', opacity: mineLockTime > 0 ? 0.6 : 1 }}
+        />
 
         <FarmInterface
           key={isFarmMenu ? `preview-${previewUpdateKey}` : "main"}
@@ -6704,7 +6760,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             }
             navigate('/forest');
           }}
-          style={{ position: 'absolute', bottom: 'calc(100% - 180px)', right: 'calc(15% - 1190px)', zIndex: 9998, cursor: forestLockTime > 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', opacity: forestLockTime > 0 ? 0.6 : 1, animation: 'mapFloat 2.6s ease-in-out infinite', willChange: 'transform' }}
+          style={{ position: 'absolute', bottom: 'calc(100% - 170px)', right: 'calc(15% - 1180px)', zIndex: 9998, cursor: forestLockTime > 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', opacity: forestLockTime > 0 ? 0.6 : 1, animation: 'mapFloat 2.6s ease-in-out infinite', willChange: 'transform' }}
         >
           <img src="/images/label/forestlabel (2).png" alt="Forest" style={{ height: '50px', objectFit: 'contain' }} />
           {forestLockTime > 0 && (
