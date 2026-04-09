@@ -3913,8 +3913,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       window.dispatchEvent(new CustomEvent('plotPrepUpdated', { detail: next }));
     };
     const onSkipTutorial = () => {
-      setTutorialStep(7);
-      localStorage.setItem('sandbox_tutorial_step', '7');
+      setTutorialStep(32);
+      localStorage.setItem('sandbox_tutorial_step', '32');
       setIsDigging(false);
       setIsDirting(false);
       setIsSeeding(false);
@@ -6413,27 +6413,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         />
         {/* Well */}
         <img src="/images/land/well.png" alt="Well" style={{ position: 'absolute', top: '410px', left: '250px', width: '190px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
-        <img
-          src="/images/label/welllabel.png"
-          alt="Well Label"
-          draggable={false}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(0,191,255,0.8))';
-            e.currentTarget.style.transform = 'scale(1.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.filter = 'none';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            e.currentTarget.style.transform = 'scale(0.9)';
-            handleWellDrop();
-            setTimeout(() => { if (e.currentTarget) e.currentTarget.style.transform = 'scale(1)'; }, 150);
-          }}
-          style={{ position: 'absolute', top: '425px', left: '325px', width: '68px', zIndex: 11, cursor: 'pointer', animation: 'mapFloat 2.6s ease-in-out infinite', transition: 'filter 0.2s ease' }}
-        />
         {/* Mine */}
         <img src="/images/land/mine.png" alt="Mine" style={{ position: 'absolute', top: '417px', left: '1023.5px', width: '235px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
         {false && <img
