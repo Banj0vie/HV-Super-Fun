@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import "./style.css";
 import {
   FARM_PLOTS_PER_SIDE,
@@ -25,6 +26,9 @@ const CropItem = ({
   selectedIndexes = [], // Add selectedIndexes prop to sync with parent state
 }) => {
   const [highlighted, setHighlighted] = useState(false);
+  const [crowLanded, setCrowLanded] = useState(false);
+  const crowLandedTimerRef = useRef(null);
+  const [crowScreenPos, setCrowScreenPos] = useState(null);
   const [growthProgress, setGrowthProgress] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -169,6 +173,25 @@ const CropItem = ({
   const handleMouseLeave = () => {
     setTooltipVisible(false);
   };
+
+  // Switch from flying to pecking after fly-in animation completes
+  useEffect(() => {
+    if (data.crowCountdown > 0) {
+      // Calculate screen position of this crop-item for portal rendering
+      if (rootRef.current) {
+        const rect = rootRef.current.getBoundingClientRect();
+        setCrowScreenPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.35, plotCX: rect.left + rect.width / 2 - 15, plotCY: rect.top + rect.height * 0.55 + 20 });
+      }
+      setCrowLanded(false);
+      clearTimeout(crowLandedTimerRef.current);
+      crowLandedTimerRef.current = setTimeout(() => setCrowLanded(true), 4800);
+    } else {
+      setCrowLanded(false);
+      setCrowScreenPos(null);
+      clearTimeout(crowLandedTimerRef.current);
+    }
+    return () => clearTimeout(crowLandedTimerRef.current);
+  }, [data.crowCountdown > 0 ? 'active' : 'inactive']);
 
   const getStatusClass = () => {
     if (isDisabled) return "disabled";
@@ -441,55 +464,129 @@ const CropItem = ({
         </div>
       )}
 
-      {/* Crow indicator and countdown */}
-      {data.crowCountdown !== undefined && data.crowCountdown > 0 && (
-        <div 
-          className="crow-container"
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.dispatchEvent(new CustomEvent('scareCrow', { detail: { plotIndex: index } }));
-          }}
-          style={{
-            position: "absolute",
-            top: "35%", 
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 9999, 
-            cursor: "crosshair",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pointerEvents: "auto",
-            animation: "crowFlyIn 1.2s ease-out forwards"
-          }}
-        >
+      {/* Crow indicator and countdown - portalled to body to escape stacking contexts */}
+      {data.crowCountdown !== undefined && data.crowCountdown > 0 && crowScreenPos && createPortal(
+        <div>
           <style>{`
-            @keyframes ratAppear {
-              0% { top: 35%; left: -200px; transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-              100% { top: 35%; left: 50%; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            @keyframes crowFlyInFromLeft {
+              0% { left: -150px; top: -100px; transform: translate(0, 0) scale(0.4); opacity: 0; }
+              70% { opacity: 1; }
+              100% { left: ${crowScreenPos.x + 14}px; top: ${crowScreenPos.y + 40}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
+            @keyframes crowFlyInFromRight {
+              0% { left: calc(100vw + 150px); top: -100px; transform: translate(0, 0) scale(0.4); opacity: 0; }
+              70% { opacity: 1; }
+              100% { left: ${crowScreenPos.x + 14}px; top: ${crowScreenPos.y + 40}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes dirtParticle0  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle1  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle2  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle3  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle4  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle5  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle6  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(0px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle7  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle8  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle9  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle10 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle11 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle12 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle13 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle14 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle15 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle16 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle17 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle18 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle19 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle20 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle21 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle22 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle23 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle24 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle25 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle26 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle27 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle28 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle29 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle30 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle31 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle32 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle33 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle34 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle35 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle36 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle37 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle38 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle39 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle40 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle41 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle42 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle43 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle44 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle45 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle46 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle47 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle48 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle49 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
           `}</style>
-          {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && <div style={{
-            color: '#ff4444',
-            fontWeight: 'bold',
-            fontSize: '18px',
-            textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
-            marginBottom: '-5px',
-            zIndex: 31
-          }}>
-            {data.crowCountdown}s
-          </div>}
-          <img
-            src="/images/crow/crow.jpg"
-            alt="crow"
-            style={{ 
-              width: "55px", // Make the crow slightly larger than the bug!
-              height: "55px",
-              filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))"
+          <div
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent('scareCrow', { detail: { plotIndex: index } }));
             }}
-          />
-        </div>
+            style={{
+              position: "fixed",
+              left: crowLanded ? `${crowScreenPos.x + 14}px` : undefined,
+              top: crowLanded ? `${crowScreenPos.y + 30}px` : undefined,
+              transform: "translate(-50%, -50%)",
+              zIndex: 999999,
+              cursor: "crosshair",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              pointerEvents: "auto",
+              animation: crowLanded ? "none" : (index < 15 ? "crowFlyInFromRight 5s ease-in-out forwards" : "crowFlyInFromLeft 5s ease-in-out forwards")
+            }}
+          >
+            {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && crowLanded && <div style={{
+              color: '#ff4444',
+              fontWeight: 'bold',
+              fontSize: '18px',
+              textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
+              marginBottom: '-5px',
+            }}>
+              {data.crowCountdown}s
+            </div>}
+            <img
+              key={crowLanded ? 'peck' : 'fly'}
+              src={crowLanded ? "/images/badanimals/crowpeck.gif" : "/images/badanimals/crowfly.gif"}
+              alt="crow"
+              style={{
+                width: crowLanded ? "89px" : "74px",
+                height: crowLanded ? "89px" : "74px",
+                filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))",
+                transform: (!crowLanded && index >= 15) ? "scaleX(-1)" : "none"
+              }}
+            />
+          </div>
+          {crowLanded && Array.from({ length: 50 }, (_, i) => (
+            <div key={`dirt-${i}`} style={{
+              position: "fixed",
+              left: `${crowScreenPos.plotCX}px`,
+              top: `${crowScreenPos.plotCY}px`,
+              width: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
+              height: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
+              borderRadius: "50%",
+              backgroundColor: i % 4 === 0 ? "#6b4226" : i % 4 === 1 ? "#8B5E3C" : i % 4 === 2 ? "#a07040" : "#4a2e10",
+              pointerEvents: "none",
+              zIndex: 999998,
+              animation: `dirtParticle${i} 0.9s ease-out infinite`,
+              animationDelay: `${i * 0.06}s`,
+            }} />
+          ))}
+        </div>,
+        document.body
       )}
 
       {/* Rat indicator and countdown */}

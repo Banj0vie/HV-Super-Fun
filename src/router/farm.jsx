@@ -6252,13 +6252,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
       {/* Farming Level Banner - Top Right */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
-        <div style={{ position: 'relative', display: 'inline-block', left: '-10px' }}>
-          <img src="/images/farming/farmpfp.png" style={{ height: '80px', width: '80px', objectFit: 'contain', display: 'block' }} />
-          <img src="/images/fish/fisherpfpborder.png" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90px', height: '90px', objectFit: 'contain' }} />
-        </div>
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img src="/images/fish/fisherbanner.png" style={{ height: '90px', objectFit: 'contain', display: 'block' }} />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '18px' }}>
+          <img src="/images/label/farmerlevellabel.png" style={{ height: '92px', objectFit: 'contain', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '113px', paddingBottom: '18px' }}>
             <span style={{ fontFamily: 'Cartoonist', fontSize: '32px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>LEVEL {farmingLevel}</span>
           </div>
         </div>
@@ -6440,7 +6436,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         />
         {/* Mine */}
         <img src="/images/land/mine.png" alt="Mine" style={{ position: 'absolute', top: '417px', left: '1023.5px', width: '235px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
-        <img
+        {false && <img
           src="/images/label/mineslabel.png"
           alt="Mine Label"
           draggable={false}
@@ -6467,7 +6463,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             setTimeout(() => { navigate('/mine'); }, 150);
           }}
           style={{ position: 'absolute', top: '377px', left: '1145px', width: '78px', zIndex: 11, cursor: mineLockTime > 0 ? 'not-allowed' : 'pointer', animation: 'mapFloat 2.6s ease-in-out infinite', transition: 'filter 0.2s ease', opacity: mineLockTime > 0 ? 0.6 : 1 }}
-        />
+        />}
 
         <FarmInterface
           key={isFarmMenu ? `preview-${previewUpdateKey}` : "main"}
@@ -6735,8 +6731,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
         {tutorialStep >= 32 && (
           <>
-        {/* Forest Label Overlay - Now inside PanZoomViewport */}
-        <div 
+        {/* Forest Label Overlay - temporarily hidden */}
+        {false && <div
           onMouseEnter={(e) => {
             if (forestLockTime <= 0) {
               e.currentTarget.style.transform = 'scale(1.1)';
@@ -6768,7 +6764,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               {Math.floor(forestLockTime / 60000)}m {Math.floor((forestLockTime % 60000) / 1000)}s
             </div>
           )}
-        </div>
+        </div>}
 
         {/* The Well Label Overlay */}
         <div 
@@ -6794,44 +6790,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           </div>
         </div>
 
-        {/* The Mine Label Overlay */}
-        <div 
-          onMouseEnter={(e) => {
-            if (mineLockTime <= 0) {
-              e.currentTarget.style.transform = 'scale(1.1)';
-              e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (mineLockTime <= 0) {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
-            }
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (mineLockTime > 0) {
-              const m = Math.floor(mineLockTime / 60000);
-              const s = Math.floor((mineLockTime % 60000) / 1000);
-              show(`The mine is resting! Come back in ${m}m ${s}s.`, "error");
-              return;
-            }
-            navigate('/mine');
-          }}
-          style={{ display: 'none', position: 'absolute', top: '518px', left: '938px', zIndex: 9998, cursor: mineLockTime > 0 ? 'not-allowed' : 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))', opacity: mineLockTime > 0 ? 0.6 : 1 }}
-        >
-          <div style={{ backgroundColor: 'rgba(31, 22, 16, 0.9)', padding: '15px 30px', borderRadius: '12px', border: '3px solid #5a402a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-            <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: '24px', fontWeight: 'bold', textShadow: '2px 2px 0 #000' }}>
-              ⛏ THE MINE
-            </span>
-            {mineLockTime > 0 && (
-              <span style={{ color: '#ff4444', fontFamily: 'monospace', fontSize: '16px', fontWeight: 'bold', marginTop: '5px' }}>
-                {Math.floor(mineLockTime / 60000)}m {Math.floor((mineLockTime % 60000) / 1000)}s
-              </span>
-            )}
-          </div>
-        </div>
+        {/* The Mine Label Overlay - temporarily hidden */}
           </>
         )}
 

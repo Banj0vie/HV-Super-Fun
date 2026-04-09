@@ -20,6 +20,8 @@ const GameMenu = () => {
             path={item.path}
             icon={item.icon}
             label={item.label}
+            labelIcon={item.labelIcon}
+            iconScale={item.iconScale}
             isActive={isActive}
           />
         );

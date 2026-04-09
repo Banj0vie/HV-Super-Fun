@@ -972,7 +972,7 @@ const AdminPanel = () => {
       {!isPanelOpen && !isForagingOrMining && location.pathname === '/farm' && (
         <>
           {/* Crafting Icon Overlay */}
-          {tutorialStep >= 26 && (
+          {false && tutorialStep >= 26 && (
           <div
             onClick={() => {
               setShowCraftingDialog(true);
@@ -995,7 +995,7 @@ const AdminPanel = () => {
           )}
 
           {/* Weight Contest Icon Overlay */}
-          {tutorialStep >= 29 && (
+          {false && tutorialStep >= 29 && (
           <div 
             onClick={() => {
               setShowWeightContest(true);
@@ -1086,9 +1086,9 @@ const AdminPanel = () => {
 
       {/* Dialogs */}
       <React.Suspense fallback={null}>
-        {showWeightContest && <WeightContestDialog onClose={() => setShowWeightContest(false)} simulatedDay={simulatedDay} targetProduceId={targetProduceId} targetFishId={targetFishId} onProduceChange={setTargetProduceId} onFishChange={setTargetFishId} targetProduceData={targetProduceData} targetFishData={targetFishData} refetchItems={refetch} />}
+        {false && showWeightContest && <WeightContestDialog onClose={() => setShowWeightContest(false)} simulatedDay={simulatedDay} targetProduceId={targetProduceId} targetFishId={targetFishId} onProduceChange={setTargetProduceId} onFishChange={setTargetFishId} targetProduceData={targetProduceData} targetFishData={targetFishData} refetchItems={refetch} />}
         {showCalendar && <CalendarDialog onClose={() => { setShowCalendar(false); setSeenCalendar(false); }} simulatedDay={simulatedDay} simulatedDate={simulatedDate} refetch={refetch} onClaimed={() => { setHasUnclaimedDaily(false); setSeenCalendar(false); }} />}
-        {showCraftingDialog && <CraftingDialog onClose={() => { setShowCraftingDialog(false); setCraftingGoal(null); }} refetchSeeds={refetch} tutorialStep={tutorialStep} craftingGoal={craftingGoal} onAdvanceTutorial={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); setShowCraftingDialog(false); }} />}
+        {false && showCraftingDialog && <CraftingDialog onClose={() => { setShowCraftingDialog(false); setCraftingGoal(null); }} refetchSeeds={refetch} tutorialStep={tutorialStep} craftingGoal={craftingGoal} onAdvanceTutorial={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); setShowCraftingDialog(false); }} />}
         {showMailboxDialog && (
           <MailboxDialog
             onClose={() => setShowMailboxDialog(false)}

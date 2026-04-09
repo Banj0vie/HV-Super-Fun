@@ -16,16 +16,22 @@ const Avatar = ({ src, alt = "avatar" }) => {
       try {
         setLoading(true);
 
+        // Check for selected pfp first
+        const savedPfp = localStorage.getItem('sandbox_pfp');
+        if (savedPfp) {
+          setAvatarImage(savedPfp);
+          setLoading(false);
+          return;
+        }
+
         // Fetch from local storage instead of smart contract
         const sandboxAvatars = JSON.parse(localStorage.getItem('sandbox_avatars') || '{}');
-        
         if (sandboxAvatars[0] && sandboxAvatars[0].image) {
           setAvatarImage(sandboxAvatars[0].image);
           setLoading(false);
           return;
         }
 
-        // No equipped avatar found, use placeholder
         setAvatarImage(null);
       } catch (error) {
         console.error('Failed to fetch avatar image:', error);
@@ -37,12 +43,14 @@ const Avatar = ({ src, alt = "avatar" }) => {
 
     fetchAvatarImage();
 
-    // Listen for avatar updates to refresh image immediately after equip
-    const handler = () => {
-      fetchAvatarImage();
-    };
+    const handler = () => fetchAvatarImage();
+    const pfpHandler = (e) => setAvatarImage(e.detail);
     window.addEventListener('avatarsUpdated', handler);
-    return () => window.removeEventListener('avatarsUpdated', handler);
+    window.addEventListener('pfpUpdated', pfpHandler);
+    return () => {
+      window.removeEventListener('avatarsUpdated', handler);
+      window.removeEventListener('pfpUpdated', pfpHandler);
+    };
   }, []);
 
   useEffect(() => {
@@ -52,6 +60,7 @@ const Avatar = ({ src, alt = "avatar" }) => {
     }
   }, []);
 
+  const isPfp = !!localStorage.getItem('sandbox_pfp');
   const resolvedSrc = src || avatarImage || fallbackSrc;
 
   return (
@@ -67,6 +76,7 @@ const Avatar = ({ src, alt = "avatar" }) => {
             src={resolvedSrc}
             alt={alt}
             className="avatar-img"
+            style={isPfp ? { transform: 'scale(1.4)', transformOrigin: 'center' } : undefined}
             onClick={() => {
               const audio = clickAudioRef.current;
               if (audio) {

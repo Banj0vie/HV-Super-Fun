@@ -1,8 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import "./style.css";
-import { fishImages, fishingPanelImages } from "../../../constants/_baseimages";
+import { fishImages } from "../../../constants/_baseimages";
 import BaseButton from "../../../components/buttons/BaseButton";
 import LootReceivedDialog from "../../Global_LootReceivedDialog";
+import FishingMiniGame from "./FishingMiniGame";
 import { useFishing } from "../../../hooks/useFishing";
 import { useItems } from "../../../hooks/useItems";
 import { useNotification } from "../../../contexts/NotificationContext";
@@ -14,29 +15,26 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
   const [isBuyAgain, setIsBuyAgain] = useState(false);
   const [fishingResult, setFishingResult] = useState(null);
   const [hasThrownBait, setHasThrownBait] = useState(false);
-  
+  const [showMiniGame, setShowMiniGame] = useState(false);
+
   const { revealFishing, listenForFishingResults } = useFishing();
   const { refetch } = useItems();
   const { show } = useNotification();
-  
-  // Use ref to track cleanup function, similar to handleReveal pattern
+
   const fishingCleanupRef = useRef(null);
   const reelInAudioRef = useRef(null);
 
-  // Initialize state when component mounts
   useEffect(() => {
     if (requestId) {
-      // Coming from pending request - bait was already thrown
       setHasThrownBait(true);
+      setShowMiniGame(true);
     } else if (baitId && amount) {
-      // Coming from new fishing - bait was just thrown in StartFishing
       setHasThrownBait(true);
+      setShowMiniGame(true);
     }
   }, [requestId, baitId, amount]);
 
-  // Phase 2: Reel in Fish - Fulfill RNG request and get results (like fulfillPendingRequest)
   const onReelInFish = useCallback(async () => {
-    // Clean up any existing fishing process
     if (fishingCleanupRef.current) {
       fishingCleanupRef.current();
       fishingCleanupRef.current = null;
@@ -50,44 +48,36 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
     const audio = reelInAudioRef.current;
     audio.currentTime = 0;
     audio.play().catch(() => {});
-    
-    try {
 
-      
-      // Reveal fishing on-chain - use requestId if available, otherwise use stored nonce
+    try {
       const result = await revealFishing(requestId);
-      
+
       if (result && result.txHash) {
         show("Reeling in fish...", "info");
-        
-        // Listen for fishing results from transaction logs
+
         await listenForFishingResults(result.txHash, (results) => {
-          // Transform itemIds array into items array with id, count, and randomized weight
           const items = results.itemIds.map(itemId => {
             const randomFactor = Math.pow(Math.random(), 2.5);
-            const weight = (1.0 + randomFactor * 14.0).toFixed(2); // Match fish weights (1.0kg - 15.0kg)
+            const weight = (1.0 + randomFactor * 14.0).toFixed(2);
             return { id: itemId, count: 1, weight: weight };
           });
-          
+
           setFishingResult(items);
+          setShowMiniGame(false);
           setIsLootReceivedDialog(true);
           setIsFishing(false);
           refetch();
         });
-        
+
         show("Fishing revealed! Check your rewards.", "success");
       } else {
-        // If fulfillment failed, reset the loading state
         setIsFishing(false);
         show("Failed to reel in fish", "error");
       }
-      
     } catch (error) {
       const { message } = handleContractError(error, 'reeling in fish');
       show(message, "error");
       setIsFishing(false);
-      
-      // Clean up any existing listeners
       if (fishingCleanupRef.current) {
         fishingCleanupRef.current();
         fishingCleanupRef.current = null;
@@ -95,7 +85,6 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
     }
   }, [requestId, revealFishing, listenForFishingResults, show, refetch]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (fishingCleanupRef.current) {
@@ -107,60 +96,66 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
   const onCloseLootReceiveDialog = () => {
     setIsLootReceivedDialog(false);
     if (onBackToMenu) {
-      // Go back to angler menu and refresh pending requests
       onBackToMenu();
     } else {
       setIsBuyAgain(true);
     }
-    // Reset fishing state for next fishing session
     setFishingResult(null);
     setHasThrownBait(false);
+    setShowMiniGame(false);
   };
+
   return (
     <div className="fishing-wrapper">
-      <div className="loading">
-        <img
-          className="background"
-          src={"/images/label/left-panel-normal.png"}
-          alt="fishing panel"
-        ></img>
-        <img className="pin" src={fishImages.catfish} alt="fish"></img>
-      </div>
-      {isBuyAgain ? (
-        <BaseButton
-          className="button"
-          label="Buy Again"
-          onClick={onBuyAgain}
-        ></BaseButton>
-      ) : (
-        // Show "Reel in Fish" button (bait was already thrown when user clicked Confirm)
-        <BaseButton
-          className="button"
-          label={isFishing ? "Reeling..." : "Reel in Fish"}
-          onClick={onReelInFish}
-          disabled={isFishing || !hasThrownBait}
-        ></BaseButton>
+      {/* Osu fishing mini-game — shown until blockchain resolves */}
+      {showMiniGame && !isLootReceivedDialog && (
+        <FishingMiniGame
+          fishItem={null}
+          fishRarity="COMMON"
+          fishWeight={null}
+          onComplete={() => {
+            setShowMiniGame(false);
+            onReelInFish();
+          }}
+          onEscape={() => {
+            setShowMiniGame(false);
+            if (onBackToMenu) onBackToMenu();
+          }}
+        />
       )}
+
+      {/* Fallback panel — only if mini-game not active and loot dialog not open */}
+      {!showMiniGame && !isFishing && !isLootReceivedDialog && (
+        <>
+          <div className="loading">
+            <img className="background" src={"/images/label/left-panel-normal.png"} alt="fishing panel" />
+            <img className="pin" src={fishImages.catfish} alt="fish" />
+          </div>
+          {isBuyAgain ? (
+            <BaseButton className="button" label="Buy Again" onClick={onBuyAgain} />
+          ) : (
+            <BaseButton
+              className="button"
+              label={isFishing ? "Reeling..." : "Reel in Fish"}
+              onClick={onReelInFish}
+              disabled={isFishing || !hasThrownBait}
+            />
+          )}
+        </>
+      )}
+
+      {/* Loot dialog */}
       {isLootReceivedDialog && (
         <>
-          <LootReceivedDialog
-            onClose={onCloseLootReceiveDialog}
-            items={fishingResult}
-          ></LootReceivedDialog>
-          {/* Overlay weight for caught fish directly on top of the modal */}
+          <LootReceivedDialog onClose={onCloseLootReceiveDialog} items={fishingResult} />
           {fishingResult && fishingResult[0] && (
             <div style={{
-              position: 'fixed',
-              top: '58%',
-              left: '50%',
+              position: 'fixed', top: '58%', left: '50%',
               transform: 'translate(-50%, -50%)',
-              zIndex: 10005,
-              color: '#00ff41',
-              fontWeight: 'bold',
-              fontSize: '24px',
+              zIndex: 10005, color: '#00ff41',
+              fontWeight: 'bold', fontSize: '24px',
               textShadow: '2px 2px 4px #000',
-              fontFamily: 'monospace',
-              pointerEvents: 'none'
+              fontFamily: 'monospace', pointerEvents: 'none',
             }}>
               Weight: {fishingResult[0].weight}kg
             </div>
