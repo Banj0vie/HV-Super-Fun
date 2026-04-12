@@ -113,11 +113,10 @@ export const useFishing = () => {
         return null;
       }
       
-      // Check if there's already a pending request to prevent duplicates
+      // Clear any stale nonce from a previous session
       const existingNonce = readStoredNonce();
       if (existingNonce) {
-        setFishingData(prev => ({ ...prev, loading: false, error: 'You already have a pending fishing request. Please reveal it first.' }));
-        return null;
+        writeStoredNonce(null);
       }
       
       // Generate a unique nonce if not provided
@@ -237,27 +236,7 @@ export const useFishing = () => {
       else if (chestRoll < chestBronze) rewards.push(ID_CHEST_ITEMS.CHEST_BRONZE || ID_CHEST_ITEMS.BRONZE_CHEST);
       else if (chestRoll < chestWood) rewards.push(ID_CHEST_ITEMS.CHEST_WOOD || ID_CHEST_ITEMS.WOODEN_CHEST);
 
-      // Trigger the Stardew Valley Fishing Minigame
-      const catchSuccess = await new Promise((resolve) => {
-        let isResolved = false;
-        let isIntercepted = false;
-        const safeResolve = (val) => {
-          if (!isResolved) {
-            isResolved = true;
-            resolve(val);
-          }
-        };
-        window.dispatchEvent(new CustomEvent('startFishingMinigame', { 
-          detail: { difficulty, callback: safeResolve, onIntercept: () => { isIntercepted = true; } } 
-        }));
-        // Fallback: Auto-win if the minigame UI isn't currently rendered on screen
-        setTimeout(() => { if (!isIntercepted) safeResolve(true); }, 500);
-      });
-
-      if (!catchSuccess) {
-        onResults({itemIds: []}); // No rewards if fish escapes!
-        return;
-      }
+      // Osu mini-game already completed before this call — always a win here
 
       const validRewards = rewards.filter(Boolean);
       const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');

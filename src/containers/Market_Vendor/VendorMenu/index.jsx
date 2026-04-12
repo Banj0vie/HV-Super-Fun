@@ -21,7 +21,6 @@ const VendorMenu = ({
   tutorialStep = 0
 }) => {
   const seedOrder = [
-    ID_CROP_CATEGORIES.FEEBLE_SEED,
     ID_CROP_CATEGORIES.PICO_SEED,
     ID_CROP_CATEGORIES.BASIC_SEED,
     ID_CROP_CATEGORIES.PREMIUM_SEED,

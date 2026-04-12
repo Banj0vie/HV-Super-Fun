@@ -6,9 +6,13 @@ import CardView from "../../../../components/boxes/CardView";
 import { TYPE_LABEL_COLOR } from "../../../../constants/item_seed";
 import BaseButton from "../../../../components/buttons/BaseButton";
 import { useItems } from "../../../../hooks/useItems";
+import { getBaitUses } from "../index";
+
+const BAIT_MAX_USES = 5;
 
 const SelectBaitDialog = ({ onClose, onSelect }) => {
   const { all: userItems } = useItems();
+  const baitUses = getBaitUses();
   
   // Filter for owned baits only
   const ownedBaits = userItems.filter(item => 
@@ -38,6 +42,9 @@ const SelectBaitDialog = ({ onClose, onSelect }) => {
                         {baitItem.label}
                       </div>
                       <div className="text-1.25">x{baitItem.count}</div>
+                      <div style={{ fontSize: '11px', color: '#f5d87a' }}>
+                        {baitUses[baitItem.id] ?? BAIT_MAX_USES}/{BAIT_MAX_USES} uses
+                      </div>
                     </div>
                     <BaseButton
                       className="button"

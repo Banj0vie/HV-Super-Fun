@@ -5,7 +5,7 @@ import { clampVolume } from "../../utils/basic";
 import { defaultSettings } from "../../utils/settings";
 
 const BackgroundMusic = () => {
-  const settings = useAppSelector(selectSettings);
+  const settings = useAppSelector(selectSettings) || defaultSettings;
   const audioRef = useRef(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import "./style.css";
 import Avatar from "./Avatar";
 import ProfileButton from "../../../components/buttons/ProfileButton";
@@ -6,18 +6,64 @@ import ProfileView from "./ProfileView";
 import { formatNumber } from "../../../utils/basic";
 import InventoryDialog from "../../../containers/Menu_Inventory";
 import SettingsDialog from "../../../containers/Menu_Settings";
-import { useSelector } from "react-redux";
-import { selectBalanceRefreshing } from "../../../solana/store/slices/balanceSlice";
+import Shop from "../../../containers/Shop";
+import { useSelector, useDispatch } from "react-redux";
+import { selectBalanceRefreshing, updateGameTokenBalance } from "../../../solana/store/slices/balanceSlice";
 import { useProdMint } from "../../../hooks/useProdMint";
 // Removed bnToNumber; using plain parsing based on 1e9 decimals for locked tokens
 
 const ProfileBar = ({ isFarmMenu }) => {
+  const dispatch = useDispatch();
 
   // Redux state
   const userData = useSelector((state) => state.user.userData);
   const [isInventoryDialog, setIsInventoryDialog] = useState(false);
   const [isSettingsDialog, setIsSettingsDialog] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
+  const [shopInitialTab, setShopInitialTab] = useState(0);
   const [hasUnreadMail, setHasUnreadMail] = useState(false);
+  const [gems, setGems] = useState(() => parseInt(localStorage.getItem('sandbox_gems') || '0', 10));
+
+  const BG_GRADIENTS = {
+    bg_default: 'linear-gradient(135deg, #2d1a0e, #4a2c10)',
+    bg_red:     'linear-gradient(135deg, #5a0a0a, #c0392b)',
+    bg_orange:  'linear-gradient(135deg, #7a3200, #e67e22)',
+    bg_yellow:  'linear-gradient(135deg, #6a5500, #f1c40f)',
+    bg_green:   'linear-gradient(135deg, #0a3a1a, #27ae60)',
+    bg_blue:    'linear-gradient(135deg, #0a1a4a, #2980b9)',
+    bg_purple:  'linear-gradient(135deg, #2a0a4a, #8e44ad)',
+    bg_night:   'linear-gradient(135deg, #050510, #1a1a3a)',
+    bg_sunset:  'linear-gradient(135deg, #6a0a2a, #ff6b35)',
+    bg_cosmic:  'linear-gradient(135deg, #0a0020, #7c3aed)',
+  };
+
+  const getProfileBg = () => {
+    const id = localStorage.getItem('sandbox_profile_bg') || 'bg_default';
+    return BG_GRADIENTS[id] || BG_GRADIENTS.bg_default;
+  };
+
+  const [profileBg, setProfileBg] = useState(getProfileBg);
+
+  useEffect(() => {
+    const handler = () => setGems(parseInt(localStorage.getItem('sandbox_gems') || '0', 10));
+    window.addEventListener('sandboxGemsChanged', handler);
+    return () => window.removeEventListener('sandboxGemsChanged', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      const gold = localStorage.getItem('sandbox_gold') || '0';
+      dispatch(updateGameTokenBalance(gold));
+    };
+    window.addEventListener('sandboxGoldChanged', handler);
+    return () => window.removeEventListener('sandboxGoldChanged', handler);
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handler = (e) => setProfileBg(e.detail || BG_GRADIENTS.bg_default);
+    window.addEventListener('profileBgUpdated', handler);
+    return () => window.removeEventListener('profileBgUpdated', handler);
+  }, []);
 
   useEffect(() => {
     const handler = (e) => setHasUnreadMail(e.detail);
@@ -109,19 +155,17 @@ const ProfileBar = ({ isFarmMenu }) => {
             />
           </div>
         </div>
-        <div className="resource-badge" key={balanceKey}>
-          <ProfileButton
-            icon={
-              <img
-                alt="Locked Honey Balance"
-                src="/images/profile_bar/locked_balance_icon.png"
-              />
-            }
-            text={isBalanceRefreshing ? "••••••" : lockedHoney}
-            title="Locked Honey Balance"
-            className={isBalanceRefreshing ? "balance-loading" : ""}
-            bg="/images/profile_bar/profile_badge_bg.png"
-          />
+        <div className="resource-badge" key={balanceKey} style={{ cursor: 'pointer' }}>
+          <div onClick={() => { setShopInitialTab(1); setIsShopOpen(true); }}>
+            <ProfileButton
+              icon={
+                <span style={{ fontSize: '22px', lineHeight: 1 }}>💎</span>
+              }
+              text={String(gems)}
+              title="Gems"
+              bg="/images/profile_bar/profile_badge_bg.png"
+            />
+          </div>
           <ProfileButton
             icon={<img alt="Honey Balance" src="/images/profile_bar/unlocked_balance_icon.png" />}
             text={isBalanceRefreshing ? "••••••" : honeyBalance}
@@ -140,6 +184,9 @@ const ProfileBar = ({ isFarmMenu }) => {
         <SettingsDialog
           onClose={() => setIsSettingsDialog(false)}
         ></SettingsDialog>
+      )}
+      {isShopOpen && (
+        <Shop onClose={() => setIsShopOpen(false)} initialTab={shopInitialTab} />
       )}
     </div>
   );

@@ -9,20 +9,21 @@ const Avatar = ({ src, alt = "avatar" }) => {
   const clickAudioRef = useRef(null);
 
 
-  const fallbackSrc = "/images/avatars/avatar-left-placeholder.png";
+  const fallbackSrc = "/images/pfp/defultpfp.png";
 
   useEffect(() => {
     const fetchAvatarImage = async () => {
       try {
         setLoading(true);
 
-        // Check for selected pfp first
-        const savedPfp = localStorage.getItem('sandbox_pfp');
-        if (savedPfp) {
-          setAvatarImage(savedPfp);
-          setLoading(false);
-          return;
+        // Check for selected pfp first — default to defultpfp if nothing saved
+        const savedPfp = localStorage.getItem('sandbox_pfp') || '/images/pfp/defultpfp.png';
+        if (!localStorage.getItem('sandbox_pfp')) {
+          localStorage.setItem('sandbox_pfp', savedPfp);
         }
+        setAvatarImage(savedPfp);
+        setLoading(false);
+        return;
 
         // Fetch from local storage instead of smart contract
         const sandboxAvatars = JSON.parse(localStorage.getItem('sandbox_avatars') || '{}');
@@ -64,33 +65,30 @@ const Avatar = ({ src, alt = "avatar" }) => {
   const resolvedSrc = src || avatarImage || fallbackSrc;
 
   return (
-    <div className="avatar">
-      <img src="/images/profile_bar/avatar_bg.png" alt="empty slot" className="avatar-bg"></img>
-      <div className="avatar-content">
-        {loading ? (
-          <div className="loading-placeholder">
-            <div className="loading-spinner"></div>
-          </div>
-        ) : (
-          <img
-            src={resolvedSrc}
-            alt={alt}
-            className="avatar-img"
-            style={isPfp ? { transform: 'scale(1.4)', transformOrigin: 'center' } : undefined}
-            onClick={() => {
-              const audio = clickAudioRef.current;
-              if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
-              }
-              setIsAvatarDialog(true);
-            }}
-            onError={(e) => {
-              e.target.src = fallbackSrc;
-            }}
-          />
-        )}
-      </div>
+    <div className="avatar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {loading ? (
+        <div className="loading-placeholder">
+          <div className="loading-spinner"></div>
+        </div>
+      ) : (
+        <img
+          src={resolvedSrc}
+          alt={alt}
+          className="avatar-img"
+          style={{ width: '100%', height: '100%', objectFit: resolvedSrc.endsWith('.jpg') ? 'cover' : 'contain', cursor: 'pointer' }}
+          onClick={() => {
+            const audio = clickAudioRef.current;
+            if (audio) {
+              audio.currentTime = 0;
+              audio.play().catch(() => {});
+            }
+            setIsAvatarDialog(true);
+          }}
+          onError={(e) => {
+            e.target.src = fallbackSrc;
+          }}
+        />
+      )}
       {isAvatarDialog && <AvatarDialog onClose={() => setIsAvatarDialog(false)}></AvatarDialog>}
     </div>
   );

@@ -1,5 +1,5 @@
 .loot-received-dialog {
-    width: 350px;
+    width: 380px;
     margin-top: 1rem;
     padding: 0.5rem;
 }
@@ -7,6 +7,14 @@
 .loot-received-dialog .items-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+    gap: 12px;
     padding: 8px 0;
+    align-items: start;
+}
+
+.loot-received-dialog .items-grid > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }

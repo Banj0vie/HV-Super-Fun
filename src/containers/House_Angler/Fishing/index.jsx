@@ -112,7 +112,11 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
         <FishingMiniGame
           fishItem={null}
           fishRarity="COMMON"
-          fishWeight={null}
+          fishWeight={(() => {
+            const base = { COMMON: [0.2, 1.5], UNCOMMON: [1.0, 4.0], RARE: [3.0, 10.0], EPIC: [8.0, 25.0], LEGENDARY: [20.0, 60.0] };
+            const [min, max] = base['COMMON'];
+            return (min + Math.random() * (max - min)).toFixed(2);
+          })()}
           onComplete={() => {
             setShowMiniGame(false);
             onReelInFish();
@@ -146,21 +150,7 @@ const Fishing = ({ baitId, amount, requestId, onBuyAgain, onBackToMenu }) => {
 
       {/* Loot dialog */}
       {isLootReceivedDialog && (
-        <>
-          <LootReceivedDialog onClose={onCloseLootReceiveDialog} items={fishingResult} />
-          {fishingResult && fishingResult[0] && (
-            <div style={{
-              position: 'fixed', top: '58%', left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 10005, color: '#00ff41',
-              fontWeight: 'bold', fontSize: '24px',
-              textShadow: '2px 2px 4px #000',
-              fontFamily: 'monospace', pointerEvents: 'none',
-            }}>
-              Weight: {fishingResult[0].weight}kg
-            </div>
-          )}
-        </>
+        <LootReceivedDialog onClose={onCloseLootReceiveDialog} items={fishingResult} />
       )}
     </div>
   );

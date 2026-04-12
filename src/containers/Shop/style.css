@@ -1,0 +1,238 @@
+.shop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-panel {
+  background: #1e1208;
+  border: 3px solid #c8922a;
+  border-radius: 18px;
+  padding: 24px;
+  width: 700px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shop-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #f5d87a;
+  flex: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.shop-balances {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-balance-pill {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.shop-balance-pill.gold {
+  background: #5a3800;
+  color: #f5d87a;
+  border: 1px solid #c8922a;
+}
+
+.shop-balance-pill.gem {
+  background: #2a1a5a;
+  color: #c4b5fd;
+  border: 1px solid #7c3aed;
+}
+
+.shop-close {
+  background: none;
+  border: none;
+  color: #f5d87a;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #5a3800;
+  background: #2b1a0e;
+  color: #a07040;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shop-tab.active {
+  background: #5a3800;
+  color: #f5d87a;
+  border-color: #c8922a;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.shop-item {
+  background: #2e1c0a;
+  border: 2px solid #6b4218;
+  border-radius: 12px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.shop-item:hover:not(.shop-item-cant-afford) {
+  border-color: #c8922a;
+}
+
+.shop-item-cant-afford {
+  opacity: 0.5;
+}
+
+.shop-item-tag {
+  font-size: 9px;
+  font-weight: bold;
+  color: #c8922a;
+  letter-spacing: 1.5px;
+}
+
+.shop-item-emoji {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.shop-item-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #f5d87a;
+}
+
+.shop-item-desc {
+  font-size: 11px;
+  color: #a07858;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.shop-item-feedback {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.shop-item-feedback.error { color: #f87171; }
+.shop-item-feedback.success { color: #86efac; }
+
+/* Gem Shop */
+.gem-shop {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gem-shop-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #c4b5fd;
+  font-weight: bold;
+}
+
+.gem-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.gem-pack {
+  background: #1a0f3a;
+  border: 2px solid #4a2a8a;
+  border-radius: 14px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.gem-pack:hover {
+  border-color: #7c3aed;
+}
+
+.gem-pack-popular {
+  border-color: #a855f7;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+}
+
+.gem-pack-popular-label {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #7c3aed;
+  color: #fff;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.gem-pack-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.gem-pack-amount {
+  font-size: 22px;
+  font-weight: bold;
+  color: #e9d5ff;
+}
+
+.gem-pack-bonus {
+  font-size: 10px;
+  color: #a78bfa;
+  font-weight: bold;
+}
+
+.gem-pack-price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f5d87a;
+  margin-top: 4px;
+}

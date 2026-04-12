@@ -10,6 +10,7 @@ import LeaderboardDialog from "../containers/Market_Leaderboard";
 import SageDialog from "../containers/Market_Sage";
 import AdminPanel from "./index";
 import WeatherOverlay from "../components/WeatherOverlay";
+import Shop from "../containers/Shop";
 import BaseDialog from "../containers/_BaseDialog";
 import BaseButton from "../components/buttons/BaseButton";
 import { useNotification } from "../contexts/NotificationContext";
@@ -20,6 +21,8 @@ const Market = () => {
   const hotspots = MARKET_HOTSPOTS;
   const { refetch } = useItems();
   const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+  const [showShop, setShowShop] = useState(false);
+  const [tutMarketPage, setTutMarketPage] = useState(() => localStorage.getItem('sandbox_tut_market') === 'true' ? 11 : 0);
 
   useEffect(() => {
     if (tutorialStep === 10) {
@@ -34,6 +37,27 @@ const Market = () => {
     };
   }, [tutorialStep]);
 
+  // Sync tutMarketPage to localStorage so index.jsx can react
+  useEffect(() => {
+    localStorage.setItem('sandbox_tut_market_page', String(tutMarketPage));
+    window.dispatchEvent(new CustomEvent('tutMarketPageChanged'));
+  }, [tutMarketPage]);
+
+  // When tutMarketPage 16: clicking the dock ends the tutorial
+  useEffect(() => {
+    if (tutMarketPage !== 16) return;
+    const handler = (e) => {
+      if (e.target.closest('a[href*="/house"]')) {
+        localStorage.setItem('sandbox_tutorial_step', '32');
+        localStorage.removeItem('sandbox_tut_market');
+        setTutMarketPage(0);
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [tutMarketPage]);
+
   const NEXT_STEP_MAP = { 11: 13, 13: 14, 14: 15, 15: 16, 16: 12, 12: 17 };
 
   const advanceTutorial = () => {
@@ -45,6 +69,12 @@ const Market = () => {
   const getActiveHotspots = () => {
     if (tutorialStep >= 32) return hotspots;
     const makeDummy = (arr) => arr.map(h => ({ ...h, id: h.id + '_dummy' }));
+    // New tutMarketPage flow (tutorialStep === 3)
+    if (tutMarketPage === 12) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.BANKER));
+    if (tutMarketPage === 13) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.VENDOR));
+    if (tutMarketPage === 14) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.MARKET));
+    if (tutMarketPage === 15) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.SAGE));
+    // Legacy tutorialStep flow
     if (tutorialStep === 11) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.DEX));
     if (tutorialStep === 13) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.MARKET));
     if (tutorialStep === 14) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.SAGE));
@@ -110,7 +140,15 @@ const Market = () => {
         bees={bees}
         initialScale={1.3}
         disablePanZoom
+        onHotspotClick={(id) => {
+          if (id === ID_MARKET_HOTSPOTS.BANKER) {
+            setShowShop(true);
+            return true;
+          }
+          return false;
+        }}
       />
+      {showShop && <Shop onClose={() => setShowShop(false)} />}
       
       <AdminPanel />
 
@@ -206,6 +244,43 @@ const Market = () => {
         </>
       )}
 
+      {/* New market tutorial flow: pages 11–15 with images + labels, page 16 with dock pulse */}
+      {tutMarketPage >= 11 && tutMarketPage <= 15 && (
+        <>
+          <style>{`
+            .tut-arrow { position: absolute; right: -22px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; background: #f5c842; border: 3px solid #a67c00; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 22px; box-shadow: 0 3px 10px rgba(0,0,0,0.4); transition: transform 0.1s, filter 0.1s; user-select: none; }
+            .tut-arrow:hover { filter: brightness(1.2); transform: translateY(-50%) scale(1.1); }
+            .tut-arrow:active { filter: brightness(0.85); transform: translateY(-50%) scale(0.95); }
+            a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
+            @keyframes marketHighlightBox { 0%, 100% { box-shadow: 0 0 20px 5px #f5c842; background-color: rgba(245,200,66,0.2); } 50% { box-shadow: 0 0 5px 2px #f5c842; background-color: transparent; } }
+            ${tutMarketPage === 12 ? `div[title*="BANKER" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
+            ${tutMarketPage === 13 ? `div[title*="VENDOR" i], div[title*="SEED" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
+            ${tutMarketPage === 14 ? `div[title*="MARKET" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
+            ${tutMarketPage === 15 ? `div[title*="QUEEN" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
+          `}</style>
+          <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
+            <div style={{ position: 'relative', width: '400px' }}>
+              <img
+                src={`/images/tutorial/tutp${tutMarketPage}.png`}
+                alt="Tutorial"
+                style={{ width: '400px', objectFit: 'contain', display: 'block' }}
+              />
+              <div
+                className="tut-arrow"
+                onClick={() => setTutMarketPage(prev => prev + 1)}
+              >▶</div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {tutMarketPage === 16 && (
+        <style>{`
+          a[href*="/farm"], a[href*="/market"], a[href*="/valley"], a[href*="/tavern"] { pointer-events: none !important; }
+          a[href*="/house"] { display: block !important; pointer-events: auto !important; animation: dockIconPulse 1.2s ease-in-out infinite !important; transform-origin: center; position: relative; z-index: 100001; }
+          @keyframes dockIconPulse { 0%, 100% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,215,0,0.9)); } 50% { transform: scale(0.95); filter: drop-shadow(0 0 2px rgba(255,215,0,0.3)); } }
+        `}</style>
+      )}
     </>
   );
 };

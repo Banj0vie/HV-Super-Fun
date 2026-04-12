@@ -23,8 +23,16 @@ import BaseButton from "../components/buttons/BaseButton";
 import AdminPanel from "./index";
 import WeatherOverlay, { getSimulatedDateInfo, getWeatherForDay } from "../components/WeatherOverlay";
 import { useNavigate } from "react-router-dom";
+import MissionBoard from "../containers/MissionBoard";
+import Shop from "../containers/Shop";
+import FarmCustomizePanel from "../containers/FarmCustomizePanel";
+import PokemonPackRipDialog from "../containers/Market_Vendor/PokemonPackRipDialog";
+import { getRaritySeedId } from "../constants/app_ids";
 
 export const getQuestData = () => [
+
+  // Wave 1: Early Bliss (0-60 min)
+
   {
     id: "q1_pabee_intro",
     type: "main",
@@ -36,13 +44,113 @@ export const getQuestData = () => [
       "Also before I left the cat ran away again, please leave him a bowl of water and a nice fish, he should come back when he smells it, thank you and enjoy the wonders of being a farmer!"
     ],
     rewards: [
-      { id: 9993, count: 12, name: "Wood Logs", image: ALL_ITEMS?.[9993]?.image || "/images/forest/wood.png" },
-      { id: 9994, count: 6, name: "Stones", image: ALL_ITEMS?.[9994]?.image || "/images/forest/rock.png" },
-      { id: ID_SEEDS?.PUMPKIN || 131846, count: 1, name: "Pumpkin Seed", image: ALL_ITEMS?.[ID_SEEDS?.PUMPKIN || 131846]?.image || "/images/items/seeds.png" }
+      { id: 'pabee_pack', count: 1, name: "Papabee's Pack", image: "/images/cardback/commonback.png" },
     ],
     reqs: [],
     unlockCondition: (step, completed) => true
   },
+
+  {
+    id: "q1b_pabee_first_crop",
+    type: "main",
+    sender: "Pabee",
+    subject: "Your First Harvest",
+    body: [
+      "Great to hear you are settling in!",
+      "Go ahead and plant a couple of those seeds I left you and bring me your first harvest.",
+      "Farming is simple once you get the hang of it — and I want to make sure you get started right!"
+    ],
+    rewards: [
+      { id: 'gold', count: 500, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_SEEDS?.CARROT || 131848, count: 8, name: "Carrot Seeds", image: "/images/items/seeds.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 3, name: "Bait I", image: "/images/items/seeds.png" }
+    ],
+    reqs: [
+      { id: ID_PRODUCE_ITEMS?.CARROT || 131588, count: 2, name: "Carrots", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.CARROT]?.image || "/images/items/carrot.png" }
+    ],
+    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_pabee_intro")
+  },
+
+  {
+    id: "q1c_uncle_bee_hello",
+    type: "main",
+    sender: "Great Uncle Sir Bee",
+    subject: "A Letter from your Uncle",
+    body: [
+      "Nephew.",
+      "I heard you took over the farm. Good.",
+      "I have left a small contribution for your operations. Use it wisely — the valley does not reward laziness.",
+      "Make me proud."
+    ],
+    rewards: [
+      { id: 'gold', count: 800, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_SEEDS?.POTATO || 131849, count: 6, name: "Potato Seeds", image: "/images/items/seeds.png" },
+      { id: ID_SEEDS?.TOMATO || 131850, count: 6, name: "Tomato Seeds", image: "/images/items/seeds.png" }
+    ],
+    reqs: [],
+    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1b_pabee_first_crop")
+  },
+
+  {
+    id: "q1d_mayor_intro",
+    type: "main",
+    sender: "Mayor Prezibee",
+    subject: "Welcome to Harvest Valley!",
+    body: [
+      "Dear new Farmer,",
+      "On behalf of everyone in Harvest Valley, welcome! We are thrilled to have such an energetic new member of our community.",
+      "I have taken the liberty of stocking your supply with a little something to help you on your way. The valley takes care of its own!"
+    ],
+    rewards: [
+      { id: 'gold', count: 600, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 5, name: "Bait I", image: "/images/items/seeds.png" },
+      { id: ID_SEEDS?.CORN || 131851, count: 5, name: "Corn Seeds", image: "/images/items/seeds.png" }
+    ],
+    reqs: [],
+    unlockCondition: (step, completed) => completed.includes("q1c_uncle_bee_hello")
+  },
+
+  // Wave 2: Unlocking the World (60-120 min)
+
+  {
+    id: "q2_unlock_dock",
+    type: "main",
+    sender: "Mayor Prezibee",
+    subject: "The Old Dock",
+    body: [
+      "I have a small favour to ask.",
+      "The old town dock has been sitting in disrepair for years. The anglers are miserable!",
+      "If you can contribute 500 Gold toward the repairs, the town will handle the rest. And I promise we will make it worth your while."
+    ],
+    rewards: [
+      { id: 'gold', count: 300, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 5, name: "Bait II", image: "/images/items/seeds.png" }
+    ],
+    reqs: [
+      { id: 'gold', count: 500, name: "Gold", image: "/images/items/gold.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q1d_mayor_intro")
+  },
+
+  {
+    id: "q2b_finn_welcome",
+    type: "main",
+    sender: "Fisherman Finn",
+    subject: "Ahoy, Farmer!",
+    body: [
+      "Well I'll be! Someone finally fixed that dock!",
+      "The name's Finn. I've been fishing these waters for 30 years and I know every current and every cove.",
+      "Here, take this — I've been saving it. Start with the basics, there's plenty of fish out there waiting for you!"
+    ],
+    rewards: [
+      { id: 'gold', count: 400, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 8, name: "Bait I", image: "/images/items/seeds.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 3, name: "Bait II", image: "/images/items/seeds.png" }
+    ],
+    reqs: [],
+    unlockCondition: (step, completed) => completed.includes("q2_unlock_dock") && (localStorage.getItem('sandbox_dock_repaired') === 'true' || localStorage.getItem('sandbox_dock_unlocked') === 'true')
+  },
+
   {
     id: "q2_rebuild_tavern",
     type: "main",
@@ -51,19 +159,23 @@ export const getQuestData = () => [
     body: [
       "Nephew.",
       "The local Tavern has fallen into ruin. It's an absolute disgrace to our family name.",
-      "I need you to gather materials to fix it up so the Potion Master can resume his brewing.",
-      "Deliver 50 Wood Logs, 50 Stones, and 10 Potatoes to the Tavern. Do not dawdle."
+      "I need you to fund the repairs so the Potion Master can resume his brewing.",
+      "Bring 500 Gold and 20 Potatoes to the Tavern. Do not dawdle."
     ],
     rewards: [
-      { id: 'honey', count: 500, name: "Honey", image: "/images/items/honey.png" }
+      { id: 'gold', count: 800, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 2, name: "Growth Elixir", image: ALL_ITEMS[ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR]?.image || "/images/items/potion1.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 5, name: "Bait II", image: "/images/items/seeds.png" }
     ],
     reqs: [
-      { id: 9993, count: 50, name: "Wood Logs", image: "/images/forest/wood.png" },
-      { id: 9994, count: 50, name: "Stones", image: "/images/forest/rock.png" },
-      { id: ID_PRODUCE_ITEMS?.POTATO || 131586, count: 10, name: "Potatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.POTATO]?.image || "/images/items/potato.png" }
+      { id: 'gold', count: 500, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_PRODUCE_ITEMS?.POTATO || 131586, count: 20, name: "Potatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.POTATO]?.image || "/images/items/potato.png" }
     ],
-    unlockCondition: (step, completed) => completed.includes("q1_pabee_intro") && step >= 32
+    unlockCondition: (step, completed) => completed.includes("q2b_finn_welcome")
   },
+
+  // Wave 3: The Taper (120-180 min)
+
   {
     id: "q3_potion_master",
     type: "main",
@@ -76,13 +188,15 @@ export const getQuestData = () => [
       "Catch them in the forest bushes using a Bug Net and I'll share a prototype potion with you."
     ],
     rewards: [
-      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 1, name: "Growth Elixir", image: ALL_ITEMS[ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR]?.image || "/images/items/potion1.png" }
+      { id: 'gold', count: 400, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 2, name: "Growth Elixir", image: ALL_ITEMS[ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR]?.image || "/images/items/potion1.png" }
     ],
     reqs: [
       { id: ID_POTION_ITEMS?.LADYBUG || 132101, count: 15, name: "Ladybugs", image: "/images/items/ladybug.png" }
     ],
     unlockCondition: (step, completed) => completed.includes("q2_rebuild_tavern")
   },
+
   {
     id: "q3b_pabee_fish_fertilizer",
     type: "main",
@@ -95,6 +209,7 @@ export const getQuestData = () => [
       "Give it a try next time you plant something!"
     ],
     rewards: [
+      { id: 'gold', count: 250, name: "Gold", image: "/images/items/gold.png" },
       { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 3, name: "Bait II", image: "/images/items/seeds.png" }
     ],
     reqs: [],
@@ -104,6 +219,7 @@ export const getQuestData = () => [
       return level >= 5;
     }
   },
+
   {
     id: "q4_prezibee_dock",
     type: "main",
@@ -115,176 +231,13 @@ export const getQuestData = () => [
       "Please accept this premium bait as a token of our gratitude. It should make fishing a breeze!"
     ],
     rewards: [
-      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 1, name: "Bait I", image: "/images/items/seeds.png" }
+      { id: 'gold', count: 200, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 3, name: "Bait I", image: "/images/items/seeds.png" }
     ],
     reqs: [],
     unlockCondition: (step, completed) => localStorage.getItem('sandbox_dock_repaired') === 'true' || localStorage.getItem('sandbox_dock_unlocked') === 'true'
   },
-  {
-    id: "q7_a_bigger_catch",
-    type: "fishing",
-    sender: "Fisherman Finn",
-    subject: "A Bigger Catch",
-    body: [
-      "Not bad, kid! You've got a real knack for angling.",
-      "But if you want to catch the really big ones, you can't just stand on the dock all day.",
-      "Gather some materials so we can build you a Rowboat. Bring me 30 Wood Logs, 20 Sticks, and 10 Iron Ore!"
-    ],
-    rewards: [
-      { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 5, name: "Bait II", image: "/images/items/seeds.png" },
-      { id: 'honey', count: 500, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: 9993, count: 30, name: "Wood Logs", image: "/images/forest/wood.png" },
-      { id: 9995, count: 20, name: "Sticks", image: "/images/forest/wood.png" },
-      { id: 9996, count: 10, name: "Iron Ore", image: "/images/forest/rock.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q6_hungry_town")
-  },
-  {
-    id: "q8_first_harvest",
-    type: "farming",
-    sender: "Farmer Bob",
-    subject: "Your First Big Harvest",
-    body: [
-      "Howdy neighbor!",
-      "I see you've got the plots cleared out. Let's get to work.",
-      "Grow 10 Potatoes and bring them to me. I'll give you some seeds to keep you going!"
-    ],
-    rewards: [
-      { id: ID_SEEDS?.CARROT || 131848, count: 5, name: "Carrot Seeds", image: "/images/items/seeds.png" },
-      { id: 'honey', count: 200, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: ID_PRODUCE_ITEMS?.POTATO || 131586, count: 10, name: "Potatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.POTATO]?.image || "/images/items/potato.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q2_rebuild_tavern")
-  },
-  {
-    id: "q9_cornucopia",
-    type: "farming",
-    sender: "Tavern Barkeep",
-    subject: "Salad Days",
-    body: [
-      "We're updating the Tavern menu and we need fresh greens!",
-      "Can you supply us with 20 Corn and 10 Tomatoes?",
-      "I'll trade you some shiny Bronze Chests for them."
-    ],
-    rewards: [
-      { id: ID_CHEST_ITEMS?.CHEST_BRONZE || 20001, count: 2, name: "Bronze Chests", image: "/images/items/chest.png" }
-    ],
-    reqs: [
-      { id: ID_PRODUCE_ITEMS?.CORN || 131590, count: 20, name: "Corn", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.CORN]?.image || "/images/items/corn.png" },
-      { id: ID_PRODUCE_ITEMS?.TOMATO || 131589, count: 10, name: "Tomatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.TOMATO]?.image || "/images/items/tomato.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q8_first_harvest")
-  },
-  {
-    id: "q10_crab_mentality",
-    type: "fishing",
-    sender: "Fisherman Finn",
-    subject: "Crab Mentality",
-    body: [
-      "Hook and line is fine, but if you want passive income, you need Crab Pots.",
-      "Craft 3 Crab Pots and set them up. Bring me 5 Crabs to prove they work!"
-    ],
-    rewards: [
-      { id: 'honey', count: 250, name: "Honey", image: "/images/items/honey.png" },
-      { id: ID_CHEST_ITEMS?.CHEST_BRONZE || 20001, count: 1, name: "Bronze Chest", image: "/images/items/chest.png" }
-    ],
-    reqs: [
-      { id: 9966, count: 3, name: "Crab Pots", image: "/images/items/crab_pot.png" },
-      { id: 10002, count: 5, name: "Crabs", image: "/images/items/fish.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q7_a_bigger_catch")
-  },
-  {
-    id: "q11_rainy_day",
-    type: "fishing",
-    sender: "Potion Master",
-    subject: "Rainy Day Blues",
-    body: [
-      "I need the scales of a Gloomfish for a new potion.",
-      "They only surface when it's raining. Take your Rowboat out on the next rainy day and catch one!"
-    ],
-    rewards: [
-      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 2, name: "Growth Elixir", image: "/images/items/potion1.png" },
-      { id: 9998, count: 1, name: "Water Sprinkler", image: "/images/items/watersprinkler.png" }
-    ],
-    reqs: [
-      { id: 10003, count: 1, name: "Gloomfish", image: "/images/items/fish.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q10_crab_mentality")
-  },
-  {
-    id: "q12_sailing",
-    type: "fishing",
-    sender: "Great Uncle Sir Bee",
-    subject: "Sailing the Open Seas",
-    body: [
-      "A Rowboat? How pedestrian. If you want to make this family proud, you need a vessel worthy of the open ocean.",
-      "Build a Sailboat so you can catch the real prizes."
-    ],
-    rewards: [
-      { id: ID_BAIT_ITEMS?.BAIT_3 || 30003, count: 10, name: "Bait III", image: "/images/items/seeds.png" }
-    ],
-    reqs: [
-      { id: 9964, count: 1, name: "Sailboat", image: "/images/items/sailboat.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q11_rainy_day")
-  },
-  {
-    id: "q13_storm_chaser",
-    type: "fishing",
-    sender: "Fisherman Finn",
-    subject: "Storm Chaser",
-    body: [
-      "You're crazy if you go out there during a lightning storm... but if you do, the legendary Spark Eel is said to ride the waves.",
-      "You'll need a Tesla Tower on your boat to survive!"
-    ],
-    rewards: [
-      { id: 9954, count: 1, name: "Magic Ring", image: "/images/items/seeds.png" },
-      { id: ID_CHEST_ITEMS?.CHEST_GOLD || 20003, count: 1, name: "Gold Chest", image: "/images/items/chest.png" }
-    ],
-    reqs: [
-      { id: 10004, count: 1, name: "Spark Eel", image: "/images/items/fish.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q12_sailing")
-  },
-  {
-    id: "q14_industrial",
-    type: "main",
-    sender: "Mayor Prezibee",
-    subject: "Industrial Revolution",
-    body: [
-      "The town is booming, and we need more resources.",
-      "Forging Steel Plates from Iron and Coal will let you build the ultimate fishing vessel."
-    ],
-    rewards: [
-      { id: 9962, count: 1, name: "Engine", image: "/images/crafting/engine.png" }
-    ],
-    reqs: [
-      { id: 9967, count: 50, name: "Steel Plates", image: "/images/crafting/steel_plate.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q13_storm_chaser")
-  },
-  {
-    id: "q15_trawler",
-    type: "fishing",
-    sender: "Fisherman Finn",
-    subject: "Industrial Fishing",
-    body: [
-      "With that Engine, you can finally build the Trawler.",
-      "It's massive, loud, and can reach the deepest parts of the ocean."
-    ],
-    rewards: [
-      { id: 'honey', count: 1000, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: 9963, count: 1, name: "Trawler", image: "/images/items/trawler.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q14_industrial")
-  },
+
   {
     id: "q5_first_catch",
     type: "fishing",
@@ -296,6 +249,7 @@ export const getQuestData = () => [
       "Why don't you try out that bait the Mayor gave you? Cast a line off the dock and bring me 3 Fish. Let's see what you've got!"
     ],
     rewards: [
+      { id: 'gold', count: 200, name: "Gold", image: "/images/items/gold.png" },
       { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 3, name: "Bait I", image: "/images/items/seeds.png" },
       { id: 'honey', count: 150, name: "Honey", image: "/images/items/honey.png" }
     ],
@@ -318,6 +272,7 @@ export const getQuestData = () => [
       return unlocked;
     }
   },
+
   {
     id: "q6_hungry_town",
     type: "fishing",
@@ -329,6 +284,7 @@ export const getQuestData = () => [
       "Can you head to the pond and catch 5 more Fish for us? I'll make it worth your while!"
     ],
     rewards: [
+      { id: 'gold', count: 200, name: "Gold", image: "/images/items/gold.png" },
       { id: ID_CHEST_ITEMS?.CHEST_BRONZE || 20001, count: 1, name: "Bronze Chest", image: "/images/items/chest.png" },
       { id: 'honey', count: 300, name: "Honey", image: "/images/items/honey.png" }
     ],
@@ -351,6 +307,190 @@ export const getQuestData = () => [
       return unlocked;
     }
   },
+
+  {
+    id: "q7_a_bigger_catch",
+    type: "fishing",
+    sender: "Fisherman Finn",
+    subject: "A Bigger Catch",
+    body: [
+      "Not bad, kid! You've got a real knack for angling.",
+      "But if you want to catch the really big ones, you can't just stand on the dock all day.",
+      "Gather some materials so we can build you a Rowboat. Bring me 30 Wood Logs, 20 Sticks, and 10 Iron Ore!"
+    ],
+    rewards: [
+      { id: 'gold', count: 300, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_2 || 30002, count: 5, name: "Bait II", image: "/images/items/seeds.png" },
+      { id: 'honey', count: 500, name: "Honey", image: "/images/items/honey.png" }
+    ],
+    reqs: [
+      { id: 9993, count: 30, name: "Wood Logs", image: "/images/forest/wood.png" },
+      { id: 9995, count: 20, name: "Sticks", image: "/images/forest/wood.png" },
+      { id: 9996, count: 10, name: "Iron Ore", image: "/images/forest/rock.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q6_hungry_town")
+  },
+
+  {
+    id: "q8_first_harvest",
+    type: "farming",
+    sender: "Farmer Bob",
+    subject: "Your First Big Harvest",
+    body: [
+      "Howdy neighbor!",
+      "I see you've got the plots cleared out. Let's get to work.",
+      "Grow 10 Potatoes and bring them to me. I'll give you some seeds to keep you going!"
+    ],
+    rewards: [
+      { id: 'gold', count: 250, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_SEEDS?.CARROT || 131848, count: 5, name: "Carrot Seeds", image: "/images/items/seeds.png" },
+      { id: 'honey', count: 200, name: "Honey", image: "/images/items/honey.png" }
+    ],
+    reqs: [
+      { id: ID_PRODUCE_ITEMS?.POTATO || 131586, count: 10, name: "Potatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.POTATO]?.image || "/images/items/potato.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q2_rebuild_tavern")
+  },
+
+  {
+    id: "q9_cornucopia",
+    type: "farming",
+    sender: "Tavern Barkeep",
+    subject: "Salad Days",
+    body: [
+      "We're updating the Tavern menu and we need fresh greens!",
+      "Can you supply us with 5 Corn and 5 Tomatoes?",
+      "I'll trade you some gold and a couple of chests for them."
+    ],
+    rewards: [
+      { id: 'gold', count: 350, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_CHEST_ITEMS?.CHEST_BRONZE || 20001, count: 2, name: "Bronze Chests", image: "/images/items/chest.png" }
+    ],
+    reqs: [
+      { id: ID_PRODUCE_ITEMS?.CORN || 131590, count: 5, name: "Corn", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.CORN]?.image || "/images/items/corn.png" },
+      { id: ID_PRODUCE_ITEMS?.TOMATO || 131589, count: 5, name: "Tomatoes", image: ALL_ITEMS[ID_PRODUCE_ITEMS?.TOMATO]?.image || "/images/items/tomato.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q8_first_harvest")
+  },
+
+  {
+    id: "q10_crab_mentality",
+    type: "fishing",
+    sender: "Fisherman Finn",
+    subject: "Crab Mentality",
+    body: [
+      "Hook and line is fine, but if you want passive income, you need Crab Pots.",
+      "Craft 3 Crab Pots and set them up. Bring me 5 Crabs to prove they work!"
+    ],
+    rewards: [
+      { id: 'gold', count: 200, name: "Gold", image: "/images/items/gold.png" },
+      { id: 'honey', count: 250, name: "Honey", image: "/images/items/honey.png" },
+      { id: ID_CHEST_ITEMS?.CHEST_BRONZE || 20001, count: 1, name: "Bronze Chest", image: "/images/items/chest.png" }
+    ],
+    reqs: [
+      { id: 9966, count: 3, name: "Crab Pots", image: "/images/items/crab_pot.png" },
+      { id: 10002, count: 5, name: "Crabs", image: "/images/items/fish.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q7_a_bigger_catch")
+  },
+
+  {
+    id: "q11_rainy_day",
+    type: "fishing",
+    sender: "Potion Master",
+    subject: "Rainy Day Blues",
+    body: [
+      "I need the scales of a Gloomfish for a new potion.",
+      "They only surface when it's raining. Take your Rowboat out on the next rainy day and catch one!"
+    ],
+    rewards: [
+      { id: 'gold', count: 150, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 2, name: "Growth Elixir", image: "/images/items/potion1.png" },
+      { id: 9998, count: 1, name: "Water Sprinkler", image: "/images/items/watersprinkler.png" }
+    ],
+    reqs: [
+      { id: 10003, count: 1, name: "Gloomfish", image: "/images/items/fish.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q10_crab_mentality")
+  },
+
+  {
+    id: "q12_sailing",
+    type: "fishing",
+    sender: "Great Uncle Sir Bee",
+    subject: "Sailing the Open Seas",
+    body: [
+      "A Rowboat? How pedestrian. If you want to make this family proud, you need a vessel worthy of the open ocean.",
+      "Build a Sailboat so you can catch the real prizes."
+    ],
+    rewards: [
+      { id: 'gold', count: 100, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_BAIT_ITEMS?.BAIT_3 || 30003, count: 10, name: "Bait III", image: "/images/items/seeds.png" }
+    ],
+    reqs: [
+      { id: 9964, count: 1, name: "Sailboat", image: "/images/items/sailboat.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q11_rainy_day")
+  },
+
+  {
+    id: "q13_storm_chaser",
+    type: "fishing",
+    sender: "Fisherman Finn",
+    subject: "Storm Chaser",
+    body: [
+      "You're crazy if you go out there during a lightning storm... but if you do, the legendary Spark Eel is said to ride the waves.",
+      "You'll need a Tesla Tower on your boat to survive!"
+    ],
+    rewards: [
+      { id: 'gold', count: 100, name: "Gold", image: "/images/items/gold.png" },
+      { id: 9954, count: 1, name: "Magic Ring", image: "/images/items/seeds.png" },
+      { id: ID_CHEST_ITEMS?.CHEST_GOLD || 20003, count: 1, name: "Gold Chest", image: "/images/items/chest.png" }
+    ],
+    reqs: [
+      { id: 10004, count: 1, name: "Spark Eel", image: "/images/items/fish.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q12_sailing")
+  },
+
+  {
+    id: "q14_industrial",
+    type: "main",
+    sender: "Mayor Prezibee",
+    subject: "Industrial Revolution",
+    body: [
+      "The town is booming, and we need more resources.",
+      "Forging Steel Plates from Iron and Coal will let you build the ultimate fishing vessel."
+    ],
+    rewards: [
+      { id: 'gold', count: 80, name: "Gold", image: "/images/items/gold.png" },
+      { id: 9962, count: 1, name: "Engine", image: "/images/crafting/engine.png" }
+    ],
+    reqs: [
+      { id: 9967, count: 50, name: "Steel Plates", image: "/images/crafting/steel_plate.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q13_storm_chaser")
+  },
+
+  {
+    id: "q15_trawler",
+    type: "fishing",
+    sender: "Fisherman Finn",
+    subject: "Industrial Fishing",
+    body: [
+      "With that Engine, you can finally build the Trawler.",
+      "It's massive, loud, and can reach the deepest parts of the ocean."
+    ],
+    rewards: [
+      { id: 'gold', count: 80, name: "Gold", image: "/images/items/gold.png" },
+      { id: 'honey', count: 1000, name: "Honey", image: "/images/items/honey.png" }
+    ],
+    reqs: [
+      { id: 9963, count: 1, name: "Trawler", image: "/images/items/trawler.png" }
+    ],
+    unlockCondition: (step, completed) => completed.includes("q14_industrial")
+  },
+
   {
     id: "q16_kraken",
     type: "fishing",
@@ -361,6 +501,7 @@ export const getQuestData = () => [
       "Take the Trawler out and catch the Kraken. Be warned, it will put up the fight of a lifetime."
     ],
     rewards: [
+      { id: 'gold', count: 50, name: "Gold", image: "/images/items/gold.png" },
       { id: 9961, count: 5, name: "Red Gem", image: "/images/items/seeds.png" }
     ],
     reqs: [
@@ -368,6 +509,7 @@ export const getQuestData = () => [
     ],
     unlockCondition: (step, completed) => completed.includes("q15_trawler")
   },
+
   {
     id: "q9b_ladybug_basics",
     type: "farming",
@@ -379,161 +521,18 @@ export const getQuestData = () => [
       "Bring me 5 Ladybugs and 1 Bug Net so I know you're prepared!"
     ],
     rewards: [
-      { id: 'honey', count: 150, name: "Honey", image: "/images/items/honey.png" }
+      { id: 'gold', count: 150, name: "Gold", image: "/images/items/gold.png" },
+      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 1, name: "Growth Elixir", image: ALL_ITEMS[ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR]?.image || "/images/items/potion1.png" }
     ],
     reqs: [
-      { id: 9988, count: 1, name: "Bug Net", image: ALL_ITEMS[9988]?.image || "/images/forest/net.png" },
-      { id: ID_POTION_ITEMS?.LADYBUG || 132101, count: 5, name: "Ladybugs", image: ALL_ITEMS[ID_POTION_ITEMS?.LADYBUG]?.image || "/images/items/ladybug.png" }
+      { id: ID_POTION_ITEMS?.LADYBUG || 132101, count: 5, name: "Ladybugs", image: "/images/items/ladybug.png" },
+      { id: 9971, count: 1, name: "Bug Net", image: "/images/items/bug_net.png" }
     ],
-    unlockCondition: (step, completed) => completed.includes("q9_cornucopia")
+    unlockCondition: (step, completed) => completed.includes("q8_first_harvest")
   },
-  {
-    id: "q10_scarecrow_basics",
-    type: "farming",
-    sender: "Farmer Bob",
-    subject: "Scarecrow Basics",
-    body: [
-      "Those darn crows are at it again!",
-      "Can you craft 1 basic scarecrow to place in your farm to help protect crops?"
-    ],
-    rewards: [
-      { id: ID_SEEDS?.CARROT || 131848, count: 5, name: "Carrot Seeds", image: "/images/items/seeds.png" },
-      { id: 'honey', count: 200, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: ID_POTION_ITEMS?.SCARECROW || 132102, count: 1, name: "Scarecrow", image: ALL_ITEMS[ID_POTION_ITEMS?.SCARECROW]?.image || '/images/scarecrow/scarecrow1.png' }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q9b_ladybug_basics")
-  },
-  {
-    id: "q11_grow_strong_crops",
-    type: "farming",
-    sender: "Queen Sage",
-    subject: "Elixir Testing",
-    body: [
-      "Greetings Farmer.",
-      "I require some testing of my latest elixir, can you apply 3 growth elixirs to the crops and see what happens?"
-    ],
-    rewards: [
-      { id: 9970, count: 5, name: "Hemp Rope", image: "/images/crafting/hemp_rope.png" },
-    ],
-    reqs: [
-      { id: ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR || 132104, count: 3, name: "Growth Elixirs", image: ALL_ITEMS[ID_POTION_ITEMS?.POTION_GROWTH_ELIXIR]?.image || "/images/items/potion1.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q10_scarecrow_basics")
-  },
-  {
-    id: "q12_golden_plots",
-    type: "farming",
-    sender: "Great Uncle Sir Bee",
-    subject: "Gold Tier Crops",
-    body: [
-      "I see you have been doing well with farming so far, however its time to get serious",
-      "I require you to harvest 3 golden tier crops of any kind for further farming analysis."
-    ],
-    rewards: [
-      { id: ID_BAIT_ITEMS?.BAIT_1 || 30001, count: 5, name: "Bait I", image: "/images/items/seeds.png" },
-      { id: 'honey', count: 350, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { name: "Gold Tier Crops", fn: (sandboxLoot, sandboxProduce) => {
-          for (const key in sandboxProduce) {
-              if (Array.isArray(sandboxProduce[key])) {
-                  if (sandboxProduce[key].some(crop => crop.type === 3)) return true;
-              } else if (sandboxProduce[key] && typeof sandboxProduce[key] === 'object' && sandboxProduce[key].type === 3) {
-                  return true;
-              }
-          }
-          return false;
-       }
-      }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q11_grow_strong_crops")
-  },
-  {
-    id: "q13_more_scarecrows",
-    type: "farming",
-    sender: "Farmer Bob",
-    subject: "Ladybug Scarecrow",
-    body: [
-      "Did you know some items can be crafted as a mixed item to combine their perks?",
-      "By combining a Scarecrow and your caught Ladybugs, you can craft a Ladybug Scarecrow!",
-      "This mixed item protects against crows AND wards off other pests while attracting friendly bugs. Craft 1 and show me!"
-    ],
-    rewards: [
-      { id: 9971, count: 10, name: "Cotton", image: "/images/crafting/cotton.png" }
-    ],
-    reqs: [
-      { id: 9979, count: 1, name: "Ladybug Scarecrow", image: ALL_ITEMS[9979]?.image || '/images/scarecrow/ladybug_scarecrow.png' }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q12_golden_plots")
-  },
-  {
-    id: "q14_advanced_automation",
-    type: "farming",
-    sender: "Farmer John",
-    subject: "Automation",
-    body: [
-      "Wow you are doing great on your farm!",
-      "I need you to put these sprinklers around to see how well they protect the land against deydration from heat, can you place 3 around for me?",
-    ],
-    rewards: [
-      { id: 'honey', count: 400, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: 9998, count: 3, name: "Water Sprinklers", image: ALL_ITEMS[9998]?.image || '/images/items/watersprinkler.png' }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q13_more_scarecrows")
-  },
-  {
-    id: "q15_windmill",
-    type: "farming",
-    sender: "Farmer Bill",
-    subject: "Windmill Request",
-    body: [
-      "Wow, this farm is looking great!",
-      "I have a request for something that may be difficult, could you setup a windwill on your farm? I would love to see if this can affect the efficiency",
-    ],
-    rewards: [
-      { id: 9969, count: 5, name: "Canvas", image: "/images/crafting/canvas.png" },
-      { id: ID_CHEST_ITEMS?.CHEST_SILVER || 20002, count: 1, name: "Silver Chest", image: "/images/items/chest.png" }
-    ],
-    reqs: [
-      {  name: "WindMill", fn: (sandboxLoot, sandboxProduce) => {
-          if (sandboxProduce[9998] && typeof sandboxProduce[9998] === 'object') {
-              return sandboxProduce[9998].length > 0;
-          }
-          if (sandboxLoot[9998]) return sandboxLoot[9998] > 0;
-          return false;
-      }
-  
-      }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q14_advanced_automation")
-  },
-  {
-    id: "q16_build_barn",
-    type: "main",
-    sender: "Farmer Bob",
-    subject: "Time for Livestock!",
-    body: [
-      "Howdy neighbor! Your farm is looking mighty fine.",
-      "I think it's time you expand into raising animals.",
-      "Gather some materials so we can build you a proper Barn. Bring me 100 Wood Logs, 100 Stones, and 20 Iron Ore!"
-    ],
-    rewards: [
-      { id: 'honey', count: 1000, name: "Honey", image: "/images/items/honey.png" }
-    ],
-    reqs: [
-      { id: 9993, count: 100, name: "Wood Logs", image: "/images/forest/wood.png" },
-      { id: 9994, count: 100, name: "Stones", image: "/images/forest/rock.png" },
-      { id: 9996, count: 20, name: "Iron Ore", image: "/images/forest/rock.png" }
-    ],
-    unlockCondition: (step, completed) => completed.includes("q15_windmill")
-  }
+
 ];
 
-// --- TAMAGOTCHI DIALOG ---
 const TamagotchiDialog = ({ onClose, onFeed, onWater, catFeedTimeLeft, bowlWaterFilled, bowlFishId, starvingTime, isCatUnlocked, firstFedTime, catHappiness, currentHunger, catHealth }) => {
   const [activePet, setActivePet] = useState('felix');
 
@@ -766,6 +765,7 @@ const SkipGrowthDialog = ({ onClose, onConfirm, tutorialStep }) => {
 };
 
 // Inline the dialog to avoid any import/module resolution errors!
+
 export const WeightContestDialog = ({ onClose, simulatedDay, targetProduceId, targetFishId, onProduceChange, onFishChange, targetProduceData, targetFishData, refetchItems }) => {
   const { show } = useNotification();
   
@@ -1903,42 +1903,8 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
     <>
     {tutorialStep === 26 && (
       <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100002 }}>
-        <div style={{ position: 'relative', width: '666px' }}>
-          <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-          <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-              {axeCount > 0 && pickaxeCount === 0
-                ? sticksCount >= 3 && activeTab !== 'tools'
-                  ? "Now head to the tools page to craft your Pickaxe!"
-                  : sticksCount >= 3 && activeTab === 'tools'
-                  ? "Great! Now craft your Pickaxe!"
-                  : sticksCount === 2
-                  ? "Just 1 more stick!"
-                  : sticksCount === 1
-                  ? "Create 2 more sticks!"
-                  : "Now craft 3 sticks so you can make your Pickaxe!"
-                : pickaxeCount > 0 && axeCount === 0
-                ? sticksCount >= 3 && activeTab !== 'tools'
-                  ? "Now head to the tools page to craft your Axe!"
-                  : sticksCount >= 3 && activeTab === 'tools'
-                  ? "Great! Now craft your Axe!"
-                  : sticksCount === 2
-                  ? "Just 1 more stick!"
-                  : sticksCount === 1
-                  ? "Create 2 more sticks!"
-                  : "Now craft 3 sticks so you can make your Axe!"
-                : sticksCount >= 3 && activeTab !== 'tools'
-                ? "Now head over to the tools page!"
-                : sticksCount >= 3 && activeTab === 'tools'
-                ? "Great! Now craft yourself an Axe or a Pickaxe using your sticks!"
-                : sticksCount === 2
-                ? "Just 1 more stick!"
-                : sticksCount === 1
-                ? "Create 2 more sticks!"
-                : "First, you'll need some Sticks. Craft 3 sticks with Wood Logs Pabee gave you!"
-              }
-            </p>
-          </div>
+        <div style={{ position: 'relative', width: '400px' }}>
+          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
         </div>
       </div>
     )}
@@ -2345,6 +2311,11 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
          }
          continue;
       }
+      if (req.id === 'gold') {
+        const gold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        if (gold < req.count) return false;
+        continue;
+      }
       let count = 0;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       for (const id of ids) {
@@ -2369,6 +2340,10 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
          }
          return { ...req, current: val ? 1 : 0, count: req.count || 1 };
       }
+      if (req.id === 'gold') {
+        const gold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        return { ...req, current: gold };
+      }
       let count = 0;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       for (const id of ids) {
@@ -2388,6 +2363,13 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
     
     for (const req of quest.reqs) {
       if (req.fn) continue;
+      if (req.id === 'gold') {
+        const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        const newGold = Math.max(0, currentGold - req.count);
+        localStorage.setItem('sandbox_gold', newGold.toString());
+        window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
+        continue;
+      }
       let remaining = req.count;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       
@@ -2419,6 +2401,11 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
         const newHoney = currentHoney + reward.count;
         localStorage.setItem('sandbox_honey', newHoney.toString());
         window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+      } else if (reward.id === 'gold') {
+        const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        const newGold = currentGold + reward.count;
+        localStorage.setItem('sandbox_gold', newGold.toString());
+        window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
       } else {
         sandboxLoot[reward.id] = (sandboxLoot[reward.id] || 0) + reward.count;
       }
@@ -2491,7 +2478,12 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
               ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-              <BaseButton label="Done" onClick={() => setAnimState(0)} />
+              <BaseButton label="Done" onClick={() => {
+                if (activeQuest?.id === 'q1_pabee_intro') {
+                  window.dispatchEvent(new CustomEvent('pabeePackOpen'));
+                }
+                setAnimState(0);
+              }} />
             </div>
           </div>
         )}
@@ -2606,6 +2598,11 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
          }
          continue;
       }
+      if (req.id === 'gold') {
+        const gold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        if (gold < req.count) return false;
+        continue;
+      }
       let count = 0;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       for (const id of ids) {
@@ -2630,6 +2627,10 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
          }
          return { ...req, current: val ? 1 : 0, count: req.count || 1 };
       }
+      if (req.id === 'gold') {
+        const gold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        return { ...req, current: gold };
+      }
       let count = 0;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       for (const id of ids) {
@@ -2650,6 +2651,13 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
     
     for (const req of quest.reqs) {
       if (req.fn) continue;
+      if (req.id === 'gold') {
+        const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        const newGold = Math.max(0, currentGold - req.count);
+        localStorage.setItem('sandbox_gold', newGold.toString());
+        window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
+        continue;
+      }
       let remaining = req.count;
       const ids = Array.isArray(req.id) ? req.id : [req.id];
       
@@ -2682,6 +2690,11 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
         const newHoney = currentHoney + reward.count;
         localStorage.setItem('sandbox_honey', newHoney.toString());
         window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+      } else if (reward.id === 'gold') {
+        const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+        const newGold = currentGold + reward.count;
+        localStorage.setItem('sandbox_gold', newGold.toString());
+        window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
       } else {
         sandboxLoot[reward.id] = (sandboxLoot[reward.id] || 0) + reward.count;
       }
@@ -2697,6 +2710,11 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
     if (quest.id === "q2_rebuild_tavern") {
       localStorage.setItem('quest_q2_rebuild_tavern_completed', 'true');
       window.dispatchEvent(new CustomEvent('tavernUnlocked'));
+    }
+    if (quest.id === "q2_unlock_dock") {
+      localStorage.setItem('sandbox_dock_unlocked', 'true');
+      localStorage.setItem('sandbox_dock_repaired', 'true');
+      window.dispatchEvent(new CustomEvent('dockRepaired'));
     }
 
     let xpSkill = "";
@@ -2770,7 +2788,17 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
               ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
-              <BaseButton label="Done" onClick={() => { setAnimState(0); if (activeQuest.id === 'q1_pabee_intro' && onTutorialAdvance) onTutorialAdvance(); }} />
+              <BaseButton label="Done" onClick={() => {
+                if (activeQuest.id === 'q1_pabee_intro') {
+                  window.dispatchEvent(new CustomEvent('closeMailbox'));
+                  onClose();
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('pabeePackOpen'));
+                  }, 100);
+                } else {
+                  setAnimState(0);
+                }
+              }} />
             </div>
           </div>
         )}
@@ -2819,6 +2847,16 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                 <p style={{ margin: 0, fontFamily: 'monospace', color: '#8c6b4a', fontSize: '14px' }}>
                   Head to the <strong>Tavern</strong> to submit your materials and rebuild it.
                 </p>
+              </div>
+            )}
+
+            {!completedQuests.includes(activeQuest.id) && activeQuest.reqs.length === 0 && activeQuest.rewards.some(r => r.id === 'pabee_pack') && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                <img
+                  src="/images/cardback/commonback.png"
+                  alt="Gift"
+                  style={{ width: '90px', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', animation: 'mapFloat 2s ease-in-out infinite' }}
+                />
               </div>
             )}
 
@@ -2890,11 +2928,10 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
               >
-                <img src="/images/mail/pabeebox.png" alt="" style={{ width: '88%', display: 'block', borderRadius: '10px', margin: '0 auto' }} draggable={false} />
-                {!isRead && <img src="/images/mail/!.png" alt="!" style={{ position: 'absolute', top: '-11px', right: '4px', width: '28px', height: '28px' }} draggable={false} />}
-                <div style={{ position: 'absolute', top: 0, left: '30%', right: '8%', bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
-                  <span style={{ fontFamily: 'Cartoonist', fontSize: '14px', color: '#FFFFFF', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{quest.subject}</span>
-                  <span style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#FFECDC', textShadow: '1px 1px 0 #000' }}>From: {quest.sender}</span>
+                <img src="/images/mail/mailpapabee.png" alt="" style={{ width: '88%', display: 'block', borderRadius: '10px', margin: '0 auto' }} draggable={false} />
+                {!isRead && <img src="/images/mail/!.png" alt="!" style={{ position: 'absolute', top: '-11px', right: '14px', width: '28px', height: '28px' }} draggable={false} />}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: '23px', bottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: 'Cartoonist', fontSize: '14px', color: '#FFFFFF', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{quest.subject}</span>
                 </div>
               </div>
             );
@@ -2956,6 +2993,15 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   const [tutorialCrowSpawned, setTutorialCrowSpawned] = useState(false);
   const [tutorialCrowDone, setTutorialCrowDone] = useState(false);
   const [tutorialGrowSkipped, setTutorialGrowSkipped] = useState(false);
+  const [tutPage, setTutPage] = useState(1);
+  const tutPageRef = useRef(1);
+  const setTutPageSync = (val) => { tutPageRef.current = val; setTutPage(val); localStorage.setItem('sandbox_tut_page', String(val)); window.dispatchEvent(new CustomEvent('tutPageChanged')); };
+  const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
+  const [tutGemPlotIndex, setTutGemPlotIndex] = useState(null);
+  const [showMissionBoard, setShowMissionBoard] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [showPabeePack, setShowPabeePack] = useState(false);
+  const [showFarmCustomize, setShowFarmCustomize] = useState(false);
 
   const [farmingXp, setFarmingXp] = useState(() => parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10));
   const farmingLevel = getLevelFromXp(farmingXp);
@@ -2967,6 +3013,41 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       };
       window.addEventListener('ls-update', handleLsUpdate);
       return () => window.removeEventListener('ls-update', handleLsUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      // Add the pack seeds to loot
+      const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+      const packSeeds = [
+        getRaritySeedId(ID_SEEDS.CARROT, 1),
+        getRaritySeedId(ID_SEEDS.CARROT, 1),
+        getRaritySeedId(ID_SEEDS.CARROT, 2),
+        getRaritySeedId(ID_SEEDS.POTATO, 1),
+        getRaritySeedId(ID_SEEDS.TOMATO, 1),
+      ];
+      for (const seedId of packSeeds) {
+        loot[seedId] = (loot[seedId] || 0) + 1;
+      }
+      localStorage.setItem('sandbox_loot', JSON.stringify(loot));
+
+      // Add 1000 gold
+      const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+      const newGold = currentGold + 1000;
+      localStorage.setItem('sandbox_gold', newGold.toString());
+      window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
+
+      // Add 250 gems
+      const currentGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+      const newGems = currentGems + 250;
+      localStorage.setItem('sandbox_gems', newGems.toString());
+      window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
+
+      window.dispatchEvent(new CustomEvent('closeMailbox'));
+      setShowPabeePack(true);
+    };
+    window.addEventListener('pabeePackOpen', handler);
+    return () => window.removeEventListener('pabeePackOpen', handler);
   }, []);
 
   const safeItems = allItems || [];
@@ -3001,6 +3082,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   const [usedSeedsInPreview, setUsedSeedsInPreview] = useState({});
   const plantConfirmAudioRef = useRef(null);
   const harvestConfirmAudioRef = useRef(null);
+  const tutPostWaterRef = useRef(false); // tracks when tut bug/crow sequence is active
+  const tutWaterPlotRef = useRef(null);  // plot index used in tutorial sequence
   const bugsRef = useRef({}); // Tracks bugs currently on the farm
   const crowsRef = useRef({}); // Tracks crows currently on the farm
   const scarecrowsRef = useRef(JSON.parse(localStorage.getItem('sandbox_scarecrows') || '{}'));
@@ -3113,22 +3196,17 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   const [sirBeePos, setSirBeePos] = useState('-200px');
   const [isToolsOpen, setIsToolsOpen] = useState(false);
 
-  useEffect(() => {
-    if (tutorialStep >= 5 && tutorialStep < 9) {
-      setIsToolsOpen(true);
-    }
-  }, [tutorialStep]);
 
   useEffect(() => {
     if (tutorialStep === 1) {
-      const t1 = setTimeout(() => setSirBeePos('425px'), 100);
+      const t1 = setTimeout(() => setSirBeePos('670px'), 100);
       const t2 = setTimeout(() => {
          setTutorialStep(2);
          localStorage.setItem('sandbox_tutorial_step', '2');
       }, 2100);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     } else if (tutorialStep >= 2) {
-      setSirBeePos('425px');
+      setSirBeePos('670px');
     }
   }, [tutorialStep]);
   
@@ -3138,6 +3216,42 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       localStorage.setItem('sandbox_tutorial_step', '25');
     }
   }, [tutorialStep]);
+
+  // Auto-open gem popup when advancing to tutPage 11
+  useEffect(() => {
+    if (tutorialStep !== 3 || tutPage !== 11) return;
+    const plotIdx = tutWaterPlotRef.current;
+    if (plotIdx !== null) {
+      setTutGemPlotIndex(plotIdx);
+      setTutGemPopupOpen(true);
+      // Deselect watercan tool
+      setSelectedTool(null);
+      setIsWatering(false);
+      // Freeze crop countdown — mark as ready so timer stops; popup blocks harvesting until paid
+      const skipped = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
+      skipped[plotIdx] = true;
+      localStorage.setItem('sandbox_skipped_crops', JSON.stringify(skipped));
+      setCropArray(prev => {
+        const newArr = new CropItemArrayClass(30);
+        newArr.copyFrom(prev);
+        const item = newArr.getItem(plotIdx);
+        if (item) { item.growStatus = 2; }
+        return newArr;
+      });
+    }
+  }, [tutPage, tutorialStep]);
+
+  // Set market tutorial flag when user is on tutPage 12
+  useEffect(() => {
+    if (tutorialStep !== 3 || tutPage !== 12) return;
+    const handleClick = (e) => {
+      if (e.target.closest('a[href*="/market"]')) {
+        localStorage.setItem('sandbox_tut_market', 'true');
+      }
+    };
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [tutorialStep, tutPage]);
 
   const [tutSticks, setTutSticks] = useState(0);
   const [tutAxe, setTutAxe] = useState(0);
@@ -3188,9 +3302,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     const newHoney = currentHoney - 100;
     localStorage.setItem('sandbox_honey', newHoney.toString());
     window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
-    if (tutorialStep === 9) {
-      setTutorialGrowSkipped(true);
-    }
     
     const skipped = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
     skipped[skipGrowTarget] = true;
@@ -3493,6 +3604,14 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           localStorage.setItem(`sandbox_${skillName}_xp`, xpNeeded.toString());
           window.dispatchEvent(new CustomEvent('ls-update', { detail: { key: `sandbox_${skillName}_xp`, value: xpNeeded.toString() } }));
           window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `${skillName.charAt(0).toUpperCase() + skillName.slice(1)} level set to ${level}!`, type: "success" } }));
+        }
+      }
+      if (cmd && cmd.startsWith('crop ')) {
+        const amount = parseInt(cmd.split(' ')[1], 10);
+        if (!isNaN(amount)) {
+          localStorage.setItem('sandbox_total_crops', amount.toString());
+          window.dispatchEvent(new CustomEvent('soilProgressChanged'));
+          window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `Crop count set to ${amount.toLocaleString()}!`, type: "success" } }));
         }
       }
       if (cmd && cmd.startsWith('weather ')) {
@@ -4398,20 +4517,19 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       });
       show("Bug squashed!", "success");
 
-      // During tutorial: spawn a crow after squashing the bug
-      const currentStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-      if (currentStep === 9) {
+      // After tutorial watering sequence: advance to tutPage 10 and spawn visual-only crow
+      if (tutPostWaterRef.current) {
+        tutPostWaterRef.current = false;
+        setTutPageSync(10);
         setTimeout(() => {
-          crowsRef.current[plotIndex] = 30;
+          crowsRef.current[plotIndex] = 9999; // long countdown so it never harms crops
           setCropArray(prev => {
             const newArr = new CropItemArrayClass(30);
             newArr.copyFrom(prev);
             const item = newArr.getItem(plotIndex);
-            if (item) item.crowCountdown = 30;
+            if (item) item.crowCountdown = 9999;
             return newArr;
           });
-          // Show crow tutorial message
-          setTutorialCrowSpawned(true);
         }, 1500);
       }
     };
@@ -4437,17 +4555,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       });
       show("Crow scared away!", "success");
 
-      // During tutorial: after scaring crow, block all future pest spawns and give 100 Honey
-      const currentStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-      if (currentStep === 9) {
-        setTutorialCrowSpawned(false);
-        setTutorialCrowDone(true);
-        localStorage.setItem('sandbox_tutorial_pests_done', 'true');
-        const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
-        const newHoney = currentHoney + 100;
-        localStorage.setItem('sandbox_honey', newHoney.toString());
-        window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
-      }
     };
 
     const handleScareRat = (event) => {
@@ -5309,6 +5416,26 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         }
       }
 
+      // Track total crops and specific crop harvests for soil unlocks
+      {
+        const DRAGON_FRUIT_SEED_ID = (4 << 8) | 11;
+        let dragonfruitCount = 0;
+        for (let i = 0; i < cropArray.getLength(); i++) {
+          const item = cropArray.getItem(i);
+          if (item && item.seedId && readySlots.includes(i)) {
+            const baseId = item.seedId & 0xFFF;
+            if (baseId === DRAGON_FRUIT_SEED_ID) dragonfruitCount++;
+          }
+        }
+        const prevTotal = parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10);
+        localStorage.setItem('sandbox_total_crops', (prevTotal + readySlots.length).toString());
+        if (dragonfruitCount > 0) {
+          const prevDragon = parseInt(localStorage.getItem('sandbox_dragonfruit_harvested') || '0', 10);
+          localStorage.setItem('sandbox_dragonfruit_harvested', (prevDragon + dragonfruitCount).toString());
+        }
+        window.dispatchEvent(new CustomEvent('soilProgressChanged'));
+      }
+
       show(`✅ Successfully harvested ${readySlots.length} crops!`, "success");
       // Clear any selection state after harvest all
       setSelectedIndexes([]);
@@ -5576,6 +5703,23 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             show("🐣 You unearthed the Purple Easter Egg!", "success");
         }
 
+        // Track total crops and dragonfruit for soil unlocks
+        {
+          const DRAGON_FRUIT_SEED_ID = (4 << 8) | 11;
+          let dragonfruitCount = 0;
+          for (const idx of readyCrops) {
+            const item = cropArray.getItem(idx);
+            if (item && item.seedId && (item.seedId & 0xFFF) === DRAGON_FRUIT_SEED_ID) dragonfruitCount++;
+          }
+          const prevTotal = parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10);
+          localStorage.setItem('sandbox_total_crops', (prevTotal + successCount).toString());
+          if (dragonfruitCount > 0) {
+            const prevDragon = parseInt(localStorage.getItem('sandbox_dragonfruit_harvested') || '0', 10);
+            localStorage.setItem('sandbox_dragonfruit_harvested', (prevDragon + dragonfruitCount).toString());
+          }
+          window.dispatchEvent(new CustomEvent('soilProgressChanged'));
+        }
+
         show(`✅ Successfully harvested ${successCount} crops!`, "success");
         // Clear selection state after successful harvest
         setSelectedIndexes([]);
@@ -5627,18 +5771,17 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           wasCarrot = true;
       }
 
-      if (tutorialStep === 9) {
-        setTutorialStep(10);
-        localStorage.setItem('sandbox_tutorial_step', '10');
-      }
-
       const result = await harvestMany([index]);
 
       // Small delay to ensure blockchain state is updated
       await new Promise(resolve => setTimeout(resolve, 1000));
       await loadCropsFromContract();
       if (typeof refetchSeeds === "function") refetchSeeds();
-      
+
+      if (tutorialStep === 3 && tutPageRef.current === 11) {
+        setTutPageSync(12);
+      }
+
       // Force a re-render by updating the preview update key
       setPreviewUpdateKey(prev => prev + 1);
 
@@ -5901,19 +6044,17 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         if (fishId) show("Dirt removed. Fish returned!", "success");
         playPlantConfirmSound();
       } else if (pStatus === 0) {
-        // During tutorial, only allow digging one hole
-        if (tutorialStep > 0 && tutorialStep < 32) {
+        if (tutorialStep === 3) {
           const existingHoles = Object.values(plotPrep).filter(p => p.status === 1 || p.status === 3).length;
-          if (existingHoles >= 1 && tutorialStep !== 5) {
-            show("Finish the tutorial before digging more holes!", "info");
+          if (existingHoles >= 1) {
+            show("Dig just one hole for now!", "info");
             return;
           }
         }
         playPlantConfirmSound();
         updatePlotPrep(index, { status: 1 });
-          if (tutorialStep === 5) {
-            setTutorialStep(6);
-            localStorage.setItem('sandbox_tutorial_step', '6');
+        if (tutorialStep === 3 && tutPage < 6) {
+          setTutPageSync(6);
         }
       } else {
         show("It's already a hole!", "info");
@@ -5940,23 +6081,22 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           setWaterEffects(prev => [...prev, { id: Date.now() + Math.random(), index, time: Date.now() }]);
         }
         playWaterSound();
-
-        if (tutorialStep === 8) {
-          setTutorialStep(9);
-          localStorage.setItem('sandbox_tutorial_step', '9');
-          setIsWatering(false);
-          // Spawn a tutorial bug on the watered plot
+        if (tutorialStep === 3 && tutPage === 8) {
+          const plotIdx = tutWaterPlotRef.current !== null ? tutWaterPlotRef.current : index;
+          setTutPageSync(9);
+          tutPostWaterRef.current = true;
           setTimeout(() => {
-            bugsRef.current[index] = 60;
+            bugsRef.current[plotIdx] = 60;
             setCropArray(prev => {
               const newArr = new CropItemArrayClass(30);
               newArr.copyFrom(prev);
-              const item = newArr.getItem(index);
+              const item = newArr.getItem(plotIdx);
               if (item) item.bugCountdown = 60;
               return newArr;
             });
-          }, 1500);
+          }, 1000);
         }
+
       } else {
         show("This plot doesn't need water right now.", "info");
       }
@@ -5993,7 +6133,18 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       const nowSec = Math.floor(Date.now() / 1000);
       const endTime = Math.floor((plotData.plantedAt || 0) / 1000) + (plotData.growthTime || 0);
       const isReady = (plotData.growStatus === 2) || (nowSec >= endTime);
-      
+
+      if (tutorialStep === 3 && tutPage === 11) {
+        if (isReady) {
+          if (farmingLoading) return;
+          handleInstantHarvest(index);
+        } else {
+          setTutGemPlotIndex(index);
+          setTutGemPopupOpen(true);
+        }
+        return;
+      }
+
       if (isReady) {
         if (farmingLoading) return; // Prevent spam clicking
         handleInstantHarvest(index);
@@ -6011,10 +6162,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       if (pStatus === 1 || pStatus === 2) {
         updatePlotPrep(index, { ...plotPrep[index], status: 3 });
         playPlantConfirmSound();
-        if (tutorialStep === 6) {
-          setTutorialStep(7);
-          localStorage.setItem('sandbox_tutorial_step', '7');
-          setIsDirting(false);
+        if (tutorialStep === 3 && tutPage < 7) {
+          setTutPageSync(7);
         }
       } else {
         show("You can only place dirt in a hole!", "info");
@@ -6073,10 +6222,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       show("Equip your shovel to dig a hole!", "info");
       return;
     } else if (pStatus === 1 || pStatus === 2) {
-      if (tutorialStep > 0 && tutorialStep < 8) {
-        show("Select the Bag of Dirt tool first!", "info");
-        return;
-      }
       setPrepDialogTarget(index);
       return;
     } else if (pStatus === 3) {
@@ -6168,10 +6313,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         localStorage.setItem('sandbox_water_state', JSON.stringify(newWaterState));
 
         show("✅ Seed planted!", "success");
-        if (tutorialStep === 7) {
-          setTutorialStep(8);
-          localStorage.setItem('sandbox_tutorial_step', '8');
-          setIsSeeding(false);
+        if (tutorialStep === 3 && tutPage === 7) {
+          setTutPageSync(8);
+          tutWaterPlotRef.current = idx;
         }
         await loadCropsFromContract();
         if (typeof refetchSeeds === "function") refetchSeeds();
@@ -6211,7 +6355,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     },
   ];
 
-  const bees = FARM_BEES;
+  const bees = tutorialStep < 32 ? [] : FARM_BEES;
   return (
     <div className={isCatShaking ? "shake-screen" : ""}>
       <style>{`
@@ -6251,7 +6395,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       
 
       {/* Farming Level Banner - Top Right */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <img src="/images/label/farmerlevellabel.png" style={{ height: '92px', objectFit: 'contain', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '113px', paddingBottom: '18px' }}>
@@ -6275,12 +6419,104 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         backgroundOffsetX={40}
         backgroundOffsetY={-40}
         disablePanZoom
+        onHotspotClick={(hotspotId) => {
+          if (hotspotId === ID_FARM_HOTSPOTS.FARMER) { setShowMissionBoard(true); return true; }
+          return false;
+        }}
+        onBeeClick={() => setShowFarmCustomize(true)}
       >
-        {/* Belt Top - hidden */}
+        {/* Shovel only on tutp5 with yellow highlight */}
+        {tutorialStep === 3 && tutPage === 5 && (
+        <img
+          src="/images/farming/realshovel.png"
+          alt="Shovel"
+          draggable={false}
+          onClick={() => { toggleTool('shovel'); const next = selectedTool !== 'shovel'; setIsDigging(next); setIsHoeing(false); setIsWatering(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
+          style={{
+            position: 'absolute',
+            top: '650px',
+            left: '555px',
+            width: '30px',
+            zIndex: 6,
+            cursor: 'pointer',
+            filter: selectedTool === 'shovel' ? 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))' : 'drop-shadow(0px 0px 10px yellow) drop-shadow(0px 0px 20px yellow)',
+            transform: selectedTool === 'shovel' ? 'translateY(-15px)' : 'none',
+            transition: 'transform 0.4s ease, filter 0.2s ease',
+            animation: selectedTool === 'shovel' ? 'mapFloat 2s ease-in-out infinite' : 'none',
+          }}
+        />
+        )}
+        {/* Seeds only on tutp7 with yellow highlight */}
+        {tutorialStep === 3 && tutPage === 7 && (
+        <img
+          src="/images/farming/realseeds.png"
+          alt="Seeds"
+          draggable={false}
+          onClick={() => { toggleTool('seeds'); const next = selectedTool !== 'seeds'; setIsSeeding(next); setIsDirting(false); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsPlanting(false); }}
+          style={{
+            position: 'absolute',
+            top: '637px',
+            left: '709px',
+            width: '43px',
+            zIndex: 6,
+            cursor: 'pointer',
+            filter: selectedTool === 'seeds' ? 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))' : 'drop-shadow(0px 0px 10px yellow) drop-shadow(0px 0px 20px yellow)',
+            transform: selectedTool === 'seeds' ? 'translateY(-15px)' : 'none',
+            transition: 'transform 0.4s ease, filter 0.2s ease',
+            animation: selectedTool === 'seeds' ? 'mapFloat 2s ease-in-out infinite' : 'none',
+          }}
+        />
+        )}
+        {/* Watercan only on tutp8 (same image as tutp7) with yellow highlight */}
+        {tutorialStep === 3 && tutPage === 8 && (
+        <img
+          src="/images/farming/realbucket.png"
+          alt="Watering Can"
+          draggable={false}
+          onClick={() => { toggleTool('bucket'); const next = selectedTool !== 'bucket'; setIsWatering(next); setIsHoeing(false); setIsDigging(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
+          style={{
+            position: 'absolute',
+            top: '638px',
+            left: '785px',
+            width: '63px',
+            zIndex: 6,
+            cursor: 'pointer',
+            filter: selectedTool === 'bucket' ? 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))' : 'drop-shadow(0px 0px 10px yellow) drop-shadow(0px 0px 20px yellow)',
+            transform: selectedTool === 'bucket' ? 'translateY(-15px)' : 'none',
+            transition: 'transform 0.4s ease, filter 0.2s ease',
+            animation: selectedTool === 'bucket' ? 'mapFloat 2s ease-in-out infinite' : 'none',
+          }}
+        />
+        )}
+        {/* Soil only on tutp6 with yellow highlight */}
+        {tutorialStep === 3 && tutPage === 6 && (
+        <img
+          src="/images/farming/realsoil.png"
+          alt="Soil"
+          draggable={false}
+          onClick={() => { toggleTool('soil'); const next = selectedTool !== 'soil'; setIsDirting(next); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsSeeding(false); setIsPlanting(false); }}
+          style={{
+            position: 'absolute',
+            top: '638px',
+            left: '618px',
+            width: '52px',
+            zIndex: 6,
+            cursor: 'pointer',
+            filter: selectedTool === 'soil' ? 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))' : 'drop-shadow(0px 0px 10px yellow) drop-shadow(0px 0px 20px yellow)',
+            transform: selectedTool === 'soil' ? 'translateY(-15px)' : 'none',
+            transition: 'transform 0.4s ease, filter 0.2s ease',
+            animation: selectedTool === 'soil' ? 'mapFloat 2s ease-in-out infinite' : 'none',
+          }}
+        />
+        )}
+        {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 4)) && (<>
+        {/* Belt Top */}
         <img src="/images/farming/realbelttop.png" alt="Belt Top" style={{ position: 'absolute', top: '655px', left: '542px', width: '376px', pointerEvents: 'none', zIndex: 7 }} draggable={false} />
         {/* Belt Bottom */}
         <img src="/images/farming/realbeltbottom.png" alt="Belt Bottom" style={{ position: 'absolute', top: '630px', left: '450px', width: '560px', pointerEvents: 'none', zIndex: 5 }} draggable={false} />
-        {/* Farm Items */}
+        </>)}
+        {/* Farm Tool Items - visible from step 32 or during bug/crow tutorial phase */}
+        {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 9)) && (<>
         <img
           src="/images/farming/realfork.png"
           alt="Fork"
@@ -6411,6 +6647,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             animation: selectedTool === 'shovel' ? 'mapFloat 2s ease-in-out infinite' : 'none',
           }}
         />
+        </>)}
         {/* Well */}
         <img src="/images/land/well.png" alt="Well" style={{ position: 'absolute', top: '410px', left: '250px', width: '190px', pointerEvents: 'none', zIndex: 10 }} draggable={false} />
         {/* Mine */}
@@ -6503,26 +6740,44 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
         {/* Sir Bee Tutorial Overlay */}
         {tutorialStep >= 1 && tutorialStep < 4 && (
-          <img 
-            src="/images/bees/sir.png" 
-            alt="Sir Bee" 
-            style={{ 
-              position: 'absolute', left: sirBeePos, top: '320px', width: '100px', zIndex: 20,
-              transition: tutorialStep === 1 ? 'left 2s ease-out' : 'none',
-              filter: tutorialStep === 2 ? 'drop-shadow(0 0 10px yellow)' : 'none',
-              cursor: tutorialStep === 2 ? 'pointer' : 'default',
-              animation: tutorialStep >= 2 ? 'mapFloat 2s ease-in-out infinite' : 'none',
-              pointerEvents: tutorialStep >= 2 ? 'auto' : 'none'
-            }} 
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              if (tutorialStep === 2) {
-                setTutorialStep(3);
-                localStorage.setItem('sandbox_tutorial_step', '3');
-              }
-            }}
-          />
+          <>
+            <img
+              src="/images/bees/sir.png"
+              alt="Sir Bee"
+              style={{
+                position: 'absolute', left: sirBeePos, top: '320px', width: '100px', zIndex: 20,
+                transition: tutorialStep === 1 ? 'left 2s ease-out' : 'none',
+                filter: tutorialStep === 2 ? 'drop-shadow(0 0 10px yellow)' : 'none',
+                cursor: tutorialStep === 2 ? 'pointer' : 'default',
+                animation: tutorialStep >= 2 ? 'mapFloat 2s ease-in-out infinite' : 'none',
+                pointerEvents: tutorialStep >= 2 ? 'auto' : 'none'
+              }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (tutorialStep === 2) {
+                  setTutorialStep(3);
+                  localStorage.setItem('sandbox_tutorial_step', '3');
+                }
+              }}
+            />
+            {tutorialStep === 2 && (
+              <img
+                src="/images/mail/!.png"
+                alt="!"
+                style={{
+                  position: 'absolute',
+                  left: `calc(${sirBeePos} + 70px)`,
+                  top: '300px',
+                  width: '24px',
+                  height: '24px',
+                  zIndex: 21,
+                  pointerEvents: 'none',
+                  animation: 'mapFloat 2s ease-in-out infinite'
+                }}
+              />
+            )}
+          </>
         )}
 
         {/* Protector Spots Overlay */}
@@ -6800,16 +7055,12 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         )}
 
         {/* Farmer Bag Icon Overlay - Static inside PanZoomViewport */}
-        {false && tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
+        {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 4)) && (
+        <div
           onPointerDown={(e) => {
             e.stopPropagation();
             e.preventDefault();
             setIsToolsOpen(!isToolsOpen);
-            if (tutorialStep === 4) {
-              setTutorialStep(5);
-              localStorage.setItem('sandbox_tutorial_step', '5');
-            }
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'scale(1.1)';
@@ -6821,285 +7072,15 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           }}
       style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 9999, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }}
         >
-        <img 
-          src="/images/farming/shed.png" 
-          alt="Shed Tools" 
-          style={{ height: '80px', objectFit: 'contain' }} 
-          onError={(e) => { e.target.onerror = null; e.target.src='/images/farm/shed.png'; }} 
+        <img
+          src="/images/farming/shed.png"
+          alt="Shed Tools"
+          style={{ height: '80px', objectFit: 'contain' }}
+          onError={(e) => { e.target.onerror = null; e.target.src='/images/farm/shed.png'; }}
         />
-          {tutorialStep === 4 && (
-            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
-              <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
-            </div>
-          )}
         </div>
         )}
 
-        {/* Hoe Icon Overlay - Static inside PanZoomViewport */}
-        {tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (tutorialStep < 9) {
-              show("You don't need the Hoe right now.", "info");
-              return;
-            }
-            setIsHoeing(!isHoeing);
-            setIsWatering(false);
-            setIsDigging(false);
-            setIsDirting(false);
-            setIsSeeding(false);
-            setIsPlanting(false);
-            setIsUsingPotion(false);
-            setIsPlacingScarecrow(false);
-            setIsPlacingLadybug(false);
-            setIsPlacingSprinkler(false);
-            setIsPlacingUmbrella(false);
-            setIsPlacingTesla(false);
-          }}
-          onMouseEnter={(e) => {
-            if (tutorialStep < 9) return;
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = isHoeing ? 'drop-shadow(0px 0px 12px yellow)' : 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            if (tutorialStep < 9) return;
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = isHoeing ? 'drop-shadow(0px 0px 8px yellow)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
-          }}
-          style={{ 
-            position: 'absolute', 
-        top: isToolsOpen ? '110px' : '20px', 
-          left: '20px', 
-            zIndex: 9998, 
-            cursor: tutorialStep < 9 ? 'not-allowed' : 'pointer', 
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-            filter: isHoeing ? 'drop-shadow(0px 0px 8px yellow)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))',
-            opacity: isToolsOpen ? (tutorialStep < 9 ? 0.5 : 1) : 0,
-            pointerEvents: isToolsOpen ? 'auto' : 'none'
-          }}
-        >
-          <img src="/images/items/hoe.png" alt="Hoe" style={{ height: '80px', objectFit: 'contain' }} />
-        </div>
-        )}
-
-        {/* Watering Can Icon Overlay - Static inside PanZoomViewport */}
-        {tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (tutorialStep < 8) {
-              show("You don't need the Watering Can right now.", "info");
-              return;
-            }
-            setIsWatering(!isWatering);
-            setIsHoeing(false);
-            setIsDigging(false);
-            setIsDirting(false);
-            setIsSeeding(false);
-            setIsPlanting(false);
-            setIsUsingPotion(false);
-            setIsPlacingScarecrow(false);
-            setIsPlacingLadybug(false);
-            setIsPlacingSprinkler(false);
-            setIsPlacingUmbrella(false);
-            setIsPlacingTesla(false);
-          }}
-          onMouseEnter={(e) => {
-            if (tutorialStep < 8) return;
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = isWatering ? 'drop-shadow(0px 0px 12px yellow)' : 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            if (tutorialStep < 8) return;
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = isWatering ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 8 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))');
-          }}
-          style={{ 
-            position: 'absolute', 
-        top: isToolsOpen ? '200px' : '20px', 
-          left: '20px', 
-            zIndex: 9998, 
-            cursor: tutorialStep < 8 ? 'not-allowed' : 'pointer', 
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-            filter: isWatering ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 8 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))'),
-            opacity: isToolsOpen ? (tutorialStep < 8 ? 0.5 : 1) : 0,
-            pointerEvents: isToolsOpen ? 'auto' : 'none'
-          }}
-        >
-          <img src="/images/forest/watercan.png" alt="Watering Can" style={{ height: '80px', objectFit: 'contain' }} />
-          {tutorialStep === 8 && (
-            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
-              <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
-            </div>
-          )}
-        </div>
-        )}
-
-        {/* Shovel Icon Overlay - Static inside PanZoomViewport */}
-        {tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (tutorialStep < 5) {
-              show("You don't need the Shovel right now.", "info");
-              return;
-            }
-            setIsDigging(!isDigging);
-            setIsHoeing(false);
-            setIsWatering(false);
-            setIsDirting(false);
-            setIsSeeding(false);
-            setIsPlanting(false);
-            setIsUsingPotion(false);
-            setIsPlacingScarecrow(false);
-            setIsPlacingLadybug(false);
-            setIsPlacingSprinkler(false);
-            setIsPlacingUmbrella(false);
-            setIsPlacingTesla(false);
-          }}
-          onMouseEnter={(e) => {
-            if (tutorialStep < 5) return;
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = isDigging ? 'drop-shadow(0px 0px 12px yellow)' : 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            if (tutorialStep < 5) return;
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = isDigging ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 5 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))');
-          }}
-          style={{ 
-            position: 'absolute', 
-        top: isToolsOpen ? '290px' : '20px', 
-          left: '20px', 
-            zIndex: 9998, 
-            cursor: tutorialStep < 5 ? 'not-allowed' : 'pointer', 
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-            filter: isDigging ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 5 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))'),
-            opacity: isToolsOpen ? (tutorialStep < 5 ? 0.5 : 1) : 0,
-            pointerEvents: isToolsOpen ? 'auto' : 'none'
-          }}
-        >
-          <img src="/images/farm/shovel.png" alt="Shovel" style={{ height: '80px', objectFit: 'contain' }} />
-          {tutorialStep === 5 && (
-            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
-              <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
-            </div>
-          )}
-        </div>
-        )}
-
-        {/* Dirt Bag Icon Overlay - Static inside PanZoomViewport */}
-        {tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (tutorialStep < 6) {
-              show("You don't need the Bag of Dirt right now.", "info");
-              return;
-            }
-            setIsDirting(!isDirting);
-            setIsHoeing(false);
-            setIsWatering(false);
-            setIsDigging(false);
-            setIsSeeding(false);
-            setIsPlanting(false);
-            setIsUsingPotion(false);
-            setIsPlacingScarecrow(false);
-            setIsPlacingLadybug(false);
-            setIsPlacingSprinkler(false);
-            setIsPlacingUmbrella(false);
-            setIsPlacingTesla(false);
-          }}
-          onMouseEnter={(e) => {
-            if (tutorialStep < 6) return;
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = isDirting ? 'drop-shadow(0px 0px 12px yellow)' : 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            if (tutorialStep < 6) return;
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = isDirting ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 6 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))');
-          }}
-          style={{ 
-            position: 'absolute', 
-        top: isToolsOpen ? '380px' : '20px', 
-          left: '20px', 
-            zIndex: 9998, 
-            cursor: tutorialStep < 6 ? 'not-allowed' : 'pointer', 
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-            filter: isDirting ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 6 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))'),
-            opacity: isToolsOpen ? (tutorialStep < 6 ? 0.5 : 1) : 0,
-            pointerEvents: isToolsOpen ? 'auto' : 'none'
-          }}
-        >
-          <img src="/images/farming/bagofdirt.png" alt="Dirt Bag" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src='/images/items/dirt.png'; }} />
-          {tutorialStep === 6 && (
-            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
-              <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
-            </div>
-          )}
-        </div>
-        )}
-
-        {/* Seed Bag Icon Overlay - Static inside PanZoomViewport */}
-        {tutorialStep >= 4 && tutorialStep !== 10 && (
-        <div 
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (tutorialStep < 7) {
-              show("You don't need the Seed Bag right now.", "info");
-              return;
-            }
-            setIsSeeding(!isSeeding);
-            setIsDirting(false);
-            setIsHoeing(false);
-            setIsWatering(false);
-            setIsDigging(false);
-            setIsPlanting(false);
-            setIsUsingPotion(false);
-            setIsPlacingScarecrow(false);
-            setIsPlacingLadybug(false);
-            setIsPlacingTesla(false);
-            setIsPlacingSprinkler(false);
-            setIsPlacingUmbrella(false);
-            setIsPlacingTesla(false);
-          }}
-          onMouseEnter={(e) => {
-            if (tutorialStep < 7) return;
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = isSeeding ? 'drop-shadow(0px 0px 12px yellow)' : 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            if (tutorialStep < 7) return;
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = isSeeding ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 7 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))');
-          }}
-          style={{ 
-            position: 'absolute', 
-        top: isToolsOpen ? '470px' : '20px', 
-          left: '20px', 
-            zIndex: 9998, 
-            cursor: tutorialStep < 7 ? 'not-allowed' : 'pointer', 
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-            filter: isSeeding ? 'drop-shadow(0px 0px 8px yellow)' : (tutorialStep === 7 ? 'drop-shadow(0px 0px 12px #00ff41)' : 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))'),
-            opacity: isToolsOpen ? (tutorialStep < 7 ? 0.5 : 1) : 0,
-            pointerEvents: isToolsOpen ? 'auto' : 'none'
-          }}
-        >
-          <img src="/images/farming/bagofseed.png" alt="Seed Bag" style={{ height: '80px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; e.target.src='/images/items/seeds.png'; }} />
-          {tutorialStep === 7 && (
-            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', animation: 'bounce 1s infinite' }}>
-              <span style={{ fontSize: '40px', color: '#00ff41', filter: 'drop-shadow(0px 2px 2px black)' }}>⬆️</span>
-            </div>
-          )}
-        </div>
-        )}
       </PanZoomViewport>
       {isFarmMenu && (
         <FarmMenu
@@ -7245,175 +7226,58 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     />
   )}
 
-  <style>{`.tutorial-img { transition: transform 0.08s, filter 0.08s; cursor: pointer; } .tutorial-img:active { transform: scale(0.96); filter: brightness(0.8); }`}</style>
+  <style>{`
+    .tutorial-img { transition: transform 0.08s, filter 0.08s; cursor: pointer; }
+    .tutorial-img:active { transform: scale(0.96); filter: brightness(0.8); }
+    .tut-arrow { position: absolute; right: -22px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; background: #f5c842; border: 3px solid #a67c00; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 22px; box-shadow: 0 3px 10px rgba(0,0,0,0.4); transition: transform 0.1s, filter 0.1s; user-select: none; }
+    .tut-arrow:hover { filter: brightness(1.2); transform: translateY(-50%) scale(1.1); }
+    .tut-arrow:active { filter: brightness(0.85); transform: translateY(-50%) scale(0.95); }
+  `}</style>
 
   {tutorialStep === 3 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000, cursor: 'pointer' }}
-      onClick={() => { setTutorialStep(4); localStorage.setItem('sandbox_tutorial_step', '4'); }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Hey its me your very wealthy Great uncle, it was a shame your grandfather left you alone with this sad excuse for a farm but he is dealing with the sickness. I hate to get my clothes dirty and even more hate to have anyone see me here and start getting any ideas so how about I do you a favor as family and give a rundown on how to work the farm. I had the curse of being raised on a farm so let me teach you the basics.
-          </p>
-        </div>
-        {/* Blue bar at bottom */}
-        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
-          <div
-            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
-          >
-            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
-            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>LET'S DO THIS!</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 4 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            First things first, click on your Farmer Bag! This bag holds all your essential tools: your Shovel, Bag of Dirt, Seed Bag, Watering Can, and Hoe.
-          </p>
-        </div>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img
+          src={tutPage === 1 ? '/images/tutorial/tutmessagep1.png' : tutPage === 2 ? '/images/tutorial/tutmessagep2.png' : tutPage === 3 ? '/images/tutorial/tutmessagep3.png' : tutPage === 4 ? '/images/tutorial/tutp4.png' : tutPage === 5 ? '/images/tutorial/tutp5.png' : tutPage === 6 ? '/images/tutorial/tutp6.png' : tutPage === 10 ? '/images/tutorial/tutpart8.png' : tutPage === 11 ? '/images/tutorial/tutp9.png' : tutPage === 12 ? '/images/tutorial/tutp10.png' : '/images/tutorial/tutp7.png'}
+          alt="Tutorial"
+          className="tutorial-img"
+          style={{ width: '400px', objectFit: 'contain', display: 'block' }}
+        />
+        {tutPage !== 5 && tutPage !== 6 && tutPage !== 7 && tutPage !== 8 && tutPage !== 9 && tutPage !== 11 && tutPage !== 12 && (
+          <div className="tut-arrow" onClick={() => {
+            if (tutPage === 1) {
+              setTutPageSync(2);
+            } else if (tutPage === 2) {
+              setTutPageSync(3);
+            } else if (tutPage === 3) {
+              setTutPageSync(4);
+            } else if (tutPage === 4) {
+              setTutPageSync(5);
+            } else if (tutPage === 10) {
+              setTutPageSync(11);
+            } else if (tutPage === 11) {
+              setTutPageSync(1);
+              setTutorialStep(32);
+              localStorage.setItem('sandbox_tutorial_step', '32');
+              window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+            }
+          }}>▶</div>
+        )}
       </div>
     </div>
   )}
 
-  {tutorialStep === 5 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', display: 'block' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Now, grab your Shovel and click on an empty spot (the Red X) to dig a hole.
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 6 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Good job! Now click the Shovel again to put it away. Next, select the Bag of Dirt and click the hole you just dug to fill it.
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 7 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Perfect! Now select your Seed Bag and click the dirt plot to choose a seed to plant.
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 8 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '5%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Excellent! Plants need water to grow. Grab your Watering Can and water the seed you just planted.
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 9 && !tutorialCrowDone && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          {tutorialCrowSpawned ? (
-            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-              Watch out! A crow has landed on your crop! Crows are dangerous — if left alone they will eat your entire plant and destroy it completely. Click on the crow to scare it away before it ruins your harvest!
-            </p>
-          ) : (
-            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-              Uh oh! A bug has appeared on your plant! Bugs are bad news — while one is on a crop, it completely stops all growth progress. Click on the bug to squash it quickly!
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 9 && tutorialCrowDone && !tutorialGrowSkipped && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Now we just have to wait for the plant to grow! Your grandfather told me to make sure you had some Honey so here is 100 Honey! Click on your growing plant and pay to instantly grow it!
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 9 && tutorialGrowSkipped && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            See that green checkmark on your crop? That means it is fully grown and ready to harvest! Click on the crop now to collect your very first harvest!
-          </p>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep < 10 && (
+  {tutorialStep > 0 && tutorialStep < 4 && tutPage < 12 && (
     <style>{`
       a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
     `}</style>
   )}
-
-  {tutorialStep === 10 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <style>{`
-        a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-        a[href*="/market"], img[src*="market"], img[src*="Market"] {
-          animation: marketHighlight 1.5s infinite !important;
-          position: relative;
-          z-index: 100001;
-          pointer-events: auto !important;
-        }
-        @keyframes marketHighlight {
-          0%, 100% { transform: scale(1.1); }
-          50% { transform: scale(1); }
-        }
-      `}</style>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Amazing harvest! You are a natural. Now you know how to grow produce, let's go and get you some more seeds to grow! Click the Marketplace icon on the left to visit the town market.
-          </p>
-        </div>
-      </div>
-    </div>
+  {tutorialStep === 3 && tutPage === 12 && (
+    <style>{`
+      a[href*="/house"], a[href*="/valley"], a[href*="/tavern"] { pointer-events: none !important; }
+      a[href*="/market"] { pointer-events: auto !important; animation: marketIconPulse 1.2s ease-in-out infinite !important; transform-origin: center; position: relative; z-index: 100001; }
+      @keyframes marketIconPulse { 0%, 100% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,215,0,0.9)); } 50% { transform: scale(0.95); filter: drop-shadow(0 0 2px rgba(255,215,0,0.3)); } }
+    `}</style>
   )}
 
   {tutorialStep === 25 && (
@@ -7425,7 +7289,10 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
         }
       `}</style>
-      <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" className="tutorial-img" style={{ width: '666px', objectFit: 'contain', pointerEvents: 'auto' }} />
+      <div style={{ position: 'relative', width: '400px', pointerEvents: 'auto' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" className="tutorial-img" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(26); localStorage.setItem('sandbox_tutorial_step', '26'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
+      </div>
     </div>
   )}
 
@@ -7439,13 +7306,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         }
       `}</style>
       <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-        <div style={{ position: 'relative', width: '666px' }}>
-          <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-          <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-            <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-              Your grandfather should have left you some materials in the mail you got earlier. Click the Crafting icon at the top of your screen to make some items!
-            </p>
-          </div>
+        <div style={{ position: 'relative', width: '400px' }}>
+          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+          <div className="tut-arrow" onClick={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
         </div>
       </div>
     </>
@@ -7460,13 +7323,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Well done! You just crafted your first tools! Your Axe and Pickaxe will let you gather wood and ore out in the world. Now click the Calendar icon to claim your daily rewards!
-          </p>
-        </div>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(28); localStorage.setItem('sandbox_tutorial_step', '28'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
   )}
@@ -7474,26 +7333,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   {tutorialStep === 28 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            The Calendar lets you claim free daily rewards and see upcoming events. Make sure to check it every day so you never miss out!
-          </p>
-        </div>
-        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
-          <div
-            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
-            onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
-          >
-            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
-            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
-          </div>
-        </div>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
   )}
@@ -7507,13 +7349,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            Now check out the Weight Contest icon! You can compete with other players to grow the biggest produce or catch the biggest fish. Click it to take a look!
-          </p>
-        </div>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(30); localStorage.setItem('sandbox_tutorial_step', '30'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
   )}
@@ -7521,51 +7359,49 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   {tutorialStep === 30 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            The Weight Contest refreshes every week — keep farming, fishing, and growing to climb the leaderboard and win big prizes!
-          </p>
-        </div>
-        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
-          <div
-            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
-            onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
-          >
-            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
-            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>NEXT!</span>
-          </div>
-        </div>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
   )}
 
   {tutorialStep === 31 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '666px' }}>
-        <img src="/images/tutorial/sirbeetextbox.png" alt="Tutorial" style={{ width: '666px', objectFit: 'contain' }} />
-        <div style={{ position: 'absolute', top: 'calc(10% + 45px)', left: '22%', right: '10%', bottom: '22%', display: 'flex', alignItems: 'flex-start' }}>
-          <p style={{ fontFamily: 'Cartoonist', fontSize: '11px', color: '#3b1f0a', lineHeight: '1.5', margin: 0 }}>
-            That is everything for now! Your grandfather would be proud. Go explore the valley, gather resources, and make this farm your own. Good luck out there!
-          </p>
+      <div style={{ position: 'relative', width: '400px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div className="tut-arrow" onClick={() => { setTutorialStep(32); localStorage.setItem('sandbox_tutorial_step', '32'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
+      </div>
+    </div>
+  )}
+
+  {/* Tutorial Gem Skip Popup (tutp9 step) */}
+  {tutGemPopupOpen && tutorialStep === 3 && tutPage === 11 && (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* tutp9 image visible above the dark overlay */}
+      <div style={{ position: 'absolute', right: '20px', bottom: '20px' }}>
+        <img src="/images/tutorial/tutp9.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain', display: 'block' }} />
+      </div>
+      {/* Centered popup card */}
+      <div style={{ background: 'linear-gradient(135deg, #3a2010, #5a3520)', border: '4px solid #a67c00', borderRadius: '20px', padding: '36px 40px', textAlign: 'center', maxWidth: '360px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+        <div style={{ fontFamily: 'Cartoonist', fontSize: '22px', color: '#fff', marginBottom: '12px', textShadow: '1px 1px 0 #000' }}>
+          Your crop is still growing!
         </div>
-        <div style={{ position: 'absolute', bottom: '13%', left: '22%', right: '5%' }}>
-          <div
-            style={{ position: 'relative', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
-            onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.2)'; e.currentTarget.style.transform = 'scale(1.03)'; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.96)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-            onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
-            onClick={() => { setTutorialStep(32); localStorage.setItem('sandbox_tutorial_step', '32'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}
-          >
-            <img src="/images/tutorial/tutbluebar.png" alt="" style={{ width: '100%', display: 'block' }} draggable={false} />
-            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontFamily: 'Cartoonist', fontSize: '14px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', pointerEvents: 'none' }}>LET'S GO!</span>
-          </div>
+        <div style={{ fontFamily: 'Cartoonist', fontSize: '16px', color: '#ffd700', marginBottom: '24px' }}>
+          Skip the wait for 50 💎?
+        </div>
+        <div
+          onClick={() => {
+            const currentGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+            if (currentGems < 50) { show("Not enough gems!", "error"); return; }
+            localStorage.setItem('sandbox_gems', String(currentGems - 50));
+            window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
+            // Crop is already marked ready — just close the popup so user can click to harvest
+            setTutGemPopupOpen(false);
+          }}
+          style={{ display: 'inline-block', background: 'linear-gradient(135deg, #f5c842, #e0a800)', border: '3px solid #a67c00', borderRadius: '12px', padding: '12px 32px', fontFamily: 'Cartoonist', fontSize: '18px', color: '#3a2010', cursor: 'pointer', userSelect: 'none' }}
+        >
+          Pay 50 💎
         </div>
       </div>
     </div>
@@ -7609,6 +7445,44 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   )}
 
       <AdminPanel />
+
+      {showMissionBoard && <MissionBoard onClose={() => setShowMissionBoard(false)} />}
+      {showShop && <Shop onClose={() => setShowShop(false)} />}
+      {showFarmCustomize && <FarmCustomizePanel onClose={() => setShowFarmCustomize(false)} />}
+      {showPabeePack && (
+        <PokemonPackRipDialog
+          rollingInfo={{
+            id: 'pabee_pack',
+            count: 5,
+            isReveal: true,
+            isComplete: true,
+            isFallback: false,
+            revealedSeeds: [
+              getRaritySeedId(ID_SEEDS.CARROT, 1),
+              getRaritySeedId(ID_SEEDS.CARROT, 1),
+              getRaritySeedId(ID_SEEDS.CARROT, 2),
+              getRaritySeedId(ID_SEEDS.POTATO, 1),
+              getRaritySeedId(ID_SEEDS.TOMATO, 1),
+            ],
+          }}
+          onClose={() => {
+            setShowPabeePack(false);
+            if (tutorialStep === 0) {
+              setTutorialStep(1);
+              localStorage.setItem('sandbox_tutorial_step', '1');
+              window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+            }
+          }}
+          onBack={() => {
+            setShowPabeePack(false);
+            if (tutorialStep === 0) {
+              setTutorialStep(1);
+              localStorage.setItem('sandbox_tutorial_step', '1');
+              window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

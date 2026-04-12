@@ -26,6 +26,7 @@ const CropItem = ({
   selectedIndexes = [], // Add selectedIndexes prop to sync with parent state
 }) => {
   const [highlighted, setHighlighted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [crowLanded, setCrowLanded] = useState(false);
   const crowLandedTimerRef = useRef(null);
   const [crowScreenPos, setCrowScreenPos] = useState(null);
@@ -40,6 +41,7 @@ const CropItem = ({
   const settings = useAppSelector(selectSettings) || defaultSettings;
   const [showDebug, setShowDebug] = useState(() => localStorage.getItem('show_debug_labels') !== 'false');
   const [plotPrep, setPlotPrep] = useState(() => JSON.parse(localStorage.getItem('sandbox_plot_prep') || '{}'));
+  const [soilColor, setSoilColor] = useState(() => localStorage.getItem('sandbox_active_soil_color') || null);
 
   useEffect(() => {
     const handlePrepUpdate = (e) => setPlotPrep(e.detail);
@@ -51,6 +53,12 @@ const CropItem = ({
     const handler = (e) => setShowDebug(e.detail);
     window.addEventListener('toggleDebugLabels', handler);
     return () => window.removeEventListener('toggleDebugLabels', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setSoilColor(localStorage.getItem('sandbox_active_soil_color') || null);
+    window.addEventListener('farmSoilChanged', handler);
+    return () => window.removeEventListener('farmSoilChanged', handler);
   }, []);
 
   const isPreview = useMemo(() => {
@@ -149,6 +157,7 @@ const CropItem = ({
   };
 
   const handleMouseEnter = (e) => {
+    setIsHovered(true);
     if (!data.seedId) return;
     
     setTooltipVisible(true);
@@ -172,6 +181,7 @@ const CropItem = ({
 
   const handleMouseLeave = () => {
     setTooltipVisible(false);
+    setIsHovered(false);
   };
 
   // Switch from flying to pecking after fly-in animation completes
@@ -273,6 +283,17 @@ const CropItem = ({
         backgroundColor: isPrepStage ? 'transparent' : undefined,
       }}
     >
+      {/* Soil color overlay */}
+      {soilColor && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          backgroundColor: soilColor,
+          mixBlendMode: 'color',
+          opacity: 0.55,
+          pointerEvents: 'none',
+        }} />
+      )}
+
       {/* --- DEBUG: PLOT INDEX LABEL --- */}
       {showDebug && (
         <div style={{
@@ -297,7 +318,7 @@ const CropItem = ({
       {!isDisabled && isPrepStage && (
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
           {prep.status === 0 && (
-            <img src="/images/farming/x.png" alt="X" style={{ width: '115px', height: '115px', objectFit: 'contain', marginTop: '115px', marginLeft: '-34px' }} />
+            <img src={isHovered ? '/images/farming/xhover.png' : '/images/farming/x.png'} alt="X" style={{ width: '115px', height: '115px', objectFit: 'contain', marginTop: '115px', marginLeft: '-34px' }} />
           )}
           {prep.status === 1 && (
             <img src="/images/farming/hole.png" alt="Hole" style={{ width: '220px', height: '220px', objectFit: 'contain', marginTop: '115px', marginLeft: '-48px' }} />
@@ -428,6 +449,7 @@ const CropItem = ({
             e.stopPropagation();
             e.preventDefault();
             window.dispatchEvent(new CustomEvent('squashBug', { detail: { plotIndex: index } }));
+            localStorage.setItem('stat_bugs_smashed', (parseInt(localStorage.getItem('stat_bugs_smashed') || '0', 10) + 1).toString());
           }}
           style={{
             position: "absolute",
@@ -534,6 +556,7 @@ const CropItem = ({
               e.stopPropagation();
               e.preventDefault();
               window.dispatchEvent(new CustomEvent('scareCrow', { detail: { plotIndex: index } }));
+              localStorage.setItem('stat_crows_swatted', (parseInt(localStorage.getItem('stat_crows_swatted') || '0', 10) + 1).toString());
             }}
             style={{
               position: "fixed",
@@ -589,46 +612,6 @@ const CropItem = ({
         document.body
       )}
 
-      {/* Rat indicator and countdown */}
-      {data.ratCountdown !== undefined && data.ratCountdown > 0 && (
-        <div 
-          className="rat-container"
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.dispatchEvent(new CustomEvent('scareRat', { detail: { plotIndex: index } }));
-          }}
-          style={{
-            position: "absolute",
-            top: "35%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 9999, 
-            cursor: "crosshair",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pointerEvents: "auto",
-            animation: "ratAppear 0.8s ease-out forwards"
-          }}
-        >
-          <div style={{
-            color: '#ff4444',
-            fontWeight: 'bold',
-            fontSize: '18px',
-            textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
-            marginBottom: '-5px',
-            zIndex: 31
-          }}>
-            {data.ratCountdown}s
-          </div>
-          <img
-            src="/images/bug/rat.png"
-            alt="rat"
-            style={{ width: "45px", height: "45px", filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))" }}
-          />
-        </div>
-      )}
       {/* Status Indicator */}
       {(data.needsWater || data.growStatus === 2) && (
         <div style={{
@@ -642,7 +625,7 @@ const CropItem = ({
         }}>
           <style>{`@keyframes statusBounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }`}</style>
           {data.needsWater
-            ? ((data.bugCountdown > 0 || data.crowCountdown > 0 || data.ratCountdown > 0)
+            ? ((data.bugCountdown > 0 || data.crowCountdown > 0)
               ? <span style={{ fontSize: '28px', filter: 'drop-shadow(0px 2px 2px black)' }}>❗</span>
               : <img src="/images/icons/needwater.png" alt="Needs Water" style={{ width: '28px', height: '28px', filter: 'drop-shadow(0px 2px 2px black)' }} />)
             : <img src="/images/icons/checkmark.png" alt="Ready" style={{ width: '28px', height: '28px', filter: 'drop-shadow(0px 2px 2px black)' }} />

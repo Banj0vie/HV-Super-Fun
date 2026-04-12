@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './style.css';
 
 const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive }) => {
   const clickAudioRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!clickAudioRef.current) {
@@ -12,22 +13,24 @@ const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive }) => {
     }
   }, []);
 
+  const handleClick = (e) => {
+    e.preventDefault();
+    const audio = clickAudioRef.current;
+    if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+    navigate(path);
+  };
+
   return (
-    <Link
-      to={path}
+    <a
+      href={path}
       className={`menu-item ${isActive ? 'active' : ''}`}
-      onClick={() => {
-        const audio = clickAudioRef.current;
-        if (!audio) return;
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      }}
+      onClick={handleClick}
     >
       <div className="menu-icon">
         <img src={icon} alt={label} className="menu-icon-img" style={iconScale ? { width: `${iconScale * 100}%`, height: `${iconScale * 100}%` } : undefined} />
         {labelIcon && <img src={labelIcon} alt={`${label} label`} style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', width: '70%', pointerEvents: 'none' }} />}
       </div>
-    </Link>
+    </a>
   );
 }
 

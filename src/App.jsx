@@ -25,6 +25,7 @@ import { getClusterDisplayName } from './solana/utils/clusterUtils';
 import Tavern from "./router/tavern.jsx";
 import Valley from "./router/valley.jsx";
 import ProfileBar from "./layouts/GameMenu/ProfileBar";
+import PageTransition from "./components/PageTransition";
 import wallets from "./config/solanaWallet";
 import store from "./solana/store";
 import { BG_COLORS } from "./constants/background_colors";
@@ -209,6 +210,7 @@ const App = () => {
 
                 
                 <AppContent />
+                {/* <PageTransition /> */}
               </Router>
             </NotificationProvider>
           </WalletModalProvider>

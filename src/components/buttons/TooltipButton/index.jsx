@@ -45,13 +45,13 @@ const TooltipButton = ({ label, style, className = '', onClick, "data-hotspot": 
   return (
     <div
       className={combinedClass}
-      style={{ backgroundImage: `url(${backgroundImage})`, ...style }}
+      style={{ ...(label ? { backgroundImage: `url(${backgroundImage})` } : {}), ...style }}
       onClick={handleClick}
       data-hotspot={dataHotspot}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <span>{label}</span>
+      {label && <span>{label}</span>}
     </div>
   );
 };

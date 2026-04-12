@@ -36,6 +36,8 @@ const AdminPanel = () => {
   const [hasUnclaimedDaily, setHasUnclaimedDaily] = useState(() => localStorage.getItem('sandbox_last_claim_date') !== new Date().toDateString());
   const isForagingOrMining = location.pathname === '/forest' || location.pathname === '/mine';
   const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+  const [tutPage, setTutPage] = useState(() => parseInt(localStorage.getItem('sandbox_tut_page') || '1', 10));
+  const [tutMarketPage, setTutMarketPage] = useState(() => parseInt(localStorage.getItem('sandbox_tut_market_page') || '0', 10));
   const [completedQuests, setCompletedQuests] = useState(() => JSON.parse(localStorage.getItem('sandbox_completed_quests') || '[]'));
   const [levelUpData, setLevelUpData] = useState(null);
   
@@ -80,13 +82,16 @@ const AdminPanel = () => {
     const handlePetOpen = (e) => setIsPetOpen(e.detail);
     const handleSeedOpen = (e) => setIsSeedOpen(e.detail);
     const handleOpenMailbox = () => setShowMailboxDialog(true);
+    const handleCloseMailbox = () => setShowMailboxDialog(false);
     window.addEventListener('petDialogOpen', handlePetOpen);
     window.addEventListener('seedDialogOpen', handleSeedOpen);
     window.addEventListener('openMailbox', handleOpenMailbox);
+    window.addEventListener('closeMailbox', handleCloseMailbox);
     return () => {
       window.removeEventListener('petDialogOpen', handlePetOpen);
       window.removeEventListener('seedDialogOpen', handleSeedOpen);
       window.removeEventListener('openMailbox', handleOpenMailbox);
+      window.removeEventListener('closeMailbox', handleCloseMailbox);
     };
   }, []);
 
@@ -161,6 +166,8 @@ const AdminPanel = () => {
       if (e.type === 'dockRepaired') setIsDockRepaired(true);
       if (e.type === 'tavernUnlocked') setIsTavernUnlocked(true);
       if (e.type === 'tutorialStepChanged') setTutorialStep(parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+      if (e.type === 'tutPageChanged') setTutPage(parseInt(localStorage.getItem('sandbox_tut_page') || '1', 10));
+      if (e.type === 'tutMarketPageChanged') setTutMarketPage(parseInt(localStorage.getItem('sandbox_tut_market_page') || '0', 10));
       if (e.type === 'seenDockPrompt') setSeenDockPrompt(true);
       if (e.type === 'questsRead') {
         import('./farm').then(m => {
@@ -181,6 +188,8 @@ const AdminPanel = () => {
     window.addEventListener('dockRepaired', handleSync);
     window.addEventListener('tavernUnlocked', handleSync);
     window.addEventListener('tutorialStepChanged', handleSync);
+    window.addEventListener('tutPageChanged', handleSync);
+    window.addEventListener('tutMarketPageChanged', handleSync);
     window.addEventListener('seenDockPrompt', handleSync);
     window.addEventListener('questsRead', handleSync);
 
@@ -276,6 +285,8 @@ const AdminPanel = () => {
       window.removeEventListener('dockRepaired', handleSync);
       window.removeEventListener('tavernUnlocked', handleSync);
       window.removeEventListener('tutorialStepChanged', handleSync);
+      window.removeEventListener('tutPageChanged', handleSync);
+      window.removeEventListener('tutMarketPageChanged', handleSync);
       window.removeEventListener('changeSimulatedDate', onChangeSimulatedDate);
       window.removeEventListener('openCraftingFor', handleOpenCrafting);
       window.removeEventListener('changeWeightContest', onChangeContest);
@@ -561,6 +572,16 @@ const AdminPanel = () => {
       return;
     }
 
+    const cropCountMatch = cmd.match(/^crop (\d+)$/);
+    if (cropCountMatch) {
+      const amount = parseInt(cropCountMatch[1], 10);
+      localStorage.setItem('sandbox_total_crops', amount.toString());
+      window.dispatchEvent(new CustomEvent('soilProgressChanged'));
+      show(`Crop count set to ${amount.toLocaleString()}`, "success");
+      setConsoleInput('');
+      return;
+    }
+
     const speedMatch = cmd.match(/^crop speed (\d+)(?:%)?$/);
     if (speedMatch) {
       const speed = parseInt(speedMatch[1], 10);
@@ -636,6 +657,15 @@ const AdminPanel = () => {
     if (cmd === 'reset mine') {
       localStorage.removeItem('mine_last_visited');
       show("Executed: mine timer reset", "success");
+      setConsoleInput('');
+      return;
+    }
+
+    if (cmd === 'pfp all') {
+      const allPfpIds = ['default','redpfp','orangepfp','yellowpfp','greenpfp','bluepfp','purplepfp','pinkpfp','benpotato','goldcarrot','goldpotato'];
+      localStorage.setItem('sandbox_unlocked_pfps', JSON.stringify(allPfpIds));
+      window.dispatchEvent(new CustomEvent('pfpUnlocksUpdated'));
+      show("Executed: all PFPs unlocked", "success");
       setConsoleInput('');
       return;
     }
@@ -878,6 +908,7 @@ const AdminPanel = () => {
       'delete ladybug': (arg) => arg === '' || /^\d+$/.test(arg),
       'delete lspot': (arg) => arg === '' || /^\d+$/.test(arg),
       'crop speed': (arg) => /^\d+%?$/.test(arg),
+      'crop': (arg) => /^\d+$/.test(arg),
       'set username': (arg) => arg.length > 0,
       'set farming': (arg) => /^\d+$/.test(arg),
       'set fishing': (arg) => /^\d+$/.test(arg),
@@ -958,8 +989,8 @@ const AdminPanel = () => {
       <style>{`
         /* Left Navigation Ordering & Visibility based on Tutorial Step */
         a[href*="/farm"] { order: 1; }
-        a[href*="/market"] { order: 2; ${tutorialStep < 10 ? 'display: none !important;' : ''} }
-        a[href*="/house"] { order: 3; ${tutorialStep < 17 ? 'display: none !important;' : ''} }
+        a[href*="/market"] { order: 2; ${tutorialStep < 10 && !(tutorialStep === 3 && tutPage >= 12) ? 'display: none !important;' : ''} }
+        a[href*="/house"] { order: 3; ${tutorialStep < 17 && tutMarketPage < 16 ? 'display: none !important;' : ''} }
         a[href*="/tavern" i] { order: 4; ${tutorialStep < 24 || (tutorialStep > 24 && tutorialStep < 32) ? 'display: none !important;' : ''} }
         a[href*="/valley"] { order: 5; ${tutorialStep < 25 ? 'display: none !important;' : ''} }
 
@@ -1054,7 +1085,7 @@ const AdminPanel = () => {
           )}
 
           {/* Calendar Icon Overlay */}
-          {tutorialStep >= 27 && (
+          {false && tutorialStep >= 27 && (
           <div 
             onClick={() => {
               setShowCalendar(true);
@@ -1087,7 +1118,7 @@ const AdminPanel = () => {
       {/* Dialogs */}
       <React.Suspense fallback={null}>
         {false && showWeightContest && <WeightContestDialog onClose={() => setShowWeightContest(false)} simulatedDay={simulatedDay} targetProduceId={targetProduceId} targetFishId={targetFishId} onProduceChange={setTargetProduceId} onFishChange={setTargetFishId} targetProduceData={targetProduceData} targetFishData={targetFishData} refetchItems={refetch} />}
-        {showCalendar && <CalendarDialog onClose={() => { setShowCalendar(false); setSeenCalendar(false); }} simulatedDay={simulatedDay} simulatedDate={simulatedDate} refetch={refetch} onClaimed={() => { setHasUnclaimedDaily(false); setSeenCalendar(false); }} />}
+        {false && showCalendar && <CalendarDialog onClose={() => { setShowCalendar(false); setSeenCalendar(false); }} simulatedDay={simulatedDay} simulatedDate={simulatedDate} refetch={refetch} onClaimed={() => { setHasUnclaimedDaily(false); setSeenCalendar(false); }} />}
         {false && showCraftingDialog && <CraftingDialog onClose={() => { setShowCraftingDialog(false); setCraftingGoal(null); }} refetchSeeds={refetch} tutorialStep={tutorialStep} craftingGoal={craftingGoal} onAdvanceTutorial={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); setShowCraftingDialog(false); }} />}
         {showMailboxDialog && (
           <MailboxDialog
@@ -1327,6 +1358,7 @@ const AdminPanel = () => {
             <li><strong style={{color: '#fff'}}>delete spot</strong>     - Removes all scarecrows</li>
             <li><strong style={{color: '#fff'}}>delete lspot [x]</strong> - Removes ladybug from lspot x</li>
             <li><strong style={{color: '#fff'}}>delete lspot</strong>    - Removes all ladybugs</li>
+            <li><strong style={{color: '#fff'}}>crop [x]</strong>        - Sets total crop harvest count to x (for soil unlocks)</li>
             <li><strong style={{color: '#fff'}}>crop speed [x]</strong>  - Sets growth speed to x% (e.g. 200)</li>
             <li><strong style={{color: '#fff'}}>clear crop</strong>      - Deletes all planted crops</li>
             <li><strong style={{color: '#fff'}}>clear pest</strong>      - Clears all active bugs and crows</li>

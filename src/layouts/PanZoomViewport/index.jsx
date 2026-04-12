@@ -9,6 +9,7 @@ import { useAppSelector } from "../../solana/store";
 import { selectSettings } from "../../solana/store/slices/uiSlice";
 import { defaultSettings } from "../../utils/settings";
 import BackgroundMusic from "../../components/audio/BackgroundMusic";
+import GlobalEventTicker from "../../components/GlobalEventTicker";
 
 if (typeof window !== 'undefined' && !window.__ls_patched_v2) {
   window.__ls_patched_v2 = true;
@@ -42,6 +43,8 @@ const PanZoomViewport = ({
   disablePanZoom = false,
   backgroundOffsetX = 0,
   backgroundOffsetY = 0,
+  onHotspotClick = null,
+  onBeeClick = null,
 }) => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -124,9 +127,7 @@ const PanZoomViewport = ({
     return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
   
-  const [isDockLocked, setIsDockLocked] = useState(
-    () => localStorage.getItem("sandbox_dock_unlocked") !== "true"
-  );
+  const [isDockLocked, setIsDockLocked] = useState(false);
   const [showDockLockModal, setShowDockLockModal] = useState(false);
   const [seenDockPrompt, setSeenDockPrompt] = useState(
     () => localStorage.getItem('seen_dock_repair_prompt') === 'true'
@@ -240,6 +241,7 @@ const PanZoomViewport = ({
   return isWalletConnected() ? (
     <>
       <BackgroundMusic />
+      <GlobalEventTicker />
       <div className="panzoom-root">
 
         {!hideMenu && <GameMenu key={`game-menu-${menuKey}`} />}
@@ -269,18 +271,21 @@ const PanZoomViewport = ({
               <div
                 key={`bee-${index}`}
                 className="bee-wrapper"
-                style={{ 
-                  left: b.x, 
-                  top: b.y, 
+                style={{
+                  left: b.x,
+                  top: b.y,
                   transform: b.flip ? "scaleX(-1)" : "none",
-                  zIndex: b.zIndex ? b.zIndex : 0
+                  zIndex: b.zIndex ? b.zIndex : 0,
+                  cursor: onBeeClick ? 'pointer' : 'default',
+                  pointerEvents: onBeeClick ? 'auto' : 'none',
                 }}
+                onClick={onBeeClick ? () => onBeeClick(b, index) : undefined}
               >
                 <img
                   src={b.image}
                   alt="Bee"
                   className="img-bee"
-                  style={{ animationDelay: `${b.delay}s` }}
+                  style={{ animationDelay: `${b.delay}s`, pointerEvents: onBeeClick ? 'none' : undefined }}
                 />
               </div>
             ))}
@@ -328,6 +333,7 @@ const PanZoomViewport = ({
                       return;
                     }
                   }
+                  if (onHotspotClick && onHotspotClick(h.id)) return;
                   if (h.link) {
                     // Navigate based on link content
                     navigate(h.link);
@@ -377,32 +383,30 @@ const PanZoomViewport = ({
             color: 'white',
             fontFamily: 'monospace'
           }}>
-            <h2 style={{ margin: '0 0 12px 0', color: '#ff9c9c' }}>Dock Destroyed!</h2>
+            <h2 style={{ margin: '0 0 12px 0', color: '#ff9c9c' }}>Dock Locked</h2>
             <p style={{ marginBottom: '20px', lineHeight: '1.5' }}>
-              A storm just came in and wrecked the dock! If you have 5 wooden planks, please donate them so we can open the dock again!
+              The dock is in disrepair. Complete the Mayor's quest to unlock it, or contribute 500 Gold directly to fund the repairs.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
               <button
                 onClick={() => {
-                  const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
-                  const PLANK_ID = 9989; // Adjust this ID to match your game's actual wooden plank item!
-                  
-                  if (sandboxLoot[PLANK_ID] >= 5) {
-                    sandboxLoot[PLANK_ID] -= 5;
-                    localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
+                  const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+                  if (currentGold >= 500) {
+                    const newGold = currentGold - 500;
+                    localStorage.setItem('sandbox_gold', String(newGold));
+                    window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: String(newGold) }));
                     localStorage.setItem('sandbox_dock_unlocked', 'true');
                     localStorage.setItem('sandbox_dock_repaired', 'true');
                     setIsDockLocked(false);
                     setShowDockLockModal(false);
                     window.dispatchEvent(new CustomEvent('dockRepaired'));
-                    alert("Thank you! The dock is now repaired and open.");
                   } else {
-                    alert(`You don't have enough wooden planks! You need 5, but have ${sandboxLoot[PLANK_ID] || 0}.`);
+                    alert(`You need 500 Gold to repair the dock. You have ${currentGold} Gold.`);
                   }
                 }}
-                style={{ padding: '10px 16px', background: '#00ff41', border: 'none', borderRadius: '6px', color: '#000', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'monospace' }}
+                style={{ padding: '10px 16px', background: '#f5d87a', border: 'none', borderRadius: '6px', color: '#000', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'monospace' }}
               >
-                Donate 5 Planks
+                🪙 Pay 500 Gold
               </button>
               <button
                 onClick={() => setShowDockLockModal(false)}

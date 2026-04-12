@@ -1,140 +1,257 @@
 import React, { useState, useEffect } from "react";
 import BaseDialog from "../_BaseDialog";
 import "./style.css";
-import NFTBox from "./NFTBox";
 import { useEquipmentRegistry } from "../../hooks/useContracts";
 import { useSolanaWallet } from "../../hooks/useSolanaWallet";
-import CardView from "../../components/boxes/CardView";
 
 const PFP_OPTIONS = [
-  { id: 'benpotato',  src: '/images/pfp/benpotato.jpg',  label: 'Ben Potato',  description: 'The legendary spud himself — a true pioneer of the valley.', how: 'Awarded to the first 100 farmers to grow 100 potatoes.' },
-  { id: 'goldcarrot', src: '/images/pfp/goldcarrot.jpg', label: 'Gold Carrot', description: 'A gleaming carrot crowned champion of the valley.', how: 'Win the Weekly Weight Contest when Carrot is the featured crop.' },
-  { id: 'goldpotato', src: '/images/pfp/goldpotato.jpg', label: 'Gold Potato', description: 'A mighty spud forged through competition and glory.', how: 'Win the Weekly Weight Contest when Potato is the featured crop.' },
+  { id: 'default',    src: '/images/pfp/defultpfp.png',  label: 'Default',       unlockType: 'always' },
+  { id: 'redpfp',    src: '/images/pfp/redpfp.png',     label: 'Red',           unlockType: 'total_crops', threshold: 10 },
+  { id: 'orangepfp', src: '/images/pfp/orangepfp.png',  label: 'Orange',        unlockType: 'total_crops', threshold: 25 },
+  { id: 'yellowpfp', src: '/images/pfp/yellowpfp.png',  label: 'Yellow',        unlockType: 'total_crops', threshold: 50 },
+  { id: 'greenpfp',  src: '/images/pfp/greenpfp.png',   label: 'Green',         unlockType: 'total_crops', threshold: 100 },
+  { id: 'bluepfp',   src: '/images/pfp/bluepfp.png',    label: 'Blue',          unlockType: 'total_crops', threshold: 200 },
+  { id: 'purplepfp', src: '/images/pfp/purplepfp.png',  label: 'Purple',        unlockType: 'total_crops', threshold: 350 },
+  { id: 'pinkpfp',   src: '/images/pfp/pinkpfp.png',    label: 'Pink',          unlockType: 'special' },
+  { id: 'benpotato',  src: '/images/pfp/benpotato.jpg',  label: 'Ben Potato',   unlockType: 'special', objectFit: 'cover' },
+  { id: 'goldcarrot', src: '/images/pfp/goldcarrot.jpg', label: 'Gold Carrot',  unlockType: 'special', objectFit: 'cover' },
+  { id: 'goldpotato', src: '/images/pfp/goldpotato.jpg', label: 'Gold Potato',  unlockType: 'special', objectFit: 'cover' },
 ];
+
+const BACKGROUND_OPTIONS = [
+  { id: 'bg_default',    label: 'Default',    unlockType: 'always',      gradient: 'linear-gradient(135deg, #2d1a0e, #4a2c10)' },
+  { id: 'bg_honeydrop',  label: 'Honey Drip', unlockType: 'always',      image: '/images/profile_bar/profile_bg.png' },
+  { id: 'bg_pinkyellow', label: 'Pink & Gold', unlockType: 'always',     image: '/images/banner/pinkyellowbanner.png' },
+  { id: 'bg_steel',      label: 'Steel',      unlockType: 'always',      image: '/images/banner/steelbanner.png' },
+  { id: 'bg_red',        label: 'Red',        unlockType: 'total_crops', threshold: 10,   gradient: 'linear-gradient(135deg, #5a0a0a, #c0392b)' },
+  { id: 'bg_orange',     label: 'Orange',     unlockType: 'total_crops', threshold: 25,   gradient: 'linear-gradient(135deg, #7a3200, #e67e22)' },
+  { id: 'bg_yellow',     label: 'Yellow',     unlockType: 'total_crops', threshold: 50,   gradient: 'linear-gradient(135deg, #6a5500, #f1c40f)' },
+  { id: 'bg_green',      label: 'Green',      unlockType: 'total_crops', threshold: 100,  gradient: 'linear-gradient(135deg, #0a3a1a, #27ae60)' },
+  { id: 'bg_blue',       label: 'Blue',       unlockType: 'total_crops', threshold: 200,  gradient: 'linear-gradient(135deg, #0a1a4a, #2980b9)' },
+  { id: 'bg_purple',     label: 'Purple',     unlockType: 'total_crops', threshold: 350,  gradient: 'linear-gradient(135deg, #2a0a4a, #8e44ad)' },
+  { id: 'bg_night',      label: 'Night',      unlockType: 'total_crops', threshold: 500,  gradient: 'linear-gradient(135deg, #050510, #1a1a3a)' },
+  { id: 'bg_sunset',     label: 'Sunset',     unlockType: 'total_crops', threshold: 750,  gradient: 'linear-gradient(135deg, #6a0a2a, #ff6b35)' },
+  { id: 'bg_cosmic',     label: 'Cosmic',     unlockType: 'total_crops', threshold: 2000, gradient: 'linear-gradient(135deg, #0a0020, #7c3aed)' },
+];
+
+const DEFAULT_PFP_SRC = '/images/pfp/defultpfp.png';
+const DEFAULT_BG_ID = 'bg_default';
+
+const getUnlockedPfps = () => {
+  try { return JSON.parse(localStorage.getItem('sandbox_unlocked_pfps') || '[]'); }
+  catch { return []; }
+};
+
+const isUnlocked = (item, totalCrops, unlockedPfps = []) => {
+  if (item.unlockType === 'always') return true;
+  if (item.unlockType === 'total_crops') return totalCrops >= item.threshold;
+  if (item.unlockType === 'special') return unlockedPfps.includes(item.id);
+  return false;
+};
+
+const TABS = ['Picture', 'Banner', 'Badge'];
 
 const AvatarDialog = ({ onClose }) => {
   const { account } = useSolanaWallet();
   const { getAvatars, getTokenBoostPpm } = useEquipmentRegistry();
-  const [selectedPfp, setSelectedPfp] = useState(() => localStorage.getItem('sandbox_pfp') || null);
-  const [avatars, setAvatars] = useState([{isEmpty: true}, {isEmpty: true}]);
-  const [totalBoost, setTotalBoost] = useState(0);
-  const [loading, setLoading] = useState(true);
+
+  const [tab, setTab] = useState(0);
+  const [totalCrops, setTotalCrops] = useState(() => parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10));
+  const [unlockedPfps, setUnlockedPfps] = useState(getUnlockedPfps);
+  const [username] = useState(() => localStorage.getItem('sandbox_username') || 'Farmer');
+
+  // Active (saved) state
+  const [activePfpSrc, setActivePfpSrc] = useState(() => localStorage.getItem('sandbox_pfp') || DEFAULT_PFP_SRC);
+  const [activeBgId, setActiveBgId] = useState(() => localStorage.getItem('sandbox_profile_bg') || DEFAULT_BG_ID);
+
+  // Preview (pending) state
+  const [previewPfpSrc, setPreviewPfpSrc] = useState(activePfpSrc);
+  const [previewBgId, setPreviewBgId] = useState(activeBgId);
+
+  const previewBg = BACKGROUND_OPTIONS.find(b => b.id === previewBgId) || BACKGROUND_OPTIONS[0];
+  const previewPfp = PFP_OPTIONS.find(p => p.src === previewPfpSrc) || PFP_OPTIONS[0];
+
+  const isDirty = previewPfpSrc !== activePfpSrc || previewBgId !== activeBgId;
 
   useEffect(() => {
-    const fetchAvatarData = async () => {
-      try {
-        setLoading(true);
+    if (!localStorage.getItem('sandbox_pfp')) {
+      localStorage.setItem('sandbox_pfp', DEFAULT_PFP_SRC);
+      window.dispatchEvent(new CustomEvent('pfpUpdated', { detail: DEFAULT_PFP_SRC }));
+    }
+  }, []);
 
-        // Fetch from local sandbox memory instead of the blockchain
-        const sandboxAvatars = JSON.parse(localStorage.getItem('sandbox_avatars') || '{}');
+  useEffect(() => {
+    const handler = () => setTotalCrops(parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10));
+    window.addEventListener('soilProgressChanged', handler);
+    return () => window.removeEventListener('soilProgressChanged', handler);
+  }, []);
 
-        let boostPercentage = 0;
+  useEffect(() => {
+    const handler = () => setUnlockedPfps(getUnlockedPfps());
+    window.addEventListener('pfpUnlocksUpdated', handler);
+    return () => window.removeEventListener('pfpUnlocksUpdated', handler);
+  }, []);
 
-        // Create avatar data array
-        const avatarData = [];
-        for (let i = 0; i < 2; i++) {
-          if (sandboxAvatars[i]) {
-            boostPercentage += sandboxAvatars[i].boostPercentage || 0;
-            avatarData.push({
-              nft: sandboxAvatars[i], // Pass the whole object so the UI has access to the image
-              tokenId: sandboxAvatars[i].tokenId,
-              isEmpty: false
-            });
-          } else {
-            avatarData.push({
-              nft: null,
-              tokenId: null,
-              isEmpty: true
-            });
-          }
-        }
-
-        setAvatars(avatarData);
-        setTotalBoost(boostPercentage);
-      } catch (error) {
-        console.error('Failed to fetch avatar data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAvatarData();
-  }, [account]); // Removed getAvatars and getTokenBoostPpm from deps to prevent infinite loops (they're stubs)
-
-  const hasAnyNFTs = avatars.some(avatar => !avatar.isEmpty);
-
-  const handleAvatarChange = (slotIndex, selectedNFT) => {
-    // Update the avatars state
-    setAvatars(prevAvatars => {
-      const newAvatars = [...prevAvatars];
-      if (!selectedNFT) {
-        newAvatars[slotIndex] = { nft: null, tokenId: null, isEmpty: true };
-      } else {
-        newAvatars[slotIndex] = {
-          nft: selectedNFT,
-          tokenId: selectedNFT.tokenId,
-          isEmpty: false
-        };
-      }
-
-      // Recalculate total boost dynamically based on the updated slots
-      const newTotalBoost = (newAvatars[0].isEmpty ? 0 : (newAvatars[0].nft?.boostPercentage || 0)) + (newAvatars[1].isEmpty ? 0 : (newAvatars[1].nft?.boostPercentage || 0));
-      setTotalBoost(newTotalBoost);
-      return newAvatars;
-    });
+  const handleEquip = () => {
+    setActivePfpSrc(previewPfpSrc);
+    setActiveBgId(previewBgId);
+    localStorage.setItem('sandbox_pfp', previewPfpSrc);
+    localStorage.setItem('sandbox_profile_bg', previewBgId);
+    const bg = BACKGROUND_OPTIONS.find(b => b.id === previewBgId);
+    if (bg?.image) localStorage.setItem('sandbox_profile_banner_img', bg.image);
+    else localStorage.removeItem('sandbox_profile_banner_img');
+    window.dispatchEvent(new CustomEvent('pfpUpdated', { detail: previewPfpSrc }));
+    window.dispatchEvent(new CustomEvent('profileBannerUpdated', { detail: bg?.image || null }));
   };
 
-  const handleSelectPfp = (pfp) => {
-    setSelectedPfp(pfp.src);
-    localStorage.setItem('sandbox_pfp', pfp.src);
-    window.dispatchEvent(new CustomEvent('pfpUpdated', { detail: pfp.src }));
-  };
+  return (
+    <BaseDialog onClose={onClose} title="Profile" header="/images/dialog/modal-header-worker.png">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '10px', width: '520px' }}>
 
-  const equippedPfp = PFP_OPTIONS.find(p => p.src === selectedPfp) || null;
-  const otherPfps = PFP_OPTIONS.filter(p => p.src !== selectedPfp);
-
-  return <BaseDialog onClose={onClose} title="PROFILE PICTURE" header="/images/dialog/modal-header-worker.png">
-    <div className="avatar-dialog" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '8px' }}>
-
-      {/* Equipped PFP - large, centered */}
-      {equippedPfp ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+        {/* Preview */}
+        <div style={{
+          borderRadius: '14px', overflow: 'hidden', height: '110px', position: 'relative',
+          background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: '16px',
+          padding: '0 20px', border: '1px solid rgba(255,255,255,0.08)',
+        }}>
           <img
-            src={equippedPfp.src}
-            alt={equippedPfp.label}
-            style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '50%', border: '4px solid #ffea00', boxShadow: '0 0 16px rgba(255,234,0,0.5)' }}
+            src={previewPfpSrc}
+            alt="pfp preview"
+            style={{ width: '80px', height: '80px', objectFit: previewPfp.objectFit || 'contain', borderRadius: '12px', flexShrink: 0 }}
           />
-          <span style={{ fontFamily: 'monospace', fontSize: '16px', fontWeight: 'bold', color: '#ffea00' }}>{equippedPfp.label}</span>
-          <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#ccc', textAlign: 'center', maxWidth: '220px' }}>{equippedPfp.description}</span>
-          <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#a67c52', textAlign: 'center', maxWidth: '220px', fontStyle: 'italic' }}>🏆 {equippedPfp.how}</span>
-        </div>
-      ) : (
-        <div style={{ width: '140px', height: '140px', borderRadius: '50%', border: '4px dashed #5a402a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#5a402a', textAlign: 'center' }}>No PFP<br/>equipped</span>
-        </div>
-      )}
-
-      {/* Divider */}
-      <div style={{ width: '100%', borderTop: '1px solid #5a402a', marginTop: '4px' }} />
-
-      {/* Other PFPs - smaller row */}
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        {otherPfps.map(pfp => (
-          <div
-            key={pfp.id}
-            onClick={() => handleSelectPfp(pfp)}
-            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '6px', borderRadius: '10px', border: '2px solid #5a402a', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#a67c52'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#5a402a'; e.currentTarget.style.backgroundColor = 'transparent'; }}
-          >
-            <img src={pfp.src} alt={pfp.label} style={{ width: '65px', height: '65px', objectFit: 'cover', borderRadius: '50%', border: '2px solid #a67c52' }} />
-            <span style={{ fontFamily: 'monospace', fontSize: '11px', color: '#ccc' }}>{pfp.label}</span>
+          {/* Name pill — replaces pill image with selected banner */}
+          <div style={{ position: 'relative', width: '200px', flexShrink: 0, marginBottom: '24px' }}>
+            <img
+              src={previewBg.image || '/images/profile_bar/profile_bg.png'}
+              alt=""
+              style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '4px' }}
+            />
+            {previewBg.id === 'bg_honeydrop' && (
+              <img src="/images/banner/hdripextentsion.png" alt="" style={{ position: 'absolute', bottom: '-17px', left: '-4.5%', width: '109%', pointerEvents: 'none' }} />
+            )}
+            {!previewBg.image && previewBg.gradient && (
+              <div style={{ position: 'absolute', inset: 0, background: previewBg.gradient, mixBlendMode: 'color', opacity: 0.75, borderRadius: '4px' }} />
+            )}
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+              width: '85%', textAlign: 'center',
+              fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold', color: '#fff',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {username}
+            </div>
           </div>
-        ))}
-      </div>
+          <span style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.35)' }}>PREVIEW</span>
+        </div>
 
-    </div>
-  </BaseDialog>;
+        {/* Tabs + Grid */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+
+          {/* Left tabs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
+            {TABS.map((t, i) => (
+              <button
+                key={t}
+                onClick={() => setTab(i)}
+                style={{
+                  width: '108px', padding: '10px 8px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  fontFamily: 'monospace', fontSize: '12px', fontWeight: 'bold',
+                  background: tab === i ? '#a67c52' : 'rgba(255,255,255,0.06)',
+                  color: tab === i ? '#fff' : 'rgba(255,255,255,0.5)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {t === 'Picture' ? '🖼️' : t === 'Banner' ? '🎨' : '🏅'} {t}
+              </button>
+            ))}
+          </div>
+
+          {/* Right grid */}
+          <div style={{ flex: 1, maxHeight: '300px', overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', padding: '2px' }}>
+            {tab === 0 && PFP_OPTIONS.map(pfp => {
+              const unlocked = isUnlocked(pfp, totalCrops, unlockedPfps);
+              const isSelected = previewPfpSrc === pfp.src;
+              return (
+                <div
+                  key={pfp.id}
+                  onClick={() => unlocked && setPreviewPfpSrc(pfp.src)}
+                  title={unlocked ? pfp.label : '???'}
+                  style={{
+                    cursor: unlocked ? 'pointer' : 'not-allowed',
+                    borderRadius: '10px', padding: '6px',
+                    border: `2px solid ${isSelected ? '#ffea00' : 'rgba(255,255,255,0.1)'}`,
+                    background: isSelected ? 'rgba(255,234,0,0.1)' : 'rgba(255,255,255,0.04)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    transition: 'all 0.15s',
+                    boxShadow: isSelected ? '0 0 8px rgba(255,234,0,0.3)' : 'none',
+                  }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    <img src={pfp.src} alt={pfp.label} style={{ width: '62px', height: '62px', objectFit: pfp.objectFit || 'contain', borderRadius: '8px', filter: unlocked ? 'none' : 'grayscale(100%) brightness(0.5)' }} />
+                    {!unlocked && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>🔒</div>}
+                  </div>
+                  <span style={{ fontSize: '9px', fontFamily: 'monospace', color: unlocked ? (isSelected ? '#ffea00' : '#ccc') : '#555', textAlign: 'center' }}>
+                    {unlocked ? pfp.label : '???'}
+                  </span>
+                </div>
+              );
+            })}
+
+            {tab === 1 && BACKGROUND_OPTIONS.map(bg => {
+              const unlocked = isUnlocked(bg, totalCrops);
+              const isSelected = previewBgId === bg.id;
+              return (
+                <div
+                  key={bg.id}
+                  onClick={() => unlocked && setPreviewBgId(bg.id)}
+                  title={unlocked ? bg.label : '???'}
+                  style={{
+                    cursor: unlocked ? 'pointer' : 'not-allowed',
+                    borderRadius: '10px', padding: '6px',
+                    border: `2px solid ${isSelected ? '#ffea00' : 'rgba(255,255,255,0.1)'}`,
+                    background: isSelected ? 'rgba(255,234,0,0.1)' : 'rgba(255,255,255,0.04)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    transition: 'all 0.15s',
+                    boxShadow: isSelected ? '0 0 8px rgba(255,234,0,0.3)' : 'none',
+                  }}
+                >
+                  <div style={{ position: 'relative', width: '62px', height: '62px', borderRadius: '8px', overflow: 'hidden', background: bg.gradient || '#222' }}>
+                    {bg.image && <img src={bg.image} alt={bg.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    {!unlocked && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>🔒</div>}
+                  </div>
+                  <span style={{ fontSize: '9px', fontFamily: 'monospace', color: unlocked ? (isSelected ? '#ffea00' : '#ccc') : '#555', textAlign: 'center' }}>
+                    {unlocked ? bg.label : '???'}
+                  </span>
+                </div>
+              );
+            })}
+
+            {tab === 2 && (
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', fontSize: '12px' }}>
+                Badges coming soon
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Equip button */}
+        <button
+          onClick={handleEquip}
+          disabled={!isDirty}
+          style={{
+            padding: '10px', borderRadius: '10px', border: 'none', cursor: isDirty ? 'pointer' : 'default',
+            fontFamily: 'monospace', fontSize: '13px', fontWeight: 'bold',
+            background: isDirty ? 'linear-gradient(135deg, #a67c52, #c8944a)' : 'rgba(255,255,255,0.08)',
+            color: isDirty ? '#fff' : 'rgba(255,255,255,0.3)',
+            transition: 'all 0.2s',
+          }}
+        >
+          {isDirty ? 'Equip' : 'In Use'}
+        </button>
+
+      </div>
+    </BaseDialog>
+  );
 };
 
 export default AvatarDialog;

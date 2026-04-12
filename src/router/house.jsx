@@ -289,7 +289,7 @@ const House = () => {
       )}
 
       {/* Fish Banner */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
         {/* PFP with border on top */}
         <div style={{ position: 'relative', display: 'inline-block', left: '-10px' }}>
           <img src="/images/fish/fisherpfp.png" alt="Fisher PFP" style={{ height: '80px', width: '80px', objectFit: 'contain', display: 'block' }} />

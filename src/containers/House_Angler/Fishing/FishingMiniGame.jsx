@@ -35,11 +35,11 @@ const STAGE = {
 
 // [approachStep, hitWindow, osuCount, targetDeg, escapePer]
 const DIFF_CFG = [
-  [0.055, 0.26, 5, 2160, 0.20], // 0 COMMON
-  [0.070, 0.20, 5, 2520, 0.25], // 1 UNCOMMON
-  [0.088, 0.15, 6, 2880, 0.30], // 2 RARE
-  [0.108, 0.11, 7, 3240, 0.35], // 3 EPIC
-  [0.130, 0.08, 8, 3600, 0.40], // 4 LEGENDARY
+  [0.055, 0.70, 7,  2160, 0.20], // 0 COMMON     — 7 circles, very forgiving
+  [0.070, 0.62, 8,  2520, 0.25], // 1 UNCOMMON   — 8 circles
+  [0.088, 0.55, 9,  2880, 0.30], // 2 RARE       — 9 circles
+  [0.108, 0.48, 10, 3240, 0.35], // 3 EPIC       — 10 circles
+  [0.130, 0.42, 12, 3600, 0.40], // 4 LEGENDARY  — 12 circles
 ];
 
 const RARITY_WEIGHTS = [
@@ -93,6 +93,7 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
   const [circleActive,  setCircleActive]  = useState(false);
   const [approachScale, setApproachScale] = useState(APPROACH_START);
   const [hitBurst,      setHitBurst]      = useState(null);
+  const [missedCircle,  setMissedCircle]  = useState(null);
   const [missCount,     setMissCount]     = useState(0);
   const [shake,         setShake]         = useState(false);
   const [circleFlash,   setCircleFlash]   = useState(false);
@@ -116,20 +117,9 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
   const [revealPhase,   setRevealPhase]   = useState(0);
   const [collectClicked,setCollectClicked]= useState(false);
 
-  // ── Bubbles ───────────────────────────────────────────────────────────────
+  // ── Skip bubbles, go straight to UNDERWATER ───────────────────────────────
   useEffect(() => {
-    const b = Array.from({ length: 18 }, (_, i) => ({
-      id: i,
-      left: `${5 + Math.random() * 90}%`,
-      width: `${8 + Math.random() * 20}px`,
-      height: `${8 + Math.random() * 20}px`,
-      animationDelay: `${Math.random() * 1.2}s`,
-      animationDuration: `${1.2 + Math.random() * 0.8}s`,
-      bottom: `${Math.random() * 20}px`,
-    }));
-    setBubbles(b);
-    const t = setTimeout(() => setStage(STAGE.UNDERWATER), 2200);
-    return () => clearTimeout(t);
+    setStage(STAGE.UNDERWATER);
   }, []);
 
   // ── Generate swimming fish when UNDERWATER ────────────────────────────────
@@ -208,7 +198,7 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
     const count = osuCountRef.current;
     if (circleIdx >= count) return;
 
-    const [baseStep,,,, escPer] = getDiff();
+    const [baseStep] = getDiff();
     const step = phaseRef.current === 2 ? baseStep * 1.35 : baseStep;
 
     setCircleActive(true);
@@ -217,15 +207,26 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
     setCircleFlash(false);
 
     let scale = APPROACH_START;
+    let missedFired = false;
     shrinkRef.current = setInterval(() => {
       scale -= step;
       setApproachScale(Math.max(0, scale));
-      if (scale <= 0) {
+
+      // Fire the miss once ring passes the end of the hit window
+      const [, hw3,,,escPer2] = getDiff();
+      if (!missedFired && scale < (1 - hw3)) {
+        missedFired = true;
         clearInterval(shrinkRef.current);
         missCountRef.current += 1;
         setMissCount(missCountRef.current);
         triggerShake();
-        const esc = Math.max(0, (missCountRef.current - 1) * escPer);
+        setCircles(prev => {
+          const c = prev[circleIdx];
+          if (c) setMissedCircle({ x: c.x, y: c.y, id: Date.now() });
+          return prev;
+        });
+        setTimeout(() => setMissedCircle(null), 600);
+        const esc = Math.max(0, (missCountRef.current - 1) * escPer2);
         if (Math.random() < esc) {
           setCircleActive(false);
           setStage(STAGE.ESCAPED);
@@ -240,15 +241,11 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleIdx, stage, triggerShake]);
 
-  // ── Phase advance ─────────────────────────────────────────────────────────
+  // ── Phase advance — single phase, go straight to REEL ────────────────────
   useEffect(() => {
     const count = osuCountRef.current;
     if (circleIdx < count) return;
-    if (stage === STAGE.CHASE_RIGHT) {
-      const t = setTimeout(() => startChase(2), 800);
-      return () => clearTimeout(t);
-    }
-    if (stage === STAGE.CHASE_LEFT) {
+    if (stage === STAGE.CHASE_RIGHT || stage === STAGE.CHASE_LEFT) {
       const t = setTimeout(() => {
         totalRotRef.current = 0; spinnerDegRef.current = 0;
         setReelFill(0); setSpinnerDeg(0); completedRef.current = false;
@@ -262,10 +259,15 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
   const handleCircleClick = () => {
     const count = osuCountRef.current;
     if (!circleActive || circleIdx >= count) return;
-    clearInterval(shrinkRef.current);
 
     const [, hw,,,escPer] = getDiff();
-    const isHit = Math.abs(approachScale - 1) < hw;
+
+    // Too early — ring is still way outside the window, ignore
+    if (approachScale > (1 + hw)) return;
+
+    clearInterval(shrinkRef.current);
+    // Hit if within window on either side of the meeting point
+    const isHit = approachScale >= (1 - hw);
     const c = circles[circleIdx];
     setHitBurst({ x: c.x, y: c.y, id: Date.now(), isHit });
 
@@ -394,15 +396,20 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
           0%,100% { filter: brightness(1.0); }
           50%     { filter: brightness(1.4); }
         }
+        @keyframes waveRight {
+          0%   { transform: translateX(-110vw); opacity:0.7; }
+          10%  { opacity:1; }
+          90%  { opacity:1; }
+          100% { transform: translateX(110vw);  opacity:0.7; }
+        }
+        @keyframes waveLeft {
+          0%   { transform: translateX(110vw);  opacity:0.7; }
+          10%  { opacity:1; }
+          90%  { opacity:1; }
+          100% { transform: translateX(-110vw); opacity:0.7; }
+        }
       `}</style>
 
-      {/* ── BUBBLES ── */}
-      {(stage === STAGE.BUBBLES || stage === STAGE.UNDERWATER) && bubbles.map(b => (
-        <Bubble key={b.id} style={{
-          left:b.left, bottom:b.bottom, width:b.width, height:b.height,
-          animationDelay:b.animationDelay, animationDuration:b.animationDuration,
-        }} />
-      ))}
 
       {/* ── UNDERWATER — swimming fish, click to choose ── */}
       {stage === STAGE.UNDERWATER && (
@@ -475,11 +482,13 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
       {/* ── CHASE ── */}
       {isChase && (
         <div style={{ width:'100%', height:'100%', position:'relative' }}>
+
+
           <div style={{
             position:'absolute', top:'16px', left:'50%', transform:'translateX(-50%)',
             color:'#fff', fontSize:'14px', textAlign:'center', lineHeight:'1.7',
           }}>
-            {stage === STAGE.CHASE_RIGHT ? 'Phase 1 — Click in time!' : 'Phase 2 — Don\'t let it escape!'}
+            Click in time!
             &nbsp;|&nbsp;{circleIdx}/{osuCountRef.current}
             {missCount > 0 && (
               <span style={{color:'#ff6644', marginLeft:'12px'}}>
@@ -498,12 +507,13 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
                 left:`${fc.x}%`, top:`${fc.y}%`,
                 transform:'translate(-50%,-50%)',
                 transition:'left 0.28s cubic-bezier(.25,.8,.25,1), top 0.28s cubic-bezier(.25,.8,.25,1)',
-                width:'108px', height:'58px',
-                background:'radial-gradient(ellipse, rgba(0,12,35,.92) 28%, rgba(0,35,75,.15) 100%)',
-                filter:'blur(11px)',
+                width:'200px', height:'110px',
+                background:'radial-gradient(ellipse, rgba(0,20,60,.98) 20%, rgba(0,60,140,.55) 55%, rgba(0,35,75,.08) 100%)',
+                filter:'blur(8px)',
                 borderRadius:'50%',
                 zIndex:5,
                 pointerEvents:'none',
+                boxShadow:'0 0 30px 10px rgba(0,40,120,.35)',
               }} />
             );
           })()}
@@ -513,32 +523,47 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
             const isCurrent = i === circleIdx && circleActive;
             const isNext    = i === circleIdx + 1 && circleActive;
             if (!isCurrent && !isNext) return null;
-            const S = 68;
+            const OUTER = 180; // target ring — approach ring lines up here
+            const INNER = 120;  // inner filled circle
             const flashing = isCurrent && circleFlash;
+            const borderCol = flashing ? '#ff3333' : isCurrent ? '#ffff64' : 'rgba(255,255,100,.22)';
             return (
               <div key={c.id} style={{ position:'absolute', left:`${c.x}%`, top:`${c.y}%` }}>
+
+                {/* Outer target ring — approach ring must line up here */}
                 <div
                   onClick={isCurrent ? handleCircleClick : undefined}
                   style={{
                     position:'absolute', transform:'translate(-50%,-50%)',
-                    width:`${S}px`, height:`${S}px`, borderRadius:'50%',
-                    border:`4px solid ${flashing ? '#ff3333' : isCurrent ? '#ffff64' : 'rgba(255,255,100,.22)'}`,
-                    background: flashing ? 'rgba(255,50,50,.25)' : isCurrent ? 'rgba(255,255,100,.12)' : 'rgba(255,255,100,.03)',
+                    width:`${OUTER}px`, height:`${OUTER}px`, borderRadius:'50%',
+                    border:`3px solid ${borderCol}`,
+                    background: flashing ? 'rgba(255,50,50,.4)' : isCurrent ? 'rgba(255,255,100,.25)' : 'rgba(255,255,100,.06)',
                     cursor: isCurrent ? 'pointer' : 'default',
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    color: flashing ? '#ff3333' : isCurrent ? '#ffff64' : 'rgba(255,255,100,.22)',
-                    fontSize:'20px', fontWeight:'bold',
                     zIndex: isCurrent ? 12 : 8, boxSizing:'border-box',
-                    transition:'border-color .08s, background .08s',
-                    boxShadow: flashing ? '0 0 22px rgba(255,50,50,.7)' : 'none',
+                    boxShadow: flashing ? '0 0 22px rgba(255,50,50,.7)' : isCurrent ? '0 0 12px rgba(255,255,100,.3)' : 'none',
+                    transition:'border-color .08s',
                   }}
-                >{i + 1}</div>
+                />
+
+                {/* Inner circle */}
+                <div style={{
+                  position:'absolute', transform:'translate(-50%,-50%)',
+                  width:`${INNER}px`, height:`${INNER}px`, borderRadius:'50%',
+                  border:`3px solid ${borderCol}`,
+                  background: flashing ? 'rgba(255,50,50,.7)' : 'rgba(10,30,60,.92)',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  color: borderCol, fontSize:'18px', fontWeight:'bold',
+                  zIndex: isCurrent ? 12 : 8, boxSizing:'border-box',
+                  pointerEvents:'none',
+                }}>{i + 1}</div>
+
+                {/* Approach ring — shrinks toward OUTER */}
                 {isCurrent && !circleFlash && (
                   <div style={{
                     position:'absolute',
                     transform:`translate(-50%,-50%) scale(${approachScale})`,
-                    width:`${S}px`, height:`${S}px`, borderRadius:'50%',
-                    border:'3px solid rgba(255,255,100,.85)',
+                    width:`${OUTER}px`, height:`${OUTER}px`, borderRadius:'50%',
+                    border:'2px solid rgba(255,255,100,.95)',
                     background:'transparent', pointerEvents:'none',
                     zIndex:11, boxSizing:'border-box',
                   }} />
@@ -551,12 +576,24 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
           {hitBurst && (
             <div key={hitBurst.id} style={{
               position:'absolute', left:`${hitBurst.x}%`, top:`${hitBurst.y}%`,
-              width:'68px', height:'68px', borderRadius:'50%',
+              width:'180px', height:'180px', borderRadius:'50%',
               border:`4px solid ${hitBurst.isHit ? '#ffff64' : '#ff3333'}`,
               background: hitBurst.isHit ? 'rgba(255,255,100,.25)' : 'rgba(255,50,50,.2)',
               animation:`${hitBurst.isHit ? 'osuBurst' : 'osuMiss'} .4s ease-out forwards`,
               pointerEvents:'none', zIndex:13,
             }} />
+          )}
+
+          {/* X on timeout miss */}
+          {missedCircle && (
+            <div key={missedCircle.id} style={{
+              position:'absolute', left:`${missedCircle.x}%`, top:`${missedCircle.y}%`,
+              transform:'translate(-50%,-50%)',
+              fontSize:'72px', fontWeight:'900', color:'#ff2222',
+              textShadow:'0 0 18px #ff0000, 0 0 4px #000',
+              animation:'osuMiss .6s ease-out forwards',
+              pointerEvents:'none', zIndex:14, lineHeight:1,
+            }}>✕</div>
           )}
         </div>
       )}
@@ -646,6 +683,13 @@ const FishingMiniGame = ({ fishItem, fishRarity: _fishRarity, fishWeight, onComp
               textShadow:'0 2px 12px rgba(0,0,0,.6)',
               opacity: revealPhase >= 2 ? 1 : 0, transition:'opacity .4s ease-out', textAlign:'center',
             }}>{fishName}</div>
+            {fishWeight != null && (
+              <div style={{
+                color:'#a0d8ef', fontSize:'14px',
+                opacity: revealPhase >= 2 ? 1 : 0, transition:'opacity .4s ease-out .1s', textAlign:'center',
+                marginTop:'-6px',
+              }}>{fishWeight} kg</div>
+            )}
 
             <div style={{ display:'flex', alignItems:'flex-start', gap:'18px' }}>
               <img
