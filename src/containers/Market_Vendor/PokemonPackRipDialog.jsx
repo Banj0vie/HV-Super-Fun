@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import BaseButton from "../../components/buttons/BaseButton";
 import { ALL_ITEMS, IMAGE_URL_CROP } from "../../constants/item_data";
 import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../../constants/item_seed";
@@ -221,65 +221,112 @@ const CARD_BACK_IMAGES = {
 
 const CARD_GLOW_TYPES = new Set([ID_RARE_TYPE.LEGENDARY]);
 
+const PICO_IDLE_FRAMES = 19;
+const PICO_IDLE_FPS = 12;
+
+const PicoPackIdle = () => {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setFrame(f => (f + 1) % PICO_IDLE_FRAMES), 1000 / PICO_IDLE_FPS);
+    return () => clearInterval(interval);
+  }, []);
+  const frameStr = String(frame).padStart(5, '0');
+  return (
+    <img
+      src={`/images/cardfront/card1idle/idle_1/idle_1_${frameStr}.png`}
+      alt="Pico Seeds Pack"
+      draggable={false}
+      style={{ height: '80vh', objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }}
+    />
+  );
+};
+
+const OPEN_FRAMES = 25;        // open_1_00019 → open_1_00043
+const OPEN_FRAME_OFFSET = 19;  // first frame number
+const DRAG_PX_FULL = 1200;     // horizontal px needed to reach last frame
+
 const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
-  const [ripProgress, setRipProgress] = useState(0);
-  const [isRipped, setIsRipped] = useState(false);
   const [showCards, setShowCards] = useState(false);
   const [flippedCards, setFlippedCards] = useState(new Set());
   const [flipDone, setFlipDone] = useState(new Set());
-  const isDragging = useRef(false);
-  const startX = useRef(0);
 
-  const isReadyToRip = rollingInfo.isComplete && !rollingInfo.isFallback;
+  // Pack-opening scrub state
+  const [phase, setPhase] = useState('idle'); // 'idle' | 'opening' | 'reversing'
+  const [openFrame, setOpenFrame] = useState(0);
+  const phaseRef = useRef('idle');
+  const openFrameRef = useRef(0);
+  const startXRef = useRef(0);
+  const reverseRafRef = useRef(null);
+  const containerRef = useRef(null);
+
+  const syncPhase = (p) => { phaseRef.current = p; setPhase(p); };
+  const syncFrame = (f) => { openFrameRef.current = f; setOpenFrame(f); };
+
+  const handlePointerDown = (e) => {
+    if (phaseRef.current !== 'idle') return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const relX = e.clientX - rect.left - 125;
+    const relY = e.clientY - rect.top - 70;
+    // Only trigger from the top-left corner of the pack
+    if (relX < rect.width * 0.22 && relY < rect.height * 0.12) {
+      if (reverseRafRef.current) { cancelAnimationFrame(reverseRafRef.current); reverseRafRef.current = null; }
+      startXRef.current = e.clientX;
+      syncPhase('opening');
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    if (phaseRef.current !== 'opening') return;
+    const DEAD_ZONE = 50;
+    const diff = Math.max(0, e.clientX - startXRef.current - DEAD_ZONE);
+    const frame = Math.min(OPEN_FRAMES - 1, Math.floor((diff / DRAG_PX_FULL) * OPEN_FRAMES));
+    syncFrame(frame);
+    if (frame >= OPEN_FRAMES - 1) {
+      syncPhase('complete');
+      setTimeout(() => setShowCards(true), 300);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (phaseRef.current !== 'opening') return;
+    if (openFrameRef.current >= OPEN_FRAMES * 0.4) {
+      syncPhase('completing');
+      const finish = () => {
+        const cur = openFrameRef.current;
+        if (cur >= OPEN_FRAMES - 1) {
+          syncPhase('complete');
+          setShowCards(true);
+          reverseRafRef.current = null;
+          return;
+        }
+        syncFrame(Math.min(OPEN_FRAMES - 1, cur + 1));
+        reverseRafRef.current = requestAnimationFrame(finish);
+      };
+      reverseRafRef.current = requestAnimationFrame(finish);
+      return;
+    }
+    syncPhase('reversing');
+    const step = () => {
+      const cur = openFrameRef.current;
+      if (cur <= 0) { syncPhase('idle'); syncFrame(0); reverseRafRef.current = null; return; }
+      syncFrame(Math.max(0, cur - 2));
+      reverseRafRef.current = requestAnimationFrame(step);
+    };
+    reverseRafRef.current = requestAnimationFrame(step);
+  };
+
+  useEffect(() => {
+    return () => { if (reverseRafRef.current) cancelAnimationFrame(reverseRafRef.current); };
+  }, []);
+
   const revealedSeeds = rollingInfo.revealedSeeds || [];
   const bonusCards = rollingInfo.id === 'pabee_pack' ? [
     { type: 'gold', label: '1000 HONEY', image: '/images/profile_bar/unlocked_balance_icon.png', color: '#ffea00' },
     { type: 'gems', label: '250 Gems', emoji: '💎', color: '#00bfff' },
   ] : [];
   const totalCards = revealedSeeds.length + bonusCards.length;
-
-  const handlePointerDown = (e) => {
-    if (!isReadyToRip || isRipped) return;
-    isDragging.current = true;
-    let clientX = e.clientX;
-    if (clientX === undefined && e.touches) clientX = e.touches[0].clientX;
-    startX.current = clientX;
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDragging.current || isRipped) return;
-    let currentX = e.clientX;
-    if (currentX === undefined && e.touches) currentX = e.touches[0].clientX;
-    if (currentX === undefined) return;
-    const diff = currentX - startX.current;
-    const progress = Math.max(0, Math.min(100, (diff / 150) * 100));
-    setRipProgress(progress);
-    if (progress >= 100) {
-      setIsRipped(true);
-      isDragging.current = false;
-      setTimeout(() => setShowCards(true), 1500);
-    }
-  };
-
-  const handlePointerUp = () => {
-    if (isDragging.current) {
-      isDragging.current = false;
-      if (ripProgress < 100) setRipProgress(0);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("touchend", handlePointerUp);
-    window.addEventListener("touchmove", handlePointerMove);
-    return () => {
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("touchend", handlePointerUp);
-      window.removeEventListener("touchmove", handlePointerMove);
-    };
-  }, [ripProgress, isReadyToRip, isRipped]);
 
   const flipCard = (idx) => {
     setFlippedCards(prev => {
@@ -312,7 +359,7 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
     return (
       <div
         key={`bonus-${idx}`}
-        onClick={() => !flipped && flipCard(idx)}
+        onClick={() => { if (!flipped) flipCard(idx); }}
         draggable={false}
         onDragStart={e => e.preventDefault()}
         style={{ width: '220px', height: '310px', position: 'relative', cursor: flipped ? 'default' : 'pointer', flexShrink: 0, perspective: '600px', userSelect: 'none' }}
@@ -353,8 +400,10 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   };
 
   const renderCard = (seedId, idx) => {
-    const item = ALL_ITEMS[seedId];
-    const rarityType = item?.type || ID_RARE_TYPE.COMMON;
+    const { rarityLevel } = getBaseAndRarity(seedId);
+    // Map rarityLevel (1–5) to ID_RARE_TYPE so back image matches front rarity
+    const rarityLevelToType = { 1: ID_RARE_TYPE.COMMON, 2: ID_RARE_TYPE.UNCOMMON, 3: ID_RARE_TYPE.RARE, 4: ID_RARE_TYPE.EPIC, 5: ID_RARE_TYPE.LEGENDARY };
+    const rarityType = rarityLevelToType[rarityLevel] || ID_RARE_TYPE.COMMON;
     const backImg = CARD_BACK_IMAGES[rarityType] || CARD_BACK_IMAGES[ID_RARE_TYPE.COMMON];
     const hasGlow = CARD_GLOW_TYPES.has(rarityType);
     const flipped = flippedCards.has(idx);
@@ -404,42 +453,21 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}>
 
       {!showCards ? (
-        <div style={{ position: 'relative', width: '250px', height: '350px', userSelect: 'none', touchAction: 'none', cursor: isReadyToRip ? 'grab' : 'wait' }} onPointerDown={handlePointerDown} onTouchStart={handlePointerDown}>
-          {!isReadyToRip && (
-            <div style={{ position: 'absolute', top: '-60px', left: '-50px', right: '-50px', textAlign: 'center', color: '#00bfff', fontSize: '16px', fontWeight: 'bold', animation: 'pulse 1.5s infinite' }}>
-              Receiving Oracle Randomness...
-              <style>{`@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }`}</style>
-            </div>
-          )}
-          {isReadyToRip && !isRipped && (
-            <div style={{ position: 'absolute', top: '-40px', left: 0, width: '100%', textAlign: 'center', color: '#00ff41', fontSize: '18px', fontWeight: 'bold', animation: 'bounce 1s infinite' }}>
-              Swipe to Rip! --&gt;
-              <style>{`@keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }`}</style>
-            </div>
-          )}
-
-          <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.8)' }}>
-            <img src="/images/cardback/commonback.png" alt="Pack" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          </div>
-
-          {isReadyToRip && ripProgress > 0 && (
-            <div style={{ position: 'absolute', top: 0, left: 0, width: `${ripProgress}%`, height: '25%', boxShadow: '0 0 50px 20px rgba(255, 234, 0, 1), inset 0 0 20px 10px rgba(255, 255, 255, 1)', backgroundColor: 'rgba(255, 255, 255, 0.8)', zIndex: 9, borderTopLeftRadius: '12px', pointerEvents: 'none', opacity: ripProgress / 100 }} />
-          )}
-
-          {isReadyToRip && (
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '25%', backgroundColor: '#8a623e', borderBottom: '3px dashed rgba(255,255,255,0.5)', transformOrigin: 'top right', transform: `rotate(${ripProgress * 0.5}deg) translateX(${ripProgress * 1.5}px)`, opacity: 1 - (ripProgress / 100), zIndex: 10 }} />
-          )}
-
-          {isRipped && revealedSeeds.map((seedId, idx) => {
-            const angle = (Math.PI * 2 * idx) / revealedSeeds.length;
-            const tx = Math.cos(angle) * 200;
-            const ty = Math.sin(angle) * 200 - 100;
-            return (
-              <div key={idx} style={{ position: 'absolute', top: '50%', left: '50%', width: '60px', height: '60px', marginLeft: '-30px', marginTop: '-30px', backgroundColor: '#1f1610', borderRadius: '8px', border: '2px solid #00ff41', animation: `burstOut 1s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275)`, animationDelay: `${idx * 0.1}s`, opacity: 0, zIndex: 5, '--tx': `${tx}px`, '--ty': `${ty}px` }}>
-                <style>{`@keyframes burstOut { 0% { transform: translate(0, 0) scale(0.5); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(1.5) rotate(720deg); opacity: 0; } }`}</style>
-              </div>
-            );
-          })}
+        <div
+          ref={containerRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{ userSelect: 'none', touchAction: 'none', cursor: phase === 'idle' ? 'default' : 'grabbing' }}
+        >
+          {phase === 'idle' || phase === 'complete'
+            ? <PicoPackIdle />
+            : /* opening | reversing | completing */ <img
+                src={`/images/cardfront/card1open/open_1/open_1_${String(OPEN_FRAME_OFFSET + openFrame).padStart(5, '0')}.png`}
+                draggable={false}
+                style={{ height: '80vh', objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }}
+              />
+          }
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', padding: '20px', width: '100%' }}>
