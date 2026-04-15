@@ -64,9 +64,10 @@ export const useVendor = () => {
     setLoading(true); setError(null);
     try {
       const currentHoney = parseFloat(localStorage.getItem('sandbox_honey') || '0');
-      // Simple sandbox pricing: 10, 25, 50, 100 honey per pack based on tier
-      const price = tier === 1 ? 10 : tier === 2 ? 25 : tier === 3 ? 50 : 100;
-      const totalCost = price * count;
+      // Pricing: 100 / 750 / 3500 / 15000 HNY per 5-seed pack
+      const pricePerPack = tier === 1 ? 100 : tier === 2 ? 750 : tier === 3 ? 3500 : 15000;
+      const numPacks = Math.ceil(count / 5);
+      const totalCost = pricePerPack * numPacks;
 
       if (currentHoney < totalCost) {
         setError(`Not enough Honey! Need ${totalCost} but you have ${currentHoney}`);

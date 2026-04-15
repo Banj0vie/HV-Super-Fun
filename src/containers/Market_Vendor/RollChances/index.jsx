@@ -1,59 +1,131 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./style.css";
-import CardListView from "../../../components/boxes/CardListView";
-import BaseDivider from "../../../components/dividers/BaseDivider";
-import Slider from "../../../components/inputs/Slider";
 import BaseButton from "../../../components/buttons/BaseButton";
-import { useROIData } from "../../../hooks/useContracts";
-import { useSelector } from "react-redux";
-import CardTopicView from "../../../components/boxes/CardTopicView";
+import { SEED_TREE, TYPE_LABEL_COLOR } from "../../../constants/item_seed";
+import { ID_CROP_CATEGORIES, ID_RARE_TYPE } from "../../../constants/app_ids";
+import { ALL_ITEMS } from "../../../constants/item_data";
+
+const RARITY_CHANCES = {
+  [ID_RARE_TYPE.COMMON]:    { pct: 60, label: "Common",    color: "#f7efec" },
+  [ID_RARE_TYPE.UNCOMMON]:  { pct: 25, label: "Uncommon",  color: "#81c935" },
+  [ID_RARE_TYPE.RARE]:      { pct: 10, label: "Rare",       color: "#29b2c2" },
+  [ID_RARE_TYPE.EPIC]:      { pct:  4, label: "Epic",       color: "#db6595" },
+  [ID_RARE_TYPE.LEGENDARY]: { pct:  1, label: "Legendary",  color: "#eedb33" },
+};
+
+const PACKS = [
+  { id: ID_CROP_CATEGORIES.PICO_SEED,    label: "Pico",    price: "750 HNY",   color: "#4ecbf5" },
+  { id: ID_CROP_CATEGORIES.BASIC_SEED,   label: "Basic",   price: "3,500 HNY", color: "#81c935" },
+  { id: ID_CROP_CATEGORIES.PREMIUM_SEED, label: "Premium", price: "15,000 HNY",color: "#eedb33" },
+];
+
+const RARITY_ORDER = [
+  ID_RARE_TYPE.LEGENDARY,
+  ID_RARE_TYPE.EPIC,
+  ID_RARE_TYPE.RARE,
+  ID_RARE_TYPE.UNCOMMON,
+  ID_RARE_TYPE.COMMON,
+];
 
 const RollChances = ({ onBack }) => {
-  const { roiData, getROIData, loading } = useROIData();
-  const [currentFarmLevel, setCurrentFarmLevel] = useState(0);
+  const [activePack, setActivePack] = useState(ID_CROP_CATEGORIES.PICO_SEED);
 
-  const level = useSelector(state => state.user?.userData?.level || 0);
-
-  // Load initial data
-  useEffect(() => {
-    getROIData(level);
-  }, [level]);
-
-  // Update ROI data when farm level changes
-  const handleFarmLevelChange = async (newLevel) => {
-    setCurrentFarmLevel(newLevel);
-    getROIData(newLevel);
-  };
-
-  const primaryData = [
-    { label: "Commons", value: `${roiData.commons.toFixed(2)}%` },
-    { label: "Uncommons", value: `${roiData.uncommons.toFixed(2)}%` },
-    { label: "Rares", value: `${roiData.rares.toFixed(2)}%` },
-    { label: "Epics", value: `${roiData.epics.toFixed(2)}%` },
-    { label: "Legendaries", value: `${roiData.legendaries.toFixed(2)}%` },
-  ];
+  const packData = SEED_TREE[activePack];
 
   return (
     <div className="roll-chances-wrapper">
-      <div className="relative">
-        <CardListView data={primaryData} className="mt-1rem">
-        </CardListView>
-        <CardTopicView title="Unlocked ROI" />
+      {/* Pack tabs */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+        {PACKS.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setActivePack(p.id)}
+            style={{
+              flex: 1,
+              padding: "8px 4px",
+              borderRadius: "8px",
+              border: `2px solid ${activePack === p.id ? p.color : "rgba(255,255,255,0.15)"}`,
+              background: activePack === p.id ? `${p.color}22` : "rgba(0,0,0,0.3)",
+              color: activePack === p.id ? p.color : "#aaa",
+              cursor: "pointer",
+              fontWeight: activePack === p.id ? "bold" : "normal",
+              fontSize: "13px",
+              transition: "all 0.15s",
+            }}
+          >
+            {p.label}
+            <div style={{ fontSize: "10px", opacity: 0.7, marginTop: "2px" }}>{p.price}</div>
+          </button>
+        ))}
       </div>
-      <div className="slider-wrapper">
-        <div className="w-full text-center">
-          Farm Level: {loading ? "Loading..." : currentFarmLevel}
-        </div>
-        <Slider
-          min="0"
-          max="15"
-          step="1"
-          value={currentFarmLevel}
-          setValue={handleFarmLevelChange}
-          disabled={loading}
-        ></Slider>
+
+      {/* Drop table */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1, overflowY: "auto" }}>
+        {RARITY_ORDER.map(rarityType => {
+          const tier = packData?.[rarityType];
+          if (!tier) return null;
+          const { pct, label, color } = RARITY_CHANCES[rarityType];
+          const perCrop = tier.list.length > 1 ? `(${(pct / tier.list.length).toFixed(1)}% each)` : "";
+
+          return (
+            <div
+              key={rarityType}
+              style={{
+                background: "rgba(0,0,0,0.35)",
+                border: `1px solid ${color}55`,
+                borderRadius: "10px",
+                padding: "10px 12px",
+              }}
+            >
+              {/* Rarity header */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <div style={{ width: "12px", height: "12px", borderRadius: "3px", background: color, flexShrink: 0 }} />
+                <span style={{ color, fontWeight: "bold", fontSize: "13px", letterSpacing: "1px" }}>{label}</span>
+                <div style={{ flex: 1 }} />
+                <span style={{ color, fontWeight: "bold", fontSize: "18px" }}>{pct}%</span>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ height: "4px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginBottom: "10px" }}>
+                <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: "2px", maxWidth: "100%" }} />
+              </div>
+
+              {/* Crop list */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {tier.list.map(seedId => {
+                  const item = ALL_ITEMS[seedId];
+                  if (!item) return null;
+                  return (
+                    <div
+                      key={seedId}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: `${color}18`,
+                        border: `1px solid ${color}44`,
+                        borderRadius: "6px",
+                        padding: "3px 8px",
+                        fontSize: "12px",
+                        color: "#ddd",
+                      }}
+                    >
+                      <span style={{ color }}>{item.label}</span>
+                      {perCrop && <span style={{ color: "#888", fontSize: "10px" }}>{(pct / tier.list.length).toFixed(1)}%</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <BaseButton className="h-4rem" label="Back" onClick={onBack} isError></BaseButton>
+
+      <div style={{ marginTop: "8px", fontSize: "11px", color: "#888", textAlign: "center" }}>
+        Each pack gives 5 seeds. Rarity is rolled independently per seed.
+      </div>
+
+      <BaseButton className="h-4rem" label="Back" onClick={onBack} isError />
     </div>
   );
 };

@@ -7,14 +7,12 @@ import { formatNumber } from "../../../utils/basic";
 import InventoryDialog from "../../../containers/Menu_Inventory";
 import SettingsDialog from "../../../containers/Menu_Settings";
 import Shop from "../../../containers/Shop";
-import { useSelector, useDispatch } from "react-redux";
-import { selectBalanceRefreshing, updateGameTokenBalance } from "../../../solana/store/slices/balanceSlice";
+import { useSelector } from "react-redux";
+import { selectBalanceRefreshing } from "../../../solana/store/slices/balanceSlice";
 import { useProdMint } from "../../../hooks/useProdMint";
 // Removed bnToNumber; using plain parsing based on 1e9 decimals for locked tokens
 
 const ProfileBar = ({ isFarmMenu }) => {
-  const dispatch = useDispatch();
-
   // Redux state
   const userData = useSelector((state) => state.user.userData);
   const [isInventoryDialog, setIsInventoryDialog] = useState(false);
@@ -49,15 +47,6 @@ const ProfileBar = ({ isFarmMenu }) => {
     window.addEventListener('sandboxGemsChanged', handler);
     return () => window.removeEventListener('sandboxGemsChanged', handler);
   }, []);
-
-  useEffect(() => {
-    const handler = () => {
-      const gold = localStorage.getItem('sandbox_gold') || '0';
-      dispatch(updateGameTokenBalance(gold));
-    };
-    window.addEventListener('sandboxGoldChanged', handler);
-    return () => window.removeEventListener('sandboxGoldChanged', handler);
-  }, [dispatch]);
 
   useEffect(() => {
     const handler = (e) => setProfileBg(e.detail || BG_GRADIENTS.bg_default);

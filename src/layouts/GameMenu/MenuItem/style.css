@@ -41,3 +41,13 @@
 
 .menu-item:active { transform: scale(1.02); }
 .menu-item:active .menu-icon { filter: brightness(1.1) contrast(1.05); }
+
+.menu-icon-highlight {
+  animation: menuHighlightPulse 1.2s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+@keyframes menuHighlightPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px #ffe033) drop-shadow(0 0 18px #ffb800); }
+  50%       { filter: drop-shadow(0 0 18px #ffe033) drop-shadow(0 0 36px #ffb800) brightness(1.2); }
+}

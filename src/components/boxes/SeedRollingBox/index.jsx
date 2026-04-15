@@ -80,21 +80,30 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
     <div className="seed-rolling-box">
       <div className="seed-roller">
         <img className="seed-roller-bg" src="/images/items/crop-bg.png" alt="Seed Roller Background"></img>
-        <div
-          className={`seed-rolling-image ${isRolling ? "rolling" : "finish"}`}
-          style={
-            selectedSeed.pos
-              ? {
-                  "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
-                  "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
-                  backgroundPositionY: `-${selectedSeed.pos * ONE_SEED_HEIGHT * 0.308}px`,
-                }
-              : { 
-                  "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
-                  "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
-                }
-          }
-        ></div>
+        {selectedSeed.pos === -1 && selectedSeed.image ? (
+          <img
+            src={selectedSeed.image}
+            alt={selectedSeed.label}
+            className={`seed-rolling-image ${isRolling ? "rolling" : "finish"}`}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`, "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px` }}
+          />
+        ) : (
+          <div
+            className={`seed-rolling-image ${isRolling ? "rolling" : "finish"}`}
+            style={
+              selectedSeed.pos
+                ? {
+                    "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
+                    "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
+                    backgroundPositionY: `-${selectedSeed.pos * ONE_SEED_HEIGHT * 0.308}px`,
+                  }
+                : {
+                    "--all-seed-image-height": `-${ALL_SEED_IMAGE_HEIGHT * 0.308}px`,
+                    "--scaled-seed-height": `${ONE_SEED_HEIGHT * 0.308}px`,
+                  }
+            }
+          ></div>
+        )}
       </div>
       <div className="seed-label">
         <p

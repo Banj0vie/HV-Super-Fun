@@ -11,6 +11,7 @@ const VendorMenu = ({
   seedStatus,
   onSeedsClicked,
   onRollChancesClicked,
+  onScratchOffClicked,
   availablePlots = 0,
   hasPendingRequests = false,
   pendingRequests = [],
@@ -89,14 +90,20 @@ const VendorMenu = ({
           );
         })}
       </div>
-      <BaseButton
-        className="vendor-button px-2rem"
-        label="Roll Chances"
-        onClick={() => {
-          onRollChancesClicked();
-        }}
-        disabled={hasPendingRequests || buyingItem !== null || isRevealing}
-      ></BaseButton>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <BaseButton
+          className="vendor-button px-2rem"
+          label="Roll Chances"
+          onClick={() => onRollChancesClicked()}
+          disabled={hasPendingRequests || buyingItem !== null || isRevealing}
+        />
+        <BaseButton
+          className="vendor-button px-2rem"
+          label={"🎰 Scratch Off"}
+          onClick={() => onScratchOffClicked()}
+          disabled={hasPendingRequests || buyingItem !== null || isRevealing}
+        />
+      </div>
 
     </div>
   );

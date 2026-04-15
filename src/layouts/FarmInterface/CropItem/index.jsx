@@ -493,12 +493,12 @@ const CropItem = ({
             @keyframes crowFlyInFromLeft {
               0% { left: -150px; top: -100px; transform: translate(0, 0) scale(0.4); opacity: 0; }
               70% { opacity: 1; }
-              100% { left: ${crowScreenPos.x + 14}px; top: ${crowScreenPos.y + 40}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+              100% { left: ${crowScreenPos.x + 7}px; top: ${crowScreenPos.y + 37}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
             @keyframes crowFlyInFromRight {
               0% { left: calc(100vw + 150px); top: -100px; transform: translate(0, 0) scale(0.4); opacity: 0; }
               70% { opacity: 1; }
-              100% { left: ${crowScreenPos.x + 14}px; top: ${crowScreenPos.y + 40}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
+              100% { left: ${crowScreenPos.x + 7}px; top: ${crowScreenPos.y + 37}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
             @keyframes dirtParticle0  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
             @keyframes dirtParticle1  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
@@ -560,8 +560,8 @@ const CropItem = ({
             }}
             style={{
               position: "fixed",
-              left: crowLanded ? `${crowScreenPos.x + 14}px` : undefined,
-              top: crowLanded ? `${crowScreenPos.y + 30}px` : undefined,
+              left: crowLanded ? `${crowScreenPos.x + 7}px` : undefined,
+              top: crowLanded ? `${crowScreenPos.y + 27}px` : undefined,
               transform: "translate(-50%, -50%)",
               zIndex: 999999,
               cursor: "crosshair",
@@ -586,8 +586,8 @@ const CropItem = ({
               src={crowLanded ? "/images/badanimals/crowpeck.gif" : "/images/badanimals/crowfly.gif"}
               alt="crow"
               style={{
-                width: crowLanded ? "89px" : "74px",
-                height: crowLanded ? "89px" : "74px",
+                width: crowLanded ? "65px" : "55px",
+                height: crowLanded ? "65px" : "55px",
                 filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))",
                 transform: (!crowLanded && index >= 15) ? "scaleX(-1)" : "none"
               }}

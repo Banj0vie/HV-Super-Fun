@@ -48,6 +48,7 @@ const TooltipButton = ({ label, style, className = '', onClick, "data-hotspot": 
       style={{ ...(label ? { backgroundImage: `url(${backgroundImage})` } : {}), ...style }}
       onClick={handleClick}
       data-hotspot={dataHotspot}
+      title={label}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

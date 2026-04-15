@@ -11,7 +11,7 @@ import { useFarming } from "../hooks/useContracts";
 import { useNotification } from "../contexts/NotificationContext";
 import { CropItemArrayClass } from "../models/crop";
 import { handleContractError } from "../utils/errorHandler";
-import { ID_POTION_ITEMS, ID_PRODUCE_ITEMS, ID_CHEST_ITEMS, ID_FISH_ITEMS, ID_SEEDS, ID_BAIT_ITEMS } from "../constants/app_ids";
+import { ID_POTION_ITEMS, ID_PRODUCE_ITEMS, ID_CHEST_ITEMS, ID_FISH_ITEMS, ID_SEEDS, ID_BAIT_ITEMS, ID_ITEM_CATEGORIES } from "../constants/app_ids";
 import { ALL_ITEMS, IMAGE_URL_CROP } from "../constants/item_data";
 import { clampVolume, getGrowthTime, getSubtype } from "../utils/basic";
 import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH } from "../constants/item_seed";
@@ -559,7 +559,7 @@ const TamagotchiDialog = ({ onClose, onFeed, onWater, catFeedTimeLeft, bowlWater
 
   return (
     <BaseDialog onClose={onClose} title="PETS" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
-      <div style={{ display: 'flex', width: '600px', height: '350px', fontFamily: 'monospace', color: '#fff', maxWidth: '90vw' }}>
+      <div style={{ display: 'flex', width: '490px', height: '350px', fontFamily: 'monospace', color: '#fff', maxWidth: '90vw' }}>
         
         {/* Left Sidebar - Pet List */}
         <div style={{ width: '180px', borderRight: '2px solid #5a402a', padding: '15px', backgroundColor: 'rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
@@ -749,15 +749,15 @@ const FishBowlDialog = ({ onClose, onAddFish, availableFish }) => {
   );
 };
 
-const SkipGrowthDialog = ({ onClose, onConfirm, tutorialStep }) => {
+const SkipGrowthDialog = ({ onClose, onConfirm }) => {
   return (
     <BaseDialog onClose={onClose} title="SPEED UP" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
       <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
         <h2 style={{ color: '#ffea00', margin: '0', textAlign: 'center' }}>Speed Up Growth?</h2>
-        <p style={{ margin: 0, color: '#ccc', textAlign: 'center' }}>Pay your Great Uncle 100 Honey to instantly grow this crop?</p>
+        <p style={{ margin: 0, color: '#ccc', textAlign: 'center' }}>Spend 50 💎 Gems to instantly grow this crop?</p>
         <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-          <BaseButton label="Pay 100 Honey" onClick={onConfirm} />
-          <BaseButton label="Cancel" onClick={onClose} />
+          <BaseButton label="Pay 50 Gems 💎" onClick={onConfirm} />
+          <BaseButton label="Cancel" onClick={onClose} isError />
         </div>
       </div>
     </BaseDialog>
@@ -1903,13 +1903,13 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
     <>
     {tutorialStep === 26 && (
       <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100002 }}>
-        <div style={{ position: 'relative', width: '400px' }}>
-          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div style={{ position: 'relative', width: '490px' }}>
+          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         </div>
       </div>
     )}
     <BaseDialog onClose={onClose} title="CRAFTING" header="/images/dialog/modal-header-inventory.png" headerOffset={10} className="custom-modal-background">
-      <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '20px', width: '600px', maxWidth: '90vw' }}>
+      <div style={{ padding: '20px', color: '#fff', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '20px', width: '490px', maxWidth: '90vw' }}>
         <h2 style={{ color: '#00ff41', margin: '0 0 10px 0', textAlign: 'center' }}>Crafting Workbench</h2>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #5a402a', paddingBottom: '10px' }}>
           <h2 style={{ color: '#00ff41', margin: '0' }}>Crafting Workbench</h2>
@@ -2470,7 +2470,7 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
                         backgroundRepeat: 'no-repeat',
                       }} />
                     ) : (
-                      <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
+                      <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -2780,7 +2780,7 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
                         backgroundRepeat: 'no-repeat',
                       }} />
                     ) : (
-                      <img src={rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
+                      <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
                     )}
                   </div>
                   <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
@@ -3031,11 +3031,11 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       }
       localStorage.setItem('sandbox_loot', JSON.stringify(loot));
 
-      // Add 1000 gold
-      const currentGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
-      const newGold = currentGold + 1000;
-      localStorage.setItem('sandbox_gold', newGold.toString());
-      window.dispatchEvent(new CustomEvent('sandboxGoldChanged', { detail: newGold.toString() }));
+      // Add 1000 honey (the in-game currency shown in the balance bar)
+      const currentHoney = parseFloat(localStorage.getItem('sandbox_honey') || '0');
+      const newHoney = currentHoney + 1000;
+      localStorage.setItem('sandbox_honey', newHoney.toString());
+      window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
 
       // Add 250 gems
       const currentGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
@@ -3091,7 +3091,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   const sprinklersRef = useRef(JSON.parse(localStorage.getItem('sandbox_sprinklers') || '{}'));
   const umbrellasRef = useRef(JSON.parse(localStorage.getItem('sandbox_umbrellas') || '{}'));
   const teslaTowersRef = useRef(JSON.parse(localStorage.getItem('sandbox_tesla') || '{}'));
-  const ratsRef = useRef({});
   
   const [isUsingPotion, setIsUsingPotion] = useState(false);
   const [selectedPotion, setSelectedPotion] = useState(null);
@@ -3194,7 +3193,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   }, [isSelectCropDialog]);
 
   const [sirBeePos, setSirBeePos] = useState('-200px');
-  const [isToolsOpen, setIsToolsOpen] = useState(false);
 
 
   useEffect(() => {
@@ -3293,15 +3291,16 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   }, []);
 
   const handleSkipGrowth = () => {
-    const currentHoney = parseInt(localStorage.getItem('sandbox_honey') || '0', 10);
-    if (currentHoney < 100) {
-      show("You don't have enough Honey!", "error");
+    const currentGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+    if (currentGems < 50) {
+      show("You don't have enough Gems!", "error");
+      setSkipGrowTarget(null);
       return;
     }
-    
-    const newHoney = currentHoney - 100;
-    localStorage.setItem('sandbox_honey', newHoney.toString());
-    window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney.toString() }));
+
+    const newGems = currentGems - 50;
+    localStorage.setItem('sandbox_gems', newGems.toString());
+    window.dispatchEvent(new CustomEvent('sandboxGemsChanged', { detail: newGems.toString() }));
     
     const skipped = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
     skipped[skipGrowTarget] = true;
@@ -3367,21 +3366,12 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       catBusyUntil.current = Date.now() + 4500;
       
       setTimeout(() => {
-        delete ratsRef.current[plotIndex];
-        setCropArray(prev => {
-          const newArr = new CropItemArrayClass(30);
-          newArr.copyFrom(prev);
-          const item = newArr.getItem(plotIndex);
-          if (item) item.ratCountdown = undefined;
-          return newArr;
-        });
         const currentFedTime = parseInt(localStorage.getItem('sandbox_cat_fed_time') || '0', 10);
         if (currentFedTime > 0) {
            localStorage.setItem('sandbox_cat_fed_time', (currentFedTime - 4 * 60 * 60 * 1000).toString());
         }
         setBowlWaterFilled(false);
         localStorage.removeItem('sandbox_bowl_water');
-        window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: "Cat hunted a rat! (Hunger & Thirst increased)", type: "warning" } }));
         setCatState('sit');
       }, 3800);
     };
@@ -3930,37 +3920,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     }
   };
 
-  const handleForceSpawnRat = () => {
-    const validPlots = [];
-    for (let i = 0; i < 30; i++) {
-      const item = cropArray.getItem(i);
-      if (item && item.seedId && item.seedId !== 0n && ratsRef.current[i] === undefined) {
-        validPlots.push(i);
-      }
-    }
-    if (validPlots.length > 0) {
-      const target = validPlots[Math.floor(Math.random() * validPlots.length)];
-      const isWaterFilled = localStorage.getItem('sandbox_bowl_water') === 'true';
-      const isFishFilled = localStorage.getItem('sandbox_bowl_fish') !== null;
-      const fedTime = parseInt(localStorage.getItem('sandbox_cat_fed_time') || '0', 10);
-      const happy = parseFloat(localStorage.getItem('sandbox_cat_happiness') || '50');
 
-      const catUnlocked = (() => {
-        const fft = parseInt(localStorage.getItem('sandbox_cat_first_fed_time') || '0', 10);
-        return fft > 0 && Date.now() - fft >= 60 * 60 * 1000;
-      })();
-      
-      if (catUnlocked && fedTime > 0 && isWaterFilled && isFishFilled && happy > 0) {
-         ratsRef.current[target] = 30;
-         window.dispatchEvent(new CustomEvent('animateCatAttack', { detail: { plotIndex: target } }));
-      } else {
-         ratsRef.current[target] = 30;
-         show(`Rat spawned on plot ${target}!`, "warning");
-      }
-    } else {
-      show("No available crops for a rat!", "info");
-    }
-  };
 
   useEffect(() => {
     const onAdminDeleteSpot = (e) => {
@@ -4007,16 +3967,14 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     const onAdminClearPests = () => {
       bugsRef.current = {};
       crowsRef.current = {};
-      ratsRef.current = {};
       setCropArray(prev => {
         const newArr = new CropItemArrayClass(30);
         newArr.copyFrom(prev);
         for(let i = 0; i < 30; i++) {
            const item = newArr.getItem(i);
-           if(item) { 
-             item.bugCountdown = undefined; 
-             item.crowCountdown = undefined; 
-             item.ratCountdown = undefined; 
+           if(item) {
+             item.bugCountdown = undefined;
+             item.crowCountdown = undefined;
            }
         }
         return newArr;
@@ -4078,7 +4036,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
     window.addEventListener('forceSpawnBug', handleForceSpawnBug);
     window.addEventListener('forceSpawnCrow', handleForceSpawnCrow);
-    window.addEventListener('forceSpawnRat', handleForceSpawnRat);
     window.addEventListener('adminDeleteSpot', onAdminDeleteSpot);
     window.addEventListener('adminDeleteLadybug', onAdminDeleteLadybug);
     window.addEventListener('adminDeleteSprinkler', onAdminDeleteSprinkler);
@@ -4098,7 +4055,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     return () => {
       window.removeEventListener('forceSpawnBug', handleForceSpawnBug);
       window.removeEventListener('forceSpawnCrow', handleForceSpawnCrow);
-      window.removeEventListener('forceSpawnRat', handleForceSpawnRat);
       window.removeEventListener('adminDeleteSpot', onAdminDeleteSpot);
       window.removeEventListener('adminDeleteLadybug', onAdminDeleteLadybug);
       window.removeEventListener('adminDeleteSprinkler', onAdminDeleteSprinkler);
@@ -4292,12 +4248,12 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
   const getAvailableSeeds = useCallback(() => {
     const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
-    const seedIds = Object.values(ID_SEEDS || {});
     let seedsList = [...(currentSeeds || [])];
-    
+
     if (allItems) {
       allItems.forEach(item => {
-        if (seedIds.includes(item.id)) {
+        const itemData = ALL_ITEMS[item.id];
+        if (itemData?.category === ID_ITEM_CATEGORIES.SEED) {
           const localCount = sandboxLoot[item.id] || 0;
           if (localCount > 0) {
             const existing = seedsList.find(s => s.id === item.id);
@@ -4508,7 +4464,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           item.bugCountdown = undefined;
           const wState = waterStateRef.current[plotIndex];
           if (wState) {
-             const hasOtherPest = crowsRef.current[plotIndex] !== undefined || ratsRef.current[plotIndex] !== undefined;
+             const hasOtherPest = crowsRef.current[plotIndex] !== undefined;
              const isHalfway = wState.needsMid && (Date.now() - (wState.contractPlantedAt + (wState.pausedMs || 0))) >= (item.growthTime * 1000) / 2;
              item.needsWater = hasOtherPest || wState.needsInitial || isHalfway;
           }
@@ -4546,7 +4502,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
            item.crowCountdown = undefined;
            const wState = waterStateRef.current[plotIndex];
            if (wState) {
-              const hasOtherPest = bugsRef.current[plotIndex] !== undefined || ratsRef.current[plotIndex] !== undefined;
+              const hasOtherPest = bugsRef.current[plotIndex] !== undefined;
               const isHalfway = wState.needsMid && (Date.now() - (wState.contractPlantedAt + (wState.pausedMs || 0))) >= (item.growthTime * 1000) / 2;
               item.needsWater = hasOtherPest || wState.needsInitial || isHalfway;
            }
@@ -4557,38 +4513,14 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
     };
 
-    const handleScareRat = (event) => {
-      const { plotIndex } = event.detail;
-      delete ratsRef.current[plotIndex];
-      
-      setCropArray(prev => {
-        const newArr = new CropItemArrayClass(30);
-        newArr.copyFrom(prev);
-        const item = newArr.getItem(plotIndex);
-        if (item) {
-           item.ratCountdown = undefined;
-           const wState = waterStateRef.current[plotIndex];
-           if (wState) {
-              const hasOtherPest = bugsRef.current[plotIndex] !== undefined || crowsRef.current[plotIndex] !== undefined;
-              const isHalfway = wState.needsMid && (Date.now() - (wState.contractPlantedAt + (wState.pausedMs || 0))) >= (item.growthTime * 1000) / 2;
-              item.needsWater = hasOtherPest || wState.needsInitial || isHalfway;
-           }
-        }
-        return newArr;
-      });
-      show("Rat scared away!", "success");
-    };
-
     window.addEventListener('triggerDestroyCrop', handleTriggerDestroy);
     window.addEventListener('squashBug', handleSquashBug);
     window.addEventListener('scareCrow', handleScareCrow);
-    window.addEventListener('scareRat', handleScareRat);
-    
+
     return () => {
       window.removeEventListener('triggerDestroyCrop', handleTriggerDestroy);
       window.removeEventListener('squashBug', handleSquashBug);
       window.removeEventListener('scareCrow', handleScareCrow);
-      window.removeEventListener('scareRat', handleScareRat);
     };
   }, [destroyCrop, loadCropsFromContract, show]);
 
@@ -4636,9 +4568,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         else if (wOverride === 'storm') currentWeather = '⚡';
 
         const currentTutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-        if (currentTutorialStep < 32) currentWeather = null;
-
+        // Check rain before tutorial override so rain always auto-waters crops
         const isRainingNow = currentWeather === '⚡' || currentWeather === '🌧️';
+        if (currentTutorialStep < 32) currentWeather = null;
         if (currentWeather === '⚡') {
           // ~5% chance every 1.5 hours (5400 seconds)
           if (Math.random() < 0.00001) {
@@ -4677,7 +4609,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         // Process bugs safely
         const currentBugs = { ...bugsRef.current };
         const currentCrows = { ...crowsRef.current };
-        const currentRats = { ...ratsRef.current };
         let cropsToDestroy = [];
         let pestsChanged = false;
         
@@ -4702,26 +4633,14 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
             }
           }
         }
-        for (const idx in currentRats) {
-          currentRats[idx] -= 1;
-          pestsChanged = true;
-          if (currentRats[idx] <= 0) {
-            if (!cropsToDestroy.includes(Number(idx))) {
-              cropsToDestroy.push(Number(idx));
-            }
-            delete currentRats[idx];
-          }
-        }
         bugsRef.current = currentBugs;
         crowsRef.current = currentCrows;
-        ratsRef.current = currentRats;
 
         const currentWaterState = waterStateRef.current;
         const now = Date.now();
 
         setCropArray((prevCropArray) => {
           let hasChanges = cropsToDestroy.length > 0 || pestsChanged;
-          let ratJustSpawned = false;
           const newCropArray = new CropItemArrayClass(30);
           newCropArray.copyFrom(prevCropArray);
           
@@ -4747,7 +4666,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
                   item.seedId = 0n;
                   item.bugCountdown = undefined;
                   item.crowCountdown = undefined;
-                  item.ratCountdown = undefined;
               }
               delete currentWaterState[idx];
             });
@@ -4781,7 +4699,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
               let basePlantedAt = wState.contractPlantedAt;
               let isPaused = false;
-              const hasPest = bugsRef.current[i] !== undefined || crowsRef.current[i] !== undefined || ratsRef.current[i] !== undefined;
+              const hasPest = bugsRef.current[i] !== undefined || crowsRef.current[i] !== undefined;
 
               if (wState.needsInitial) {
                 isPaused = true;
@@ -4894,31 +4812,9 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
                   }
                 }
               }
-              if (autoSpawnRef.current && Object.keys(ratsRef.current).length === 0 && !ratJustSpawned && Math.random() < 0.000385) { // 50% chance every 30 minutes
-                 ratJustSpawned = true;
-                 const isWaterFilled = localStorage.getItem('sandbox_bowl_water') === 'true';
-                 const isFishFilled = localStorage.getItem('sandbox_bowl_fish') !== null;
-                 const fedTime = parseInt(localStorage.getItem('sandbox_cat_fed_time') || '0', 10);
-                 const happy = parseFloat(localStorage.getItem('sandbox_cat_happiness') || '50');
-                 
-                 const catUnlocked = (() => {
-                    const fft = parseInt(localStorage.getItem('sandbox_cat_first_fed_time') || '0', 10);
-                    return fft > 0 && Date.now() - fft >= 60 * 60 * 1000;
-                 })();
-                 
-                 ratsRef.current[i] = 30;
-                 item.ratCountdown = 30;
-                 hasChanges = true;
-                 
-                 if (catUnlocked && fedTime > 0 && isWaterFilled && isFishFilled && happy > 0) {
-                    window.dispatchEvent(new CustomEvent('animateCatAttack', { detail: { plotIndex: i } }));
-                 }
-              }
-              
-              if (item.bugCountdown !== bugsRef.current[i] || item.crowCountdown !== crowsRef.current[i] || item.ratCountdown !== ratsRef.current[i]) {
+              if (item.bugCountdown !== bugsRef.current[i] || item.crowCountdown !== crowsRef.current[i]) {
                  item.bugCountdown = bugsRef.current[i];
                  item.crowCountdown = crowsRef.current[i];
-                 item.ratCountdown = ratsRef.current[i];
                  hasChanges = true;
               }
             } else {
@@ -4929,10 +4825,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               }
               if (crowsRef.current[i] !== undefined) {
                 delete crowsRef.current[i];
-                hasChanges = true;
-              }
-              if (ratsRef.current[i] !== undefined) {
-                delete ratsRef.current[i];
                 hasChanges = true;
               }
             }
@@ -4983,7 +4875,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
               
               if (item.bugCountdown !== bugsRef.current[i]) { item.bugCountdown = bugsRef.current[i]; hasChanges = true; }
               if (item.crowCountdown !== crowsRef.current[i]) { item.crowCountdown = crowsRef.current[i]; hasChanges = true; }
-              if (item.ratCountdown !== ratsRef.current[i]) { item.ratCountdown = ratsRef.current[i]; hasChanges = true; }
             }
           }
 
@@ -5105,7 +4996,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           const subtype = getSubtype(seed.id);
           encodedIdsToPlant.push((plotIdx << 24) | (category << 16) | (subtype << 8) | localId);
           plantedSeedIds.push(seed.id);
-          newWaterState[plotIdx] = { needsInitial: true, needsMid: true, pausedMs: 0, contractPlantedAt: Date.now() };
+          newWaterState[plotIdx] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
       }
     }
 
@@ -5537,7 +5428,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         
         const newWaterState = { ...waterStateRef.current };
         for (let i = 0; i < cropsToPlant.length; i++) {
-          newWaterState[cropsToPlant[i].plotNumber] = { needsInitial: true, needsMid: true, pausedMs: 0, contractPlantedAt: Date.now() };
+          newWaterState[cropsToPlant[i].plotNumber] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
         }
         waterStateRef.current = newWaterState;
         localStorage.setItem('sandbox_water_state', JSON.stringify(newWaterState));
@@ -6084,6 +5975,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         if (tutorialStep === 3 && tutPage === 8) {
           const plotIdx = tutWaterPlotRef.current !== null ? tutWaterPlotRef.current : index;
           setTutPageSync(9);
+          setSelectedTool(null);
+          setIsWatering(false);
           tutPostWaterRef.current = true;
           setTimeout(() => {
             bugsRef.current[plotIdx] = 60;
@@ -6150,7 +6043,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         handleInstantHarvest(index);
         return;
       } else {
-        setSkipGrowTarget(index);
+        if (tutorialStep >= 32) setSkipGrowTarget(index);
         return;
       }
     }
@@ -6308,7 +6201,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
         
         const newWaterState = { ...waterStateRef.current };
-        newWaterState[idx] = { needsInitial: true, needsMid: true, pausedMs: 0, contractPlantedAt: Date.now() };
+        newWaterState[idx] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
         waterStateRef.current = newWaterState;
         localStorage.setItem('sandbox_water_state', JSON.stringify(newWaterState));
 
@@ -6395,12 +6288,19 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       
 
       {/* Farming Level Banner - Top Right */}
-      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: '0px' }}>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, pointerEvents: 'none', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div style={{ position: 'relative', display: 'flex' }}>
           <img src="/images/label/farmerlevellabel.png" style={{ height: '92px', objectFit: 'contain', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: '113px', paddingBottom: '18px' }}>
             <span style={{ fontFamily: 'Cartoonist', fontSize: '32px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>LEVEL {farmingLevel}</span>
           </div>
+        </div>
+        {/* XP Progress Bar */}
+        <div style={{ height: '12px', background: 'rgba(0,0,0,0.55)', borderRadius: '0 0 8px 8px', overflow: 'hidden', border: '2px solid rgba(0,0,0,0.35)', borderTop: 'none' }}>
+          <div style={{ width: `${Math.min(farmingProgress, 100)}%`, height: '100%', background: 'linear-gradient(90deg, #4caf50, #8bc34a)', transition: 'width 0.5s ease' }} />
+        </div>
+        <div style={{ textAlign: 'center', fontFamily: 'Cartoonist', fontSize: '11px', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000', marginTop: '3px' }}>
+          {Math.round(farmingProgress)}% to Lv.{farmingLevel + 1}
         </div>
       </div>
 
@@ -7054,32 +6954,6 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           </div>
         )}
 
-        {/* Farmer Bag Icon Overlay - Static inside PanZoomViewport */}
-        {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 4)) && (
-        <div
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            setIsToolsOpen(!isToolsOpen);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.8))';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.filter = 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))';
-          }}
-      style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 9999, cursor: 'pointer', transition: 'all 0.2s ease', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.5))' }}
-        >
-        <img
-          src="/images/farming/shed.png"
-          alt="Shed Tools"
-          style={{ height: '80px', objectFit: 'contain' }}
-          onError={(e) => { e.target.onerror = null; e.target.src='/images/farm/shed.png'; }}
-        />
-        </div>
-        )}
 
       </PanZoomViewport>
       {isFarmMenu && (
@@ -7153,11 +7027,12 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
       )}
 
       {skipGrowTarget !== null && (
-        <SkipGrowthDialog
-          onClose={() => setSkipGrowTarget(null)}
-          onConfirm={handleSkipGrowth}
-          tutorialStep={tutorialStep}
-        />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000000 }}>
+          <SkipGrowthDialog
+            onClose={() => setSkipGrowTarget(null)}
+            onConfirm={handleSkipGrowth}
+          />
+        </div>
       )}
 
       {/* Interactive Bowls */}
@@ -7236,12 +7111,12 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
   {tutorialStep === 3 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '400px' }}>
+      <div style={{ position: 'relative', width: '490px' }}>
         <img
           src={tutPage === 1 ? '/images/tutorial/tutmessagep1.png' : tutPage === 2 ? '/images/tutorial/tutmessagep2.png' : tutPage === 3 ? '/images/tutorial/tutmessagep3.png' : tutPage === 4 ? '/images/tutorial/tutp4.png' : tutPage === 5 ? '/images/tutorial/tutp5.png' : tutPage === 6 ? '/images/tutorial/tutp6.png' : tutPage === 10 ? '/images/tutorial/tutpart8.png' : tutPage === 11 ? '/images/tutorial/tutp9.png' : tutPage === 12 ? '/images/tutorial/tutp10.png' : '/images/tutorial/tutp7.png'}
           alt="Tutorial"
           className="tutorial-img"
-          style={{ width: '400px', objectFit: 'contain', display: 'block' }}
+          style={{ width: '490px', objectFit: 'contain', display: 'block' }}
         />
         {tutPage !== 5 && tutPage !== 6 && tutPage !== 7 && tutPage !== 8 && tutPage !== 9 && tutPage !== 11 && tutPage !== 12 && (
           <div className="tut-arrow" onClick={() => {
@@ -7289,8 +7164,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '400px', pointerEvents: 'auto' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" className="tutorial-img" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px', pointerEvents: 'auto' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" className="tutorial-img" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(26); localStorage.setItem('sandbox_tutorial_step', '26'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7306,8 +7181,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
         }
       `}</style>
       <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-        <div style={{ position: 'relative', width: '400px' }}>
-          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+        <div style={{ position: 'relative', width: '490px' }}>
+          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
           <div className="tut-arrow" onClick={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
         </div>
       </div>
@@ -7323,8 +7198,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '400px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(28); localStorage.setItem('sandbox_tutorial_step', '28'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7333,8 +7208,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   {tutorialStep === 28 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '400px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7349,8 +7224,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
           50% { transform: scale(1); }
         }
       `}</style>
-      <div style={{ position: 'relative', width: '400px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(30); localStorage.setItem('sandbox_tutorial_step', '30'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7359,8 +7234,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
   {tutorialStep === 30 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
       <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '400px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7368,8 +7243,8 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
 
   {tutorialStep === 31 && (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '400px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain' }} />
+      <div style={{ position: 'relative', width: '490px' }}>
+        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
         <div className="tut-arrow" onClick={() => { setTutorialStep(32); localStorage.setItem('sandbox_tutorial_step', '32'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}>▶</div>
       </div>
     </div>
@@ -7380,7 +7255,7 @@ const Farm = ({ isFarmMenu, setIsFarmMenu }) => {
     <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {/* tutp9 image visible above the dark overlay */}
       <div style={{ position: 'absolute', right: '20px', bottom: '20px' }}>
-        <img src="/images/tutorial/tutp9.png" alt="Tutorial" style={{ width: '400px', objectFit: 'contain', display: 'block' }} />
+        <img src="/images/tutorial/tutp9.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain', display: 'block' }} />
       </div>
       {/* Centered popup card */}
       <div style={{ background: 'linear-gradient(135deg, #3a2010, #5a3520)', border: '4px solid #a67c00', borderRadius: '20px', padding: '36px 40px', textAlign: 'center', maxWidth: '360px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>

@@ -57,25 +57,31 @@ export const useFarming = () => {
             slotsArray.forEach(slot => {
                 const crop = crops[slot];
                 if (crop && crop.id !== 0) {
-                    const category = (crop.id >> 16) & 0xFF;
+                    // Bits 16-19 hold the seed category; bits 20-23 hold rarity — mask to get just category
+                    const category = (crop.id >> 16) & 0x0F;
                     const localId = crop.id & 0xFF;
-                    
-                    // Contract logic: produce category is usually seed category + 3
+
+                    // Contract logic: produce category is seed category + 3
                     const expectedProduceCategory = category + 3;
-                    
-                    let matchingProduce = Object.values(ID_PRODUCE_ITEMS).find(id => 
-                        (typeof id === 'number') && 
-                        (id & 0xFF) === localId && 
+
+                    let matchingProduce = Object.values(ID_PRODUCE_ITEMS).find(id =>
+                        (typeof id === 'number') &&
+                        (id & 0xFF) === localId &&
                         (id >> 8) === expectedProduceCategory
                     );
-                    
+
                     // Fallback to just matching localId if exact category mapping misses
                     if (!matchingProduce) {
-                        matchingProduce = Object.values(ID_PRODUCE_ITEMS).find(id => (typeof id === 'number') && (id & 0xFF) === localId);
+                        matchingProduce = Object.values(ID_PRODUCE_ITEMS).find(id => (typeof id === 'number') && (id & 0xFF) === localId && (id >> 8) >= 5);
                     }
                     
                     const produceToGive = matchingProduce || Object.values(ID_PRODUCE_ITEMS).find(id => typeof id === 'number');
-                    const produceCount = ALL_ITEMS[crop.id]?.produceCount ?? 1;
+                    // Reconstruct original seed ID from stored crop.id to look up rarity produceCount
+                    const rarityCategory = (crop.id >> 16) & 0xFF;
+                    const rarity = rarityCategory >> 4;
+                    const baseSeedId = category << 8 | localId;
+                    const originalSeedId = rarity > 0 ? (rarity << 12) | baseSeedId : baseSeedId;
+                    const produceCount = ALL_ITEMS[originalSeedId]?.produceCount ?? 1;
                     if (produceToGive) sandboxProduce[produceToGive] = (sandboxProduce[produceToGive] || 0) + produceCount;
                 }
                 crops[slot] = { id: 0, endTime: 0, prodMultiplier: 1000, tokenMultiplier: 1000, growthElixir: 0 };

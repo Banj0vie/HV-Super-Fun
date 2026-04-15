@@ -23,6 +23,7 @@ import { useNotification } from "../../contexts/NotificationContext";
 import { isTransactionRejection } from "../../utils/errorUtils";
 import CustomSeedsDialog from "./CustomSeedsDialog";
 import PokemonPackRipDialog from "./PokemonPackRipDialog";
+import ScratchOff from "./ScratchOff";
 const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0 }) => {
   const { isConnected, account } = useSolanaWallet();
   const {
@@ -271,6 +272,10 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
 
   const onRollChancesClicked = useCallback(() => {
     setPageIndex(ID_SEED_SHOP_PAGES.ROLL_CHANCES);
+  }, []);
+
+  const onScratchOffClicked = useCallback(() => {
+    setPageIndex(ID_SEED_SHOP_PAGES.SCRATCH_OFF);
   }, []);
 
   const handleReveal = useCallback(
@@ -533,6 +538,7 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
           seedStatus={seedStatus}
           onSeedsClicked={onSeedsClicked}
           onRollChancesClicked={onRollChancesClicked}
+          onScratchOffClicked={onScratchOffClicked}
           availablePlots={availablePlots}
           hasPendingRequests={hasPendingRequests}
           pendingRequests={pendingRequests}
@@ -556,10 +562,13 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
       )}
       {pageIndex === ID_SEED_SHOP_PAGES.ROLL_CHANCES && (
         <RollChances
-          onBack={() => {
-            setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST);
-          }}
-        ></RollChances>
+          onBack={() => setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST)}
+        />
+      )}
+      {pageIndex === ID_SEED_SHOP_PAGES.SCRATCH_OFF && (
+        <ScratchOff
+          onBack={() => setPageIndex(ID_SEED_SHOP_PAGES.SEED_PACK_LIST)}
+        />
       )}
       {isCustomDlg && (
         <CustomSeedsDialog

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
 
-const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive }) => {
+const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive, highlight }) => {
   const clickAudioRef = useRef(null);
   const navigate = useNavigate();
 
@@ -26,7 +26,7 @@ const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive }) => {
       className={`menu-item ${isActive ? 'active' : ''}`}
       onClick={handleClick}
     >
-      <div className="menu-icon">
+      <div className={`menu-icon${highlight ? ' menu-icon-highlight' : ''}`}>
         <img src={icon} alt={label} className="menu-icon-img" style={iconScale ? { width: `${iconScale * 100}%`, height: `${iconScale * 100}%` } : undefined} />
         {labelIcon && <img src={labelIcon} alt={`${label} label`} style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', width: '70%', pointerEvents: 'none' }} />}
       </div>

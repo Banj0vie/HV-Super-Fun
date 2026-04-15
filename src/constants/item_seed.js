@@ -2,9 +2,9 @@ import { ID_CROP_CATEGORIES, ID_RARE_TYPE, ID_SEEDS } from "./app_ids";
 
 export const SEED_PACK_PRICE = {
     [1]: 100,
-    [2]: 2000,
-    [3]: 10000,
-    [4]: 250000,
+    [2]: 750,
+    [3]: 3500,
+    [4]: 15000,
 }
 
 export const SEED_PACKS = [
@@ -12,25 +12,11 @@ export const SEED_PACKS = [
         id: ID_CROP_CATEGORIES.FEEBLE_SEED,
         items: [
             {
-                label: "1x Seed",
-                count: 1,
+                label: "5x Seeds",
+                count: 5,
                 price: SEED_PACK_PRICE[1],
-                priceLabel: "100 HNY",
-                icon: "/images/crops/pack-pico-one.png",
-            },
-            {
-                label: "3x Seed",
-                count: 3,
-                price: SEED_PACK_PRICE[1],
-                priceLabel: "300 HNY",
+                priceLabel: "500 HNY",
                 icon: "/images/crops/pack-pico-three.png",
-            },
-            {
-                label: "Custom",
-                count: 0,
-                price: SEED_PACK_PRICE[1],
-                priceLabel: "100 HNY x Seed",
-                icon: "/images/crops/pack-pico-random.png",
             },
         ],
         tip: "Feeble seeds won't give produce!",
@@ -38,75 +24,33 @@ export const SEED_PACKS = [
         id: ID_CROP_CATEGORIES.PICO_SEED,
         items: [
             {
-                label: "1x Seed",
-                count: 1,
+                label: "5x Seeds",
+                count: 5,
                 price: SEED_PACK_PRICE[2],
-                priceLabel: "2000 HNY",
-                icon: "/images/crops/pack-pico-one.png",
-            },
-            {
-                label: "3x Seed",
-                count: 3,
-                price: SEED_PACK_PRICE[2],
-                priceLabel: "6000 HNY",
+                priceLabel: "750 HNY",
                 icon: "/images/crops/pack-pico-three.png",
-            },
-            {
-                label: "Custom",
-                count: 0,
-                price: SEED_PACK_PRICE[2],
-                priceLabel: "2000 HNY x Seed",
-                icon: "/images/crops/pack-pico-random.png",
             },
         ],
     }, {
         id: ID_CROP_CATEGORIES.BASIC_SEED,
         items: [
             {
-                label: "1x Seed",
-                count: 1,
+                label: "5x Seeds",
+                count: 5,
                 price: SEED_PACK_PRICE[3],
-                priceLabel: "10000 HNY",
-                icon: "/images/crops/pack-basic-one.png",
-            },
-            {
-                label: "3x Seed",
-                count: 3,
-                price: SEED_PACK_PRICE[3],
-                priceLabel: "30000 HNY",
+                priceLabel: "3,500 HNY",
                 icon: "/images/crops/pack-basic-three.png",
-            },
-            {
-                label: "Custom",
-                count: 0,
-                price: SEED_PACK_PRICE[3],
-                priceLabel: "10000 HNY x Seed",
-                icon: "/images/crops/pack-basic-random.png",
             },
         ],
     }, {
         id: ID_CROP_CATEGORIES.PREMIUM_SEED,
         items: [
             {
-                label: "1x Seed",
-                count: 1,
+                label: "5x Seeds",
+                count: 5,
                 price: SEED_PACK_PRICE[4],
-                priceLabel: "25000 HNY",
-                icon: "/images/crops/pack-premium-one.png",
-            },
-            {
-                label: "3x Seed",
-                count: 3,
-                price: SEED_PACK_PRICE[4],
-                priceLabel: "75000 HNY",
+                priceLabel: "15,000 HNY",
                 icon: "/images/crops/pack-premium-three.png",
-            },
-            {
-                label: "Custom",
-                count: 0,
-                price: SEED_PACK_PRICE[4],
-                priceLabel: "25000 HNY x Seed",
-                icon: "/images/crops/pack-premium-random.png",
             },
         ],
     }

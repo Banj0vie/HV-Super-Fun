@@ -3,39 +3,48 @@ import "./style.css";
 import BaseButton from "../../components/buttons/BaseButton";
 import { ID_PRODUCE_ITEMS, ID_FISH_ITEMS } from "../../constants/app_ids";
 
-const SKIP_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+const SKIP_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
 const MISSION_POOL = [
-  { id: "turnin_carrot_2",    title: "Carrot Delivery",    desc: "Turn in 2 Carrots.",        itemId: ID_PRODUCE_ITEMS.CARROT,      amount: 2,  reward: 25,   rewardLabel: "25 Gold",  type: "vegetable" },
-  { id: "turnin_potato_2",    title: "Potato Supply",      desc: "Turn in 2 Potatoes.",       itemId: ID_PRODUCE_ITEMS.POTATO,      amount: 2,  reward: 25,   rewardLabel: "25 Gold",  type: "vegetable" },
-  { id: "turnin_tomato_2",    title: "Tomato Haul",        desc: "Turn in 2 Tomatoes.",       itemId: ID_PRODUCE_ITEMS.TOMATO,      amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_corn_2",      title: "Corn Run",           desc: "Turn in 2 Corn.",           itemId: ID_PRODUCE_ITEMS.CORN,        amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_pumpkin_1",   title: "Pumpkin Patch",      desc: "Turn in 1 Pumpkin.",        itemId: ID_PRODUCE_ITEMS.PUMPKIN,     amount: 1,  reward: 35,   rewardLabel: "35 Gold",  type: "vegetable" },
-  { id: "turnin_lettuce_3",   title: "Lettuce Load",       desc: "Turn in 3 Lettuce.",        itemId: ID_PRODUCE_ITEMS.LETTUCE,     amount: 3,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_pepper_2",    title: "Spice Trade",        desc: "Turn in 2 Peppers.",        itemId: ID_PRODUCE_ITEMS.PEPPER,      amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_broccoli_2",  title: "Broccoli Batch",     desc: "Turn in 2 Broccoli.",       itemId: ID_PRODUCE_ITEMS.BROCCOLI,    amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_wheat_3",     title: "Wheat Harvest",      desc: "Turn in 3 Wheat.",          itemId: ID_PRODUCE_ITEMS.WHEAT,       amount: 3,  reward: 30,   rewardLabel: "30 Gold",  type: "vegetable" },
-  { id: "turnin_onion_2",     title: "Onion Order",        desc: "Turn in 2 Onions.",         itemId: ID_PRODUCE_ITEMS.ONION,       amount: 2,  reward: 28,   rewardLabel: "28 Gold",  type: "vegetable" },
-  { id: "turnin_celery_2",    title: "Celery Stash",       desc: "Turn in 2 Celery.",         itemId: ID_PRODUCE_ITEMS.CELERY,      amount: 2,  reward: 28,   rewardLabel: "28 Gold",  type: "vegetable" },
-  { id: "turnin_grapes_1",    title: "Grape Bunch",        desc: "Turn in 1 Grapes.",         itemId: ID_PRODUCE_ITEMS.GRAPES,      amount: 1,  reward: 35,   rewardLabel: "35 Gold",  type: "vegetable" },
-  { id: "turnin_anchovy_2",   title: "Anchovy Catch",      desc: "Turn in 2 Anchovies.",      itemId: ID_FISH_ITEMS.ANCHOVY,        amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "fish" },
-  { id: "turnin_sardine_2",   title: "Sardine Haul",       desc: "Turn in 2 Sardines.",       itemId: ID_FISH_ITEMS.SARDINE,        amount: 2,  reward: 30,   rewardLabel: "30 Gold",  type: "fish" },
-  { id: "turnin_herring_2",   title: "Herring Run",        desc: "Turn in 2 Herring.",        itemId: ID_FISH_ITEMS.HERRING,        amount: 2,  reward: 35,   rewardLabel: "35 Gold",  type: "fish" },
-  { id: "turnin_trout_1",     title: "Trout Trade",        desc: "Turn in 1 Small Trout.",    itemId: ID_FISH_ITEMS.SMALL_TROUT,    amount: 1,  reward: 40,   rewardLabel: "40 Gold",  type: "fish" },
-  { id: "turnin_perch_1",     title: "Perch Platter",      desc: "Turn in 1 Yellow Perch.",   itemId: ID_FISH_ITEMS.YELLOW_PERCH,   amount: 1,  reward: 45,   rewardLabel: "45 Gold",  type: "fish" },
-  { id: "turnin_salmon_1",    title: "Salmon Supply",      desc: "Turn in 1 Salmon.",         itemId: ID_FISH_ITEMS.SALMON,         amount: 1,  reward: 60,   rewardLabel: "60 Gold",  type: "fish" },
-  { id: "turnin_catfish_1",   title: "Catfish Order",      desc: "Turn in 1 Catfish.",        itemId: ID_FISH_ITEMS.CATFISH,        amount: 1,  reward: 70,   rewardLabel: "70 Gold",  type: "fish" },
+  { id: "turnin_carrot_2",    title: "Carrot Delivery",    desc: "Turn in 2 Carrots.",        itemId: ID_PRODUCE_ITEMS.CARROT,      amount: 2,  reward: 25,   rewardLabel: "25 Honey",  type: "vegetable" },
+  { id: "turnin_potato_2",    title: "Potato Supply",      desc: "Turn in 2 Potatoes.",       itemId: ID_PRODUCE_ITEMS.POTATO,      amount: 2,  reward: 25,   rewardLabel: "25 Honey",  type: "vegetable" },
+  { id: "turnin_tomato_2",    title: "Tomato Haul",        desc: "Turn in 2 Tomatoes.",       itemId: ID_PRODUCE_ITEMS.TOMATO,      amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_corn_2",      title: "Corn Run",           desc: "Turn in 2 Corn.",           itemId: ID_PRODUCE_ITEMS.CORN,        amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_pumpkin_1",   title: "Pumpkin Patch",      desc: "Turn in 1 Pumpkin.",        itemId: ID_PRODUCE_ITEMS.PUMPKIN,     amount: 1,  reward: 35,   rewardLabel: "35 Honey",  type: "vegetable" },
+  { id: "turnin_lettuce_3",   title: "Lettuce Load",       desc: "Turn in 3 Lettuce.",        itemId: ID_PRODUCE_ITEMS.LETTUCE,     amount: 3,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_pepper_2",    title: "Spice Trade",        desc: "Turn in 2 Peppers.",        itemId: ID_PRODUCE_ITEMS.PEPPER,      amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_broccoli_2",  title: "Broccoli Batch",     desc: "Turn in 2 Broccoli.",       itemId: ID_PRODUCE_ITEMS.BROCCOLI,    amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_wheat_3",     title: "Wheat Harvest",      desc: "Turn in 3 Wheat.",          itemId: ID_PRODUCE_ITEMS.WHEAT,       amount: 3,  reward: 30,   rewardLabel: "30 Honey",  type: "vegetable" },
+  { id: "turnin_onion_2",     title: "Onion Order",        desc: "Turn in 2 Onions.",         itemId: ID_PRODUCE_ITEMS.ONION,       amount: 2,  reward: 28,   rewardLabel: "28 Honey",  type: "vegetable" },
+  { id: "turnin_celery_2",    title: "Celery Stash",       desc: "Turn in 2 Celery.",         itemId: ID_PRODUCE_ITEMS.CELERY,      amount: 2,  reward: 28,   rewardLabel: "28 Honey",  type: "vegetable" },
+  { id: "turnin_grapes_1",    title: "Grape Bunch",        desc: "Turn in 1 Grapes.",         itemId: ID_PRODUCE_ITEMS.GRAPES,      amount: 1,  reward: 35,   rewardLabel: "35 Honey",  type: "vegetable" },
+  { id: "turnin_anchovy_2",   title: "Anchovy Catch",      desc: "Turn in 2 Anchovies.",      itemId: ID_FISH_ITEMS.ANCHOVY,        amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "fish" },
+  { id: "turnin_sardine_2",   title: "Sardine Haul",       desc: "Turn in 2 Sardines.",       itemId: ID_FISH_ITEMS.SARDINE,        amount: 2,  reward: 30,   rewardLabel: "30 Honey",  type: "fish" },
+  { id: "turnin_herring_2",   title: "Herring Run",        desc: "Turn in 2 Herring.",        itemId: ID_FISH_ITEMS.HERRING,        amount: 2,  reward: 35,   rewardLabel: "35 Honey",  type: "fish" },
+  { id: "turnin_trout_1",     title: "Trout Trade",        desc: "Turn in 1 Small Trout.",    itemId: ID_FISH_ITEMS.SMALL_TROUT,    amount: 1,  reward: 40,   rewardLabel: "40 Honey",  type: "fish" },
+  { id: "turnin_perch_1",     title: "Perch Platter",      desc: "Turn in 1 Yellow Perch.",   itemId: ID_FISH_ITEMS.YELLOW_PERCH,   amount: 1,  reward: 45,   rewardLabel: "45 Honey",  type: "fish" },
+  { id: "turnin_salmon_1",    title: "Salmon Supply",      desc: "Turn in 1 Salmon.",         itemId: ID_FISH_ITEMS.SALMON,         amount: 1,  reward: 60,   rewardLabel: "60 Honey",  type: "fish" },
+  { id: "turnin_catfish_1",   title: "Catfish Order",      desc: "Turn in 1 Catfish.",        itemId: ID_FISH_ITEMS.CATFISH,        amount: 1,  reward: 70,   rewardLabel: "70 Honey",  type: "fish" },
   { id: "turnin_roughy_1",    title: "Rare Catch",         desc: "Turn in 1 Orange Roughy.",  itemId: ID_FISH_ITEMS.ORANGE_ROUGHY,  amount: 1,  reward: 100,  rewardLabel: "100 Gold", type: "fish" },
   { id: "turnin_shark_1",     title: "Shark Week",         desc: "Turn in 1 Small Shark.",    itemId: ID_FISH_ITEMS.SMALL_SHARK,    amount: 1,  reward: 180,  rewardLabel: "180 Gold", type: "fish" },
 ];
 
-const STORAGE_KEY = "mission_board_state";
+const STORAGE_KEY = "sandbox_mission_board_state";
 
 const getLoot = () => {
-  try { return JSON.parse(localStorage.getItem('sandbox_loot') || '{}'); } catch { return {}; }
+  try {
+    const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+    const produce = JSON.parse(localStorage.getItem('sandbox_produce') || '{}');
+    const merged = { ...loot };
+    Object.entries(produce).forEach(([id, val]) => {
+      const count = Array.isArray(val) ? val.length : (Number(val) || 0);
+      merged[id] = (merged[id] || 0) + count;
+    });
+    return merged;
+  } catch { return {}; }
 };
-const getGold = () => {
-  try { return parseInt(localStorage.getItem('sandbox_gold') || '0', 10); } catch { return 0; }
+const getHoney = () => {
+  try { return parseInt(localStorage.getItem('sandbox_honey') || '0', 10); } catch { return 0; }
 };
 
 const pickOne = (pool, excludeIds) => {
@@ -69,16 +78,20 @@ const MissionBoard = ({ onClose }) => {
   const [missions, setMissions] = useState([]);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [loot, setLoot] = useState({});
-  const [gold, setGold] = useState(0);
+  const [honey, setHoney] = useState(0);
   const [feedback, setFeedback] = useState({});
   // skipTimers: { [slotIndex]: { replacesAt: timestamp, pendingMission } }
   const [skipTimers, setSkipTimers] = useState({});
   const [now, setNow] = useState(Date.now());
   const tickRef = useRef(null);
 
-  // Tick every second to update countdowns
+  // Tick every second to update countdowns and refresh inventory
   useEffect(() => {
-    tickRef.current = setInterval(() => setNow(Date.now()), 1000);
+    tickRef.current = setInterval(() => {
+      setNow(Date.now());
+      setLoot(getLoot());
+      setHoney(getHoney());
+    }, 1000);
     return () => clearInterval(tickRef.current);
   }, []);
 
@@ -106,7 +119,7 @@ const MissionBoard = ({ onClose }) => {
 
   useEffect(() => {
     setLoot(getLoot());
-    setGold(getGold());
+    setHoney(getHoney());
     const saved = loadState();
     const validMissions = (saved?.missions || []).filter(m => m.itemId != null && m.amount != null);
     if (validMissions.length === 3) {
@@ -150,12 +163,32 @@ const MissionBoard = ({ onClose }) => {
       return;
     }
 
-    currentLoot[mission.itemId] = have - mission.amount;
-    localStorage.setItem('sandbox_loot', JSON.stringify(currentLoot));
-    const newGold = getGold() + mission.reward;
-    localStorage.setItem('sandbox_gold', String(newGold));
-    setLoot({ ...currentLoot });
-    setGold(newGold);
+    // Deduct from sandbox_produce first, then sandbox_loot for any remainder
+    let remaining = mission.amount;
+    const produce = JSON.parse(localStorage.getItem('sandbox_produce') || '{}');
+    const produceVal = produce[mission.itemId];
+    if (produceVal !== undefined) {
+      const produceCount = Array.isArray(produceVal) ? produceVal.length : (Number(produceVal) || 0);
+      const deduct = Math.min(remaining, produceCount);
+      if (Array.isArray(produce[mission.itemId])) {
+        produce[mission.itemId].splice(0, deduct);
+      } else {
+        produce[mission.itemId] = Math.max(0, produceCount - deduct);
+      }
+      remaining -= deduct;
+      localStorage.setItem('sandbox_produce', JSON.stringify(produce));
+    }
+    const sandboxLoot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+    if (remaining > 0 && sandboxLoot[mission.itemId]) {
+      sandboxLoot[mission.itemId] = Math.max(0, (sandboxLoot[mission.itemId] || 0) - remaining);
+      localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
+    }
+
+    const newHoney = getHoney() + mission.reward;
+    localStorage.setItem('sandbox_honey', String(newHoney));
+    window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: String(newHoney) }));
+    setLoot(getLoot());
+    setHoney(newHoney);
 
     setMissions(prev => {
       const excludeIds = [...prev.map(m => m.id), mission.id];
@@ -177,7 +210,7 @@ const MissionBoard = ({ onClose }) => {
         <div className="mission-board-header">
           <span className="mission-board-title">Mission Board</span>
           <span className="mission-board-tier">Tier {tier}</span>
-          <span className="mission-board-gold">Gold: {gold}</span>
+          <span className="mission-board-gold">Honey: {honey}</span>
           <button className="mission-board-close" onClick={onClose}>✕</button>
         </div>
 

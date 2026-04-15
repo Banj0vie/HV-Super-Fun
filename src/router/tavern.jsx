@@ -619,19 +619,7 @@ const Tavern = () => {
         disablePanZoom
       />
       
-      {/* KITCHEN BUTTON */}
-      {tutorialStep >= 32 && (
-        <div 
-          className="km-tavern-button"
-          onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setShowKitchen(true); }}
-        >
-          <div className="km-tavern-button-inner">
-            <span className="km-tavern-button-text">
-              🍳 KITCHEN
-            </span>
-          </div>
-        </div>
-      )}
+      {/* KITCHEN BUTTON - hidden */}
 
       {/* KITCHEN MINIGAME OVERLAY */}
       {showKitchen && <KitchenMinigame onClose={() => setShowKitchen(false)} />}

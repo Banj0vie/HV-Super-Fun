@@ -358,6 +358,18 @@ const AdminPanel = () => {
       return;
     }
 
+    const diamondMatch = cmd.match(/^diamond (-?\d+)$/);
+    if (diamondMatch) {
+      const amount = parseInt(diamondMatch[1], 10);
+      const current = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+      const newAmount = Math.max(0, current + amount);
+      localStorage.setItem('sandbox_gems', newAmount.toString());
+      window.dispatchEvent(new CustomEvent('sandboxGemsChanged', { detail: newAmount.toString() }));
+      show(`Executed: ${amount > 0 ? 'Added' : 'Removed'} ${Math.abs(amount)} Gems`, "success");
+      setConsoleInput('');
+      return;
+    }
+
     const lockedHoneyMatch = cmd.match(/^locked honey (-?\d+)$/);
     if (lockedHoneyMatch) {
       const amount = parseInt(lockedHoneyMatch[1], 10);
@@ -1370,6 +1382,7 @@ const AdminPanel = () => {
             <li><strong style={{color: '#fff'}}>reset dock</strong>      - Resets dock repair quest</li>
             <li><strong style={{color: '#fff'}}>set username [x]</strong>- Changes your username</li>
             <li><strong style={{color: '#fff'}}>set [skill] [x]</strong> - Sets level for skill (e.g. set farming 10)</li>
+            <li><strong style={{color: '#fff'}}>diamond [x]</strong>     - Adds x gems (can be negative)</li>
             <li><strong style={{color: '#fff'}}>add honey [x]</strong>   - Adds x honey (coins)</li>
             <li><strong style={{color: '#fff'}}>add locked honey [x]</strong> - Adds x locked honey</li>
             <li><strong style={{color: '#fff'}}>axe [x]</strong>         - Adds x axes (can be negative)</li>
