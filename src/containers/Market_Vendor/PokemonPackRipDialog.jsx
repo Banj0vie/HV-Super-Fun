@@ -247,8 +247,14 @@ const DRAG_PX_FULL = 1200;     // horizontal px needed to reach last frame
 
 const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   const [showCards, setShowCards] = useState(false);
+  const [packFading, setPackFading] = useState(false);
+  const [cardPhase, setCardPhase] = useState('hidden'); // 'hidden'|'burst'|'top'|'deal'
+  const [dealt, setDealt] = useState(false);
   const [flippedCards, setFlippedCards] = useState(new Set());
   const [flipDone, setFlipDone] = useState(new Set());
+
+  const CARD_W = 220;
+  const CARD_GAP = 28;
 
   // Pack-opening scrub state
   const [phase, setPhase] = useState('idle'); // 'idle' | 'opening' | 'reversing'
@@ -261,6 +267,16 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
 
   const syncPhase = (p) => { phaseRef.current = p; setPhase(p); };
   const syncFrame = (f) => { openFrameRef.current = f; setOpenFrame(f); };
+
+  const revealCards = () => {
+    setPackFading(true);
+    setShowCards(true);
+    setCardPhase('hidden');
+    setTimeout(() => setCardPhase('burst'), 150);  // cards burst out from pack
+    setTimeout(() => setCardPhase('top'),   650);  // instantly jump above screen
+    setTimeout(() => setCardPhase('deal'),  700);  // deal down into grid
+    setTimeout(() => setDealt(true),        700);  // pack removed from DOM
+  };
 
   const handlePointerDown = (e) => {
     if (phaseRef.current !== 'idle') return;
@@ -285,7 +301,7 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
     syncFrame(frame);
     if (frame >= OPEN_FRAMES - 1) {
       syncPhase('complete');
-      setTimeout(() => setShowCards(true), 300);
+      setTimeout(revealCards, 300);
     }
   };
 
@@ -297,8 +313,8 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
         const cur = openFrameRef.current;
         if (cur >= OPEN_FRAMES - 1) {
           syncPhase('complete');
-          setShowCards(true);
           reverseRafRef.current = null;
+          setTimeout(revealCards, 300);
           return;
         }
         syncFrame(Math.min(OPEN_FRAMES - 1, cur + 1));
@@ -320,6 +336,7 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   useEffect(() => {
     return () => { if (reverseRafRef.current) cancelAnimationFrame(reverseRafRef.current); };
   }, []);
+
 
   const revealedSeeds = rollingInfo.revealedSeeds || [];
   const bonusCards = rollingInfo.id === 'pabee_pack' ? [
@@ -452,87 +469,174 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(12px)' }}>
 
-      {!showCards ? (
-        <div
-          ref={containerRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          style={{ userSelect: 'none', touchAction: 'none', cursor: phase === 'idle' ? 'default' : 'grabbing' }}
-        >
-          {phase === 'idle' || phase === 'complete'
-            ? <PicoPackIdle />
-            : /* opening | reversing | completing */ <img
-                src={`/images/cardfront/card1open/open_1/open_1_${String(OPEN_FRAME_OFFSET + openFrame).padStart(5, '0')}.png`}
-                draggable={false}
-                style={{ height: '80vh', objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }}
-              />
-          }
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', padding: '20px', width: '100%' }}>
-          <style>{`
-            .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s ease; }
-            .card-inner.flipped { transform: rotateY(180deg); }
-            .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); overflow: hidden; box-sizing: border-box; }
-            .card-front-face { transform: rotateY(180deg); }
-            @keyframes legGlow {
-              0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-              50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.12); }
-            }
-          `}</style>
-          {/* Cards row — fit all cards in one row, scale down if needed */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 220px)', gap: '28px', justifyContent: 'center', marginTop: '50px' }}>
-            {revealedSeeds.map((seedId, idx) => renderCard(seedId, idx))}
-            {bonusCards.map((bonus, i) => renderBonusCard(bonus, revealedSeeds.length + i))}
-          </div>
-
-          {/* Buttons */}
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
-            {!allFlipped && (
-              <img
-                src="/images/button/flipallbutton.png"
-                alt="Flip All"
-                onClick={flipAll}
-                style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
-                draggable={false}
-                onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.15)'; e.currentTarget.style.transform = 'scale(1.04)'; }}
-                onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-                onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-              />
-            )}
-            {flipDone.size === totalCards && totalCards > 0 && (
-              <>
-                <img
-                  src="/images/button/donebutton.png"
-                  alt="Done"
-                  onClick={onClose}
-                  style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
+      {/* Pack — stays visible, fades+scales out when cards emerge */}
+      {!dealt && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10,
+          opacity: packFading ? 0 : 1,
+          transform: packFading ? 'scale(1.18)' : 'scale(1)',
+          transition: 'opacity 0.45s ease, transform 0.45s ease',
+          pointerEvents: packFading ? 'none' : 'auto',
+        }}>
+          <div
+            ref={containerRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            style={{ userSelect: 'none', touchAction: 'none', cursor: phase === 'idle' ? 'default' : 'grabbing' }}
+          >
+            {phase === 'idle'
+              ? <PicoPackIdle />
+              : <img
+                  src={`/images/cardfront/card1open/open_1/open_1_${String(OPEN_FRAME_OFFSET + openFrame).padStart(5, '0')}.png`}
                   draggable={false}
-                  onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.15)'; e.currentTarget.style.transform = 'scale(1.04)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                  onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-                  onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                  style={{ height: '80vh', objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }}
                 />
-                {onBuyAgain && (
-                  <img
-                    src="/images/button/buyagainbutton.png"
-                    alt="Buy Again"
-                    onClick={onBuyAgain}
-                    style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
-                    draggable={false}
-                    onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.15)'; e.currentTarget.style.transform = 'scale(1.04)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.transform = 'scale(1)'; }}
-                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; e.currentTarget.style.filter = 'brightness(0.85)'; }}
-                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                  />
-                )}
-              </>
-            )}
+            }
           </div>
         </div>
       )}
+
+      {/* Cards — burst out of pack, jump to top, deal down */}
+      {showCards && (() => {
+        const COLS = 5;
+        const CARD_H = 310;
+        const ROW_GAP = 20;
+        const numRows = Math.ceil(totalCards / COLS);
+        const containerW = COLS * CARD_W + (COLS - 1) * CARD_GAP; // 1212px
+        const containerH = numRows * CARD_H + (numRows - 1) * ROW_GAP;
+
+        // Burst directions — cards fly out from pack center
+        const BURST = [
+          { x: -370, y: -270, rot: -28 },
+          { x: -150, y: -400, rot: -10 },
+          { x:   30, y: -420, rot:   4 },
+          { x:  250, y: -310, rot:  22 },
+          { x:  390, y: -180, rot:  35 },
+          { x: -300, y: -180, rot: -42 },
+          { x:  320, y: -160, rot:  30 },
+        ];
+
+        const cards = [
+          ...revealedSeeds.map((seedId, idx) => ({ type: 'seed', seedId, idx })),
+          ...bonusCards.map((bonus, i) => ({ type: 'bonus', bonus, idx: revealedSeeds.length + i })),
+        ];
+
+        return (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 5, overflow: 'hidden' }}>
+            <style>{`
+              .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s ease; }
+              .card-inner.flipped { transform: rotateY(180deg); }
+              .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); overflow: hidden; box-sizing: border-box; }
+              .card-front-face { transform: rotateY(180deg); }
+              @keyframes legGlow {
+                0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+                50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.12); }
+              }
+              @keyframes cardFlash {
+                0%   { filter: brightness(1); }
+                35%  { filter: brightness(4) saturate(0); }
+                65%  { filter: brightness(2); }
+                100% { filter: brightness(1); }
+              }
+              .card-flash { animation: cardFlash 0.5s ease-out forwards; }
+            `}</style>
+
+            {cards.map(({ type, seedId, bonus, idx }) => {
+              const col = idx % COLS;
+              const row = Math.floor(idx / COLS);
+              const cardsInRow = row < numRows - 1 ? COLS : totalCards - row * COLS;
+              const rowOffset = (containerW - (cardsInRow * CARD_W + (cardsInRow - 1) * CARD_GAP)) / 2;
+
+              // Final position: translate from viewport center (card anchored at 50vw-110, 50vh-155)
+              const finalX = -496 + rowOffset + col * (CARD_W + CARD_GAP);
+              const finalY = -(containerH / 2) + row * (CARD_H + ROW_GAP) + CARD_H / 2 - CARD_H / 2
+                           + (-(containerH / 2) + CARD_H / 2 === 0 ? 0 : 0); // simplified below
+              const finalYCalc = -containerH / 2 + row * (CARD_H + ROW_GAP) + CARD_H / 2;
+
+              const burst = BURST[idx] || { x: 0, y: -300, rot: 0 };
+
+              let transform, transition;
+              if (cardPhase === 'hidden') {
+                transform = 'translate(0, 0) scale(0) rotate(0deg)';
+                transition = 'none';
+              } else if (cardPhase === 'burst') {
+                transform = `translate(${burst.x}px, ${burst.y}px) rotate(${burst.rot}deg) scale(1)`;
+                transition = `transform 0.4s cubic-bezier(0.15, 0, 0.3, 1) ${idx * 0.04}s`;
+              } else if (cardPhase === 'top') {
+                transform = `translate(${finalX}px, -1000px) rotate(0deg)`;
+                transition = 'none';
+              } else { // deal
+                transform = `translate(${finalX}px, ${finalYCalc}px) rotate(0deg)`;
+                transition = `transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) ${idx * 0.07}s`;
+              }
+
+              return (
+                <div
+                  key={idx}
+                  className={cardPhase === 'burst' ? 'card-flash' : ''}
+                  style={{
+                    position: 'absolute',
+                    left: `calc(50% - ${CARD_W / 2}px)`,
+                    top: `calc(50% - ${CARD_H / 2}px)`,
+                    width: CARD_W,
+                    height: CARD_H,
+                    transform,
+                    transition,
+                    opacity: cardPhase === 'hidden' ? 0 : 1,
+                    zIndex: cardPhase === 'deal' ? 1 : totalCards - idx,
+                  }}
+                >
+                  {type === 'seed' ? renderCard(seedId, idx) : renderBonusCard(bonus, idx)}
+                </div>
+              );
+            })}
+
+            {/* Buttons — appear after cards have dealt in */}
+            {cardPhase === 'deal' && (
+              <div
+                style={{ position: 'absolute', bottom: '40px', left: 0, right: 0, display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'center' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {!allFlipped && (
+                  <img src="/images/button/flipallbutton.png" alt="Flip All" onClick={flipAll}
+                    style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
+                    draggable={false}
+                    onMouseEnter={e => { e.currentTarget.style.filter='brightness(1.15)'; e.currentTarget.style.transform='scale(1.04)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter='brightness(1)';    e.currentTarget.style.transform='scale(1)'; }}
+                    onMouseDown={e =>  { e.currentTarget.style.transform='scale(0.95)';   e.currentTarget.style.filter='brightness(0.85)'; }}
+                    onMouseUp={e =>    { e.currentTarget.style.transform='scale(1.04)';   e.currentTarget.style.filter='brightness(1.15)'; }}
+                  />
+                )}
+                {flipDone.size === totalCards && totalCards > 0 && (
+                  <>
+                    <img src="/images/button/donebutton.png" alt="Done" onClick={onClose}
+                      style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
+                      draggable={false}
+                      onMouseEnter={e => { e.currentTarget.style.filter='brightness(1.15)'; e.currentTarget.style.transform='scale(1.04)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.filter='brightness(1)';    e.currentTarget.style.transform='scale(1)'; }}
+                      onMouseDown={e =>  { e.currentTarget.style.transform='scale(0.95)';   e.currentTarget.style.filter='brightness(0.85)'; }}
+                      onMouseUp={e =>    { e.currentTarget.style.transform='scale(1.04)';   e.currentTarget.style.filter='brightness(1.15)'; }}
+                    />
+                    {onBuyAgain && (
+                      <img src="/images/button/buyagainbutton.png" alt="Buy Again" onClick={onBuyAgain}
+                        style={{ height: '104px', marginTop: '-5px', cursor: 'pointer', userSelect: 'none', transition: 'transform 0.08s, filter 0.08s' }}
+                        draggable={false}
+                        onMouseEnter={e => { e.currentTarget.style.filter='brightness(1.15)'; e.currentTarget.style.transform='scale(1.04)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.filter='brightness(1)';    e.currentTarget.style.transform='scale(1)'; }}
+                        onMouseDown={e =>  { e.currentTarget.style.transform='scale(0.95)';   e.currentTarget.style.filter='brightness(0.85)'; }}
+                        onMouseUp={e =>    { e.currentTarget.style.transform='scale(1.04)';   e.currentTarget.style.filter='brightness(1.15)'; }}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };

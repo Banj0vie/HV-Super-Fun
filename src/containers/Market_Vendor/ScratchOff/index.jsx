@@ -2,19 +2,35 @@ import React, { useState, useCallback } from "react";
 import "./style.css";
 import BaseButton from "../../../components/buttons/BaseButton";
 import { useNotification } from "../../../contexts/NotificationContext";
-import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
-
+import { ONE_SEED_HEIGHT, ONE_SEED_WIDTH, ALL_SEED_IMAGE_HEIGHT } from "../../../constants/item_seed";
 const COST = 1000;
+
+const SPRITE_URL = "/images/crops/seeds.webp";
+
+const CropSprite = ({ pos, size = 56 }) => {
+  const scale = size / ONE_SEED_HEIGHT;
+  return (
+    <div style={{
+      width: Math.round(ONE_SEED_WIDTH * scale),
+      height: size,
+      backgroundImage: `url(${SPRITE_URL})`,
+      backgroundSize: `${Math.round(ONE_SEED_WIDTH * scale)}px ${Math.round(ALL_SEED_IMAGE_HEIGHT * scale)}px`,
+      backgroundPosition: `0 ${-Math.round(pos * ONE_SEED_HEIGHT * scale)}px`,
+      backgroundRepeat: 'no-repeat',
+      flexShrink: 0,
+    }} />
+  );
+};
 
 // Symbols ordered by value (lowest → highest)
 const SYMBOLS = [
-  { id: "potato",      image: "/images/cardfront/potatocard/potatocom.png",     label: "Potato",      prize: 250   },
-  { id: "carrot",      image: "/images/cardfront/carrot/carcom.png",            label: "Carrot",      prize: 700   },
-  { id: "tomato",      image: "/images/cardfront/tomato/tomatocom.png",         label: "Tomato",      prize: 1200  },
-  { id: "corn",        image: "/images/cardfront/corn/corncom.png",             label: "Corn",        prize: 1800  },
-  { id: "blueberry",   image: "/images/cardfront/blueberry/bbcom.png",          label: "Blueberry",   prize: 3000  },
-  { id: "mango",       image: "/images/cardfront/mango/mangocom.png",           label: "Mango",       prize: 7000  },
-  { id: "dragonfruit", image: "/images/cardfront/dragonfruit/dragcom.png",      label: "Dragonfruit", prize: 15000 },
+  { id: "potato",      pos: 24, label: "Potato",      prize: 250   },
+  { id: "carrot",      pos: 3,  label: "Carrot",      prize: 700   },
+  { id: "tomato",      pos: 2,  label: "Tomato",      prize: 1200  },
+  { id: "corn",        pos: 4,  label: "Corn",        prize: 1800  },
+  { id: "blueberry",   pos: 17, label: "Blueberry",   prize: 3000  },
+  { id: "mango",       pos: 14, label: "Mango",       prize: 7000  },
+  { id: "dragonfruit", pos: 23, label: "Dragonfruit", prize: 15000 },
 ];
 
 // Win tier probability table (cumulative %)
@@ -90,7 +106,7 @@ function generateTicket() {
 
 const PRIZE_TABLE = SYMBOLS.slice().reverse().map(s => ({
   symbolId: s.id,
-  image: s.image,
+  pos: s.pos,
   label: s.prize === 15000 ? "JACKPOT" : s.prize === 7000 ? "MEGA WIN" : s.prize === 3000 ? "SUPER WIN" : s.prize === 1800 ? "BIG WIN" : s.prize === 1200 ? "WIN" : s.prize === 700 ? "SMALL WIN" : "TINY WIN",
   prize: s.prize,
 }));
@@ -199,7 +215,7 @@ const ScratchOff = ({ onBack }) => {
               <div key={p.label} className="scratch-prize-row">
                 <span className="scratch-prize-combo">
                   {[0,1,2].map(i => (
-                    <img key={i} src={p.image} alt={p.symbolId} className="scratch-prize-img" />
+                    <CropSprite key={i} pos={p.pos} size={36} />
                   ))}
                 </span>
                 <span className="scratch-prize-label">{p.label}</span>
@@ -237,7 +253,7 @@ const ScratchOff = ({ onBack }) => {
                       disabled={isRev}
                     >
                       {isRev ? (
-                        <img src={sym.image} alt={sym.label} className="scratch-symbol-img" />
+                        <CropSprite pos={sym.pos} size={56} />
                       ) : (
                         <span className="scratch-cover">?</span>
                       )}
