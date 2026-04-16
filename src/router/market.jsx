@@ -252,11 +252,6 @@ const Market = () => {
             .tut-arrow:hover { filter: brightness(1.2); transform: translateY(-50%) scale(1.1); }
             .tut-arrow:active { filter: brightness(0.85); transform: translateY(-50%) scale(0.95); }
             a[href*="/farm"], a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-            @keyframes marketHighlightBox { 0%, 100% { box-shadow: 0 0 20px 5px #f5c842; background-color: rgba(245,200,66,0.2); } 50% { box-shadow: 0 0 5px 2px #f5c842; background-color: transparent; } }
-            ${tutMarketPage === 12 ? `div[title*="BANKER" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
-            ${tutMarketPage === 13 ? `div[title*="VENDOR" i], div[title*="SEED" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
-            ${tutMarketPage === 14 ? `div[title*="MARKET" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
-            ${tutMarketPage === 15 ? `div[title*="QUEEN" i] { animation: marketHighlightBox 1.5s infinite !important; border-radius: 12px; pointer-events: none; }` : ''}
           `}</style>
           <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
             <div style={{ position: 'relative', width: '400px' }}>

@@ -221,7 +221,7 @@ const CARD_BACK_IMAGES = {
 
 const CARD_GLOW_TYPES = new Set([ID_RARE_TYPE.LEGENDARY]);
 
-const PICO_IDLE_FRAMES = 19;
+const PICO_IDLE_FRAMES = 11;
 const PICO_IDLE_FPS = 12;
 
 const PicoPackIdle = () => {
@@ -241,8 +241,8 @@ const PicoPackIdle = () => {
   );
 };
 
-const OPEN_FRAMES = 25;        // open_1_00019 → open_1_00043
-const OPEN_FRAME_OFFSET = 19;  // first frame number
+const OPEN_FRAMES = 15;        // open_1_00013 → open_1_00027
+const OPEN_FRAME_OFFSET = 13;  // first frame number
 const DRAG_PX_FULL = 1200;     // horizontal px needed to reach last frame
 
 const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
