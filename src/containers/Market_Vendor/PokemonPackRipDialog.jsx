@@ -248,10 +248,14 @@ const DRAG_PX_FULL = 1200;     // horizontal px needed to reach last frame
 const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   const [showCards, setShowCards] = useState(false);
   const [packFading, setPackFading] = useState(false);
-  const [cardPhase, setCardPhase] = useState('hidden'); // 'hidden'|'burst'|'top'|'deal'
+  const [packSlid, setPackSlid] = useState(false);
+  const [cardPhase, setCardPhase] = useState('hidden'); // 'hidden'|'behind'|'flyup'|'floatdown'
   const [dealt, setDealt] = useState(false);
   const [flippedCards, setFlippedCards] = useState(new Set());
   const [flipDone, setFlipDone] = useState(new Set());
+  const [flashing, setFlashing] = useState(false);
+  const [floatReady, setFloatReady] = useState(false);
+  const PACK_SLIDE_Y = 150;
 
   const CARD_W = 220;
   const CARD_GAP = 28;
@@ -269,13 +273,41 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   const syncFrame = (f) => { openFrameRef.current = f; setOpenFrame(f); };
 
   const revealCards = () => {
-    setPackFading(true);
-    setShowCards(true);
-    setCardPhase('hidden');
-    setTimeout(() => setCardPhase('burst'), 150);  // cards burst out from pack
-    setTimeout(() => setCardPhase('top'),   650);  // instantly jump above screen
-    setTimeout(() => setCardPhase('deal'),  700);  // deal down into grid
-    setTimeout(() => setDealt(true),        700);  // pack removed from DOM
+    const numCards = (rollingInfo.revealedSeeds?.length || 0) + (rollingInfo.id === 'pabee_pack' ? 2 : 0);
+    // flyup stagger: 70ms per card + 380ms fly duration
+    const FLY_DONE = 900 + numCards * 70 + 380;
+
+    // 1. Pack slides down
+    setPackSlid(true);
+
+    // 2. Cards appear as stack of card backs behind the pack
+    setTimeout(() => {
+      setShowCards(true);
+      setCardPhase('behind');
+    }, 450);
+
+    // 3. Cards fly up off-screen one by one
+    setTimeout(() => setCardPhase('flyup'), 900);
+
+    // 4. Screen flashes bright — pack fades simultaneously so it's gone before flash clears
+    setTimeout(() => {
+      setFlashing(true);
+      setPackFading(true);
+    }, FLY_DONE);
+
+    // 5. Cards snap to final X above screen (during flash)
+    setTimeout(() => {
+      setCardPhase('floatdown');
+    }, FLY_DONE + 380);
+
+    // 6. Cards float down (after snap, double-rAF handled by 50ms gap)
+    setTimeout(() => setFloatReady(true), FLY_DONE + 430);
+
+    // 7. Flash done, pack removed from DOM
+    setTimeout(() => {
+      setFlashing(false);
+      setDealt(true);
+    }, FLY_DONE + 980);
   };
 
   const handlePointerDown = (e) => {
@@ -476,8 +508,12 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 10,
           opacity: packFading ? 0 : 1,
-          transform: packFading ? 'scale(1.18)' : 'scale(1)',
-          transition: 'opacity 0.45s ease, transform 0.45s ease',
+          transform: packSlid
+            ? `translateY(${PACK_SLIDE_Y}px)${packFading ? ' scale(1.15)' : ''}`
+            : 'none',
+          transition: packFading
+            ? 'opacity 0.4s ease, transform 0.4s ease'
+            : 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
           pointerEvents: packFading ? 'none' : 'auto',
         }}>
           <div
@@ -499,7 +535,17 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
         </div>
       )}
 
-      {/* Cards — burst out of pack, jump to top, deal down */}
+      {/* Screen flash */}
+      {flashing && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 20,
+          backgroundColor: 'white',
+          pointerEvents: 'none',
+          animation: 'screenFlash 0.98s ease forwards',
+        }} />
+      )}
+
+      {/* Cards — emerge from behind pack, fly up, float back down */}
       {showCards && (() => {
         const COLS = 5;
         const CARD_H = 310;
@@ -507,17 +553,6 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
         const numRows = Math.ceil(totalCards / COLS);
         const containerW = COLS * CARD_W + (COLS - 1) * CARD_GAP; // 1212px
         const containerH = numRows * CARD_H + (numRows - 1) * ROW_GAP;
-
-        // Burst directions — cards fly out from pack center
-        const BURST = [
-          { x: -370, y: -270, rot: -28 },
-          { x: -150, y: -400, rot: -10 },
-          { x:   30, y: -420, rot:   4 },
-          { x:  250, y: -310, rot:  22 },
-          { x:  390, y: -180, rot:  35 },
-          { x: -300, y: -180, rot: -42 },
-          { x:  320, y: -160, rot:  30 },
-        ];
 
         const cards = [
           ...revealedSeeds.map((seedId, idx) => ({ type: 'seed', seedId, idx })),
@@ -535,13 +570,15 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
                 0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
                 50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.12); }
               }
-              @keyframes cardFlash {
-                0%   { filter: brightness(1); }
-                35%  { filter: brightness(4) saturate(0); }
-                65%  { filter: brightness(2); }
-                100% { filter: brightness(1); }
+              @keyframes screenFlash {
+                0%   { opacity: 0; }
+                30%  { opacity: 1; }
+                100% { opacity: 0; }
               }
-              .card-flash { animation: cardFlash 0.5s ease-out forwards; }
+              @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(14px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
             `}</style>
 
             {cards.map(({ type, seedId, bonus, idx }) => {
@@ -552,31 +589,37 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
 
               // Final position: translate from viewport center (card anchored at 50vw-110, 50vh-155)
               const finalX = -496 + rowOffset + col * (CARD_W + CARD_GAP);
-              const finalY = -(containerH / 2) + row * (CARD_H + ROW_GAP) + CARD_H / 2 - CARD_H / 2
-                           + (-(containerH / 2) + CARD_H / 2 === 0 ? 0 : 0); // simplified below
-              const finalYCalc = -containerH / 2 + row * (CARD_H + ROW_GAP) + CARD_H / 2;
-
-              const burst = BURST[idx] || { x: 0, y: -300, rot: 0 };
+              const finalYCalc = -containerH / 2 + row * (CARD_H + ROW_GAP) + CARD_H / 2 - 70;
 
               let transform, transition;
               if (cardPhase === 'hidden') {
-                transform = 'translate(0, 0) scale(0) rotate(0deg)';
+                // Stacked at (slid-down) pack center, invisible
+                transform = `translate(0, ${PACK_SLIDE_Y}px) scale(0)`;
                 transition = 'none';
-              } else if (cardPhase === 'burst') {
-                transform = `translate(${burst.x}px, ${burst.y}px) rotate(${burst.rot}deg) scale(1)`;
-                transition = `transform 0.4s cubic-bezier(0.15, 0, 0.3, 1) ${idx * 0.04}s`;
-              } else if (cardPhase === 'top') {
-                transform = `translate(${finalX}px, -1000px) rotate(0deg)`;
-                transition = 'none';
-              } else { // deal
-                transform = `translate(${finalX}px, ${finalYCalc}px) rotate(0deg)`;
-                transition = `transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) ${idx * 0.07}s`;
+              } else if (cardPhase === 'behind') {
+                // Stacked behind the pack — slight offset so you can see them layered
+                transform = `translate(${idx * 1}px, ${PACK_SLIDE_Y - idx * 2}px) scale(1)`;
+                transition = `transform 0.3s ease ${idx * 0.04}s`;
+              } else if (cardPhase === 'flyup') {
+                // Fly up one by one off the top of the screen
+                const rot = idx % 2 === 0 ? -6 : 6;
+                transform = `translate(0, -130vh) scale(0.8) rotate(${rot}deg)`;
+                transition = `transform 0.38s cubic-bezier(0.55, 0, 0.85, 0.35) ${idx * 0.07}s`;
+              } else { // floatdown
+                if (!floatReady) {
+                  // Snap to correct X column, off-screen above (no transition)
+                  transform = `translate(${finalX}px, -130vh)`;
+                  transition = 'none';
+                } else {
+                  // Float down with spring + stagger
+                  transform = `translate(${finalX}px, ${finalYCalc}px)`;
+                  transition = `transform 0.65s cubic-bezier(0.22, 1, 0.36, 1) ${idx * 0.11}s`;
+                }
               }
 
               return (
                 <div
                   key={idx}
-                  className={cardPhase === 'burst' ? 'card-flash' : ''}
                   style={{
                     position: 'absolute',
                     left: `calc(50% - ${CARD_W / 2}px)`,
@@ -586,7 +629,7 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
                     transform,
                     transition,
                     opacity: cardPhase === 'hidden' ? 0 : 1,
-                    zIndex: cardPhase === 'deal' ? 1 : totalCards - idx,
+                    zIndex: cardPhase === 'floatdown' ? 1 : totalCards - idx,
                   }}
                 >
                   {type === 'seed' ? renderCard(seedId, idx) : renderBonusCard(bonus, idx)}
@@ -594,10 +637,10 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
               );
             })}
 
-            {/* Buttons — appear after cards have dealt in */}
-            {cardPhase === 'deal' && (
+            {/* Buttons — appear after cards have floated down */}
+            {cardPhase === 'floatdown' && floatReady && (
               <div
-                style={{ position: 'absolute', bottom: '40px', left: 0, right: 0, display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', bottom: '40px', left: 0, right: 0, display: 'flex', gap: '16px', alignItems: 'center', justifyContent: 'center', animation: 'fadeInUp 0.4s ease 1.3s both' }}
                 onClick={e => e.stopPropagation()}
               >
                 {!allFlipped && (
