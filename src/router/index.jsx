@@ -553,9 +553,11 @@ const AdminPanel = () => {
       const weather = weatherMatch[1];
       if (weather === 'clear') {
         localStorage.removeItem('sandbox_weather_override');
+        window.dispatchEvent(new CustomEvent('weatherOverrideChanged'));
         show(`Executed: weather override cleared`, "success");
       } else {
         localStorage.setItem('sandbox_weather_override', weather);
+        window.dispatchEvent(new CustomEvent('weatherOverrideChanged'));
         show(`Executed: weather set to ${weather}`, "success");
       }
       setConsoleInput('');

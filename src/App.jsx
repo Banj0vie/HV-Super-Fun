@@ -28,6 +28,7 @@ import wallets from "./config/solanaWallet";
 import store from "./solana/store";
 import { BG_COLORS } from "./constants/background_colors";
 import BackgroundMusic from "./components/audio/BackgroundMusic";
+import Jukebox from "./components/Jukebox";
 
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -218,6 +219,7 @@ const App = () => {
 
                 
                 <BackgroundMusic />
+                <Jukebox />
                 <AppContent />
               </Router>
             </NotificationProvider>

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
 
 // Global weather helper
 export const getWeatherForDay = (day) => {
@@ -16,17 +16,37 @@ export const getSimulatedDateInfo = () => {
   return { date, day };
 };
 
+const getEffectiveWeather = (simulatedDate) => {
+  const tutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+  if (tutorialStep < 32) return '☀️';
+  const override = localStorage.getItem('sandbox_weather_override');
+  if (override === 'rain') return '🌧️';
+  if (override === 'storm') return '⚡';
+  if (override === 'sunny') return '☀️';
+  return getWeatherForDay(simulatedDate);
+};
 
 const WeatherOverlay = () => {
   const [simulatedDate, setSimulatedDate] = useState(() => getSimulatedDateInfo().date);
+  const [weatherOverride, setWeatherOverride] = useState(() => localStorage.getItem('sandbox_weather_override') || null);
+  const rainAudioRef = useRef(null);
+
+  useEffect(() => {
+    const audio = new Audio('/sounds/rain/rainsound.mp3');
+    audio.loop = true;
+    audio.volume = 0.32;
+    rainAudioRef.current = audio;
+    return () => { audio.pause(); audio.src = ''; };
+  }, []);
 
   useEffect(() => {
     const handleSync = (e) => {
       if (e.type === 'changeSimulatedDate') setSimulatedDate(e.detail.date);
     };
+    const handleOverride = () => setWeatherOverride(localStorage.getItem('sandbox_weather_override') || null);
     window.addEventListener('changeSimulatedDate', handleSync);
-    
-    // Check exactly once a minute if the real-world day crossed over midnight
+    window.addEventListener('weatherOverrideChanged', handleOverride);
+
     const interval = setInterval(() => {
       const info = getSimulatedDateInfo();
       if (info.date !== simulatedDate) setSimulatedDate(info.date);
@@ -34,14 +54,25 @@ const WeatherOverlay = () => {
 
     return () => {
       window.removeEventListener('changeSimulatedDate', handleSync);
+      window.removeEventListener('weatherOverrideChanged', handleOverride);
       clearInterval(interval);
     };
   }, [simulatedDate]);
 
-  const tutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-  const weather = tutorialStep < 32 ? '☀️' : getWeatherForDay(simulatedDate);
+  const weather = getEffectiveWeather(simulatedDate);
   const isLightning = weather === '⚡';
   const isRaining = weather === '⚡' || weather === '🌧️';
+
+  useEffect(() => {
+    const audio = rainAudioRef.current;
+    if (!audio) return;
+    if (isRaining) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, [isRaining]);
 
   const drops = useMemo(() => Array.from({ length: 150 }).map((_, i) => ({
     left: `${Math.random() * 120 - 10}%`, 

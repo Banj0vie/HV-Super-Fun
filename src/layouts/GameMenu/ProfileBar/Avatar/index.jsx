@@ -86,35 +86,38 @@ const Avatar = ({ src, alt = "avatar" }) => {
           <div className="loading-spinner"></div>
         </div>
       ) : (
-        <img
-          src={resolvedSrc}
-          alt={alt}
-          className="avatar-img"
-          style={{ width: '100%', height: '100%', objectFit: resolvedSrc.endsWith('.jpg') ? 'cover' : 'contain', cursor: 'pointer' }}
+        <div
+          style={{ width: '100%', height: '100%', position: 'relative', transition: 'transform 0.15s ease-out', transformOrigin: 'center' }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.93)'; }}
+          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.12)'; }}
           onClick={() => {
             const audio = clickAudioRef.current;
-            if (audio) {
-              audio.currentTime = 0;
-              audio.play().catch(() => {});
-            }
+            if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
             setProfileTab(0);
             setIsAvatarDialog(prev => !prev);
           }}
-          onError={(e) => {
-            e.target.src = fallbackSrc;
-          }}
-        />
-      )}
-      {hasNewPfp && (
-        <>
-          <style>{`@keyframes pfpBadgePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.35)} }`}</style>
+        >
           <img
-            src="/images/mail/!.png"
+            src={resolvedSrc}
+            alt={alt}
+            className="avatar-img"
+            style={{ width: '100%', height: '100%', objectFit: resolvedSrc.endsWith('.jpg') ? 'cover' : 'contain', cursor: 'pointer' }}
+            onError={(e) => { e.target.src = fallbackSrc; }}
+          />
+          {hasNewPfp && (
+            <>
+              <style>{`@keyframes pfpBadgePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.35)} }`}</style>
+              <img
+                src="/images/mail/!.png"
             alt="!"
             draggable={false}
             style={{ position: 'absolute', top: '-11px', right: '-11px', width: '29px', height: '29px', pointerEvents: 'none', zIndex: 10, animation: 'pfpBadgePulse 1.1s ease-in-out infinite' }}
-          />
-        </>
+              />
+            </>
+          )}
+        </div>
       )}
       {isAvatarDialog && (
         <div
@@ -135,10 +138,9 @@ const Avatar = ({ src, alt = "avatar" }) => {
               onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
             />
             <style>{`
-              .profile-tab-btn { transition: transform 0.1s, filter 0.1s; cursor: pointer; flex: 1; width: 0; object-fit: contain; }
-              .profile-tab-btn:hover { transform: scale(1.06); filter: brightness(1.15); }
-              .profile-tab-btn:active { transform: scale(0.95); filter: brightness(0.9); }
-              .profile-tab-btn.active { filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,80,0.7)); }
+              .profile-tab-btn { transition: transform 0.1s; cursor: pointer; flex: 1; width: 0; object-fit: contain; }
+              .profile-tab-btn:hover { transform: scale(1.06); }
+              .profile-tab-btn:active { transform: scale(0.95); }
             `}</style>
             {/* Tab buttons */}
             <div style={{ position: 'absolute', top: 'calc(27% - 60px)', left: '8%', width: '84%', display: 'flex', gap: '2%' }}>
@@ -196,11 +198,10 @@ const Avatar = ({ src, alt = "avatar" }) => {
                           width: '100%', objectFit: 'contain', cursor: 'pointer',
                           borderRadius: '6px',
                           outline: isSelected ? '2px solid #ffea00' : 'none',
-                          filter: isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none',
-                          transition: 'transform 0.1s, filter 0.1s',
+                          transition: 'transform 0.1s',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.2) drop-shadow(0 0 4px rgba(255,234,0,0.9))' : 'brightness(1.15)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none'; }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                         onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; }}
                         onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
                       />
@@ -232,11 +233,10 @@ const Avatar = ({ src, alt = "avatar" }) => {
                           width: '100%', objectFit: 'contain', cursor: 'pointer',
                           borderRadius: '6px',
                           outline: isSelected ? '2px solid #ffea00' : 'none',
-                          filter: isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none',
-                          transition: 'transform 0.1s, filter 0.1s',
+                          transition: 'transform 0.1s',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none'; }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                         onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; }}
                         onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
                       />

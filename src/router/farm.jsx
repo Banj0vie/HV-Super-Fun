@@ -3988,9 +3988,11 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         if (['sunny', 'rain', 'storm', 'clear'].includes(weather)) {
           if (weather === 'clear') {
             localStorage.removeItem('sandbox_weather_override');
+            window.dispatchEvent(new CustomEvent('weatherOverrideChanged'));
             window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `Weather override cleared!`, type: "success" } }));
           } else {
             localStorage.setItem('sandbox_weather_override', weather);
+            window.dispatchEvent(new CustomEvent('weatherOverrideChanged'));
             window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `Weather forced to ${weather}!`, type: "success" } }));
           }
         }

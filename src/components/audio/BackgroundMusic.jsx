@@ -7,6 +7,7 @@ import { defaultSettings } from "../../utils/settings";
 const BackgroundMusic = () => {
   const settings = useAppSelector(selectSettings) || defaultSettings;
   const audioRef = useRef(null);
+  const jukeboxActiveRef = useRef(false);
 
   useEffect(() => {
     const audio = new Audio("/sounds/theme.wav");
@@ -14,8 +15,8 @@ const BackgroundMusic = () => {
     audio.preload = "auto";
     audioRef.current = audio;
 
-    // Try autoplay immediately; if blocked, retry on first user interaction
     const tryPlay = () => {
+      if (jukeboxActiveRef.current) return;
       audio.play().catch(() => {});
     };
 
@@ -28,9 +29,14 @@ const BackgroundMusic = () => {
       window.removeEventListener("touchstart", unlock, true);
     };
 
+    const onJukeboxReady = () => { jukeboxActiveRef.current = true; audio.pause(); };
+    const onJukeboxDestroyed = () => { jukeboxActiveRef.current = false; tryPlay(); };
+
     window.addEventListener("pointerdown", unlock, true);
     window.addEventListener("keydown", unlock, true);
     window.addEventListener("touchstart", unlock, true);
+    window.addEventListener("jukeboxReady", onJukeboxReady);
+    window.addEventListener("jukeboxDestroyed", onJukeboxDestroyed);
 
     return () => {
       audio.pause();
@@ -38,6 +44,8 @@ const BackgroundMusic = () => {
       window.removeEventListener("pointerdown", unlock, true);
       window.removeEventListener("keydown", unlock, true);
       window.removeEventListener("touchstart", unlock, true);
+      window.removeEventListener("jukeboxReady", onJukeboxReady);
+      window.removeEventListener("jukeboxDestroyed", onJukeboxDestroyed);
     };
   }, []);
 
