@@ -29,6 +29,7 @@
 }
 
 .menu-item {
+  display: block;
   position: relative;
   transform-origin: center;
   width: fit-content;
