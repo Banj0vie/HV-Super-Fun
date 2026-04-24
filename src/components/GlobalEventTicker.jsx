@@ -61,8 +61,8 @@ export default function GlobalEventTicker() {
   };
 
   const showNext = () => {
-    if (isTutorialActive()) {
-      timeoutRef.current = setTimeout(showNext, 5000);
+    if (isTutorialActive() || window.__harvestTickerActive) {
+      timeoutRef.current = setTimeout(showNext, 1000);
       return;
     }
     const next = generateEvent();
@@ -81,7 +81,7 @@ export default function GlobalEventTicker() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!event) return null;
+  if (!event || window.__harvestTickerActive) return null;
 
   const isLegendary = event.type === 'legendary';
   const isEpic      = event.type === 'epic';

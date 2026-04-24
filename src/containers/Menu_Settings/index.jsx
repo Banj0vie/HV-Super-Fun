@@ -58,15 +58,6 @@ const SettingsDialog = ({ onClose }) => {
             onChange={(v) => setIsOverwritePlant(v)}
           ></BaseCheckBox>
         </div> */}
-        <div className="settings-row-input">
-          <div className="left">Dex Slippage %</div>
-          <BaseInput
-            className="right"
-            value={settings.dexSlippage ?? defaultSettings.dexSlippage}
-            setValue={setSetting("dexSlippage")}
-            primary={true}
-          ></BaseInput>
-        </div>
         {/* <div className="settings-row-input">
           <div className="left">Base Gwei</div>
           <BaseInput

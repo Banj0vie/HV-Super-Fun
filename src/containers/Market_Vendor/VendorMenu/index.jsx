@@ -36,8 +36,7 @@ const VendorMenu = ({
   return (
     <div className="vendor-menu">
       <div className="vendor-menu-content">
-        <CardView className="available-plots min-h-0">Available Plots: {isLoading ? "Loading..." : availablePlots}</CardView>
-        {seedOrder.map((id) => {
+{seedOrder.map((id) => {
           // Check if this tier has pending requests
           const tierPendingRequests = pendingRequests.filter(req => {
             const reqTier = typeof req.tier === 'bigint' ? Number(req.tier) : req.tier;

@@ -110,36 +110,49 @@ const ProfileBar = ({ isFarmMenu }) => {
           State: isAchievementsOpen / setIsAchievementsOpen (already declared in this file)
           */}
           <ProfileButton
-            icon={<img alt="Settings" src="/images/profile_bar/btn_setting.png" />}
-            title="Settings"
-            bg="/images/profile_bar/profile_button_bg.png"
-            onClick={() => setIsSettingsDialog(true)}
-          />
-          <ProfileButton
             icon={<img alt="Inventory" src="/images/profile_bar/btn_inventory.png" />}
             title="Inventory"
             bg="/images/profile_bar/profile_button_bg.png"
             onClick={() => setIsInventoryDialog(true)}
           />
-          <ProfileButton
-            icon={
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <style>{`@keyframes mailShake { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 80%{transform:rotate(6deg)} }`}</style>
-                <img
-                  alt="Mail"
-                  src="/images/mail/realmail.png"
-                  style={{ width: '32px', height: '32px', objectFit: 'contain', animation: hasUnreadMail ? 'mailShake 1.2s infinite ease-in-out' : 'none' }}
-                />
-                {hasUnreadMail
-                  ? <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ position: 'absolute', top: '-14px', right: '-14px', width: '20px', height: '20px', pointerEvents: 'none' }} draggable={false} />
-                  : hasReadyQuests && <img src="/images/farming/checkmark.png" alt="✓" style={{ position: 'absolute', top: '-14px', right: '-14px', width: '20px', height: '20px', pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))' }} draggable={false} />
-                }
-              </div>
-            }
-            title="Mail"
-            bg="/images/profile_bar/profile_button_bg.png"
-            onClick={() => window.dispatchEvent(new CustomEvent('openMailbox'))}
-          />
+          <div style={{ position: 'relative', left: '8px', top: '-1px' }}>
+            <ProfileButton
+              icon={
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <style>{`@keyframes mailShake { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 80%{transform:rotate(6deg)} }`}</style>
+                  <img
+                    alt="Mail"
+                    src="/images/mail/realmail.png"
+                    style={{ width: '32px', height: '32px', objectFit: 'contain', animation: hasUnreadMail ? 'mailShake 1.2s infinite ease-in-out' : 'none' }}
+                  />
+                  {hasUnreadMail
+                    ? <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ position: 'absolute', top: '-14px', right: '-14px', width: '20px', height: '20px', pointerEvents: 'none' }} draggable={false} />
+                    : hasReadyQuests && <img src="/images/farming/checkmark.png" alt="✓" className="badge-pulse" style={{ position: 'absolute', top: '-14px', right: '-14px', width: '20px', height: '20px', pointerEvents: 'none', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))', animation: 'badge-pulse 0.9s infinite ease-in-out' }} draggable={false} />
+                  }
+                </div>
+              }
+              title="Mail"
+              bg="/images/profile_bar/profile_button_bg.png"
+              onClick={() => window.dispatchEvent(new CustomEvent('openMailbox'))}
+            />
+          </div>
+          <div style={{ position: 'relative', top: '52px', marginLeft: '-92px' }}>
+            <ProfileButton
+              icon={<img alt="Settings" src="/images/profile_bar/btn_setting.png" />}
+              title="Settings"
+              bg="/images/profile_bar/profile_button_bg.png"
+              onClick={() => setIsSettingsDialog(true)}
+            />
+          </div>
+          <div style={{ position: 'relative', top: '51.5px', marginLeft: '8px' }} className="news-btn-wrapper">
+            <style>{`.news-btn-wrapper .pb-bg { top: calc(50% - 1px); }`}</style>
+            <ProfileButton
+              icon={<img alt="News" src="/images/news/news.png" style={{ width: '44px', height: '44px', objectFit: 'contain' }} />}
+              title="News"
+              bg="/images/profile_bar/profile_button_bg.png"
+              onClick={() => {}}
+            />
+          </div>
           <div style={{ display: 'none' }}>
             <ProfileButton
               icon={<img alt="Test Mint" src="/images/profile_bar/btn_inventory.png" />}

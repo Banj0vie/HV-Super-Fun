@@ -104,52 +104,13 @@ export const getQuestData = () => [
       "Send me proof and I'll hook you up with something nice."
     ],
     rewards: [
-      { id: 'honey', count: 650, name: "HNY", image: "/images/profile_bar/hny.png" },
-      { id: 'gems', count: 20, name: "Gems" },
+      { id: 'honey', count: 850, name: "HNY", image: "/images/profile_bar/hny.png" },
+      { id: 'gems', count: 25, name: "Gems" },
     ],
     reqs: [
       { id: ID_PRODUCE_ITEMS?.POTATO, count: 2, name: "Potatoes", pos: 24 }
     ],
     unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_beejamin_welcome")
-  },
-
-  {
-    id: "q1_dewey_welcome",
-    type: "main",
-    sender: "Captain Dewey",
-    subject: "Greetings From the Sea",
-    mailImage: "/images/mail/maildewey.png",
-    body: [
-      "Aye, word travels fast on the water, new farmer.",
-      "I be Captain Dewey, and I sail these shores without fear — except the scurvy. That'll get ye before any storm.",
-      "Take these onion seeds. Grow 'em, eat 'em, and keep yer insides from goin' rotten. Yarr."
-    ],
-    rewards: [
-      { id: 'pico_pack', seeds: [getRaritySeedId(ID_SEEDS.ONION, 1), getRaritySeedId(ID_SEEDS.ONION, 1)], count: 1, name: "Pico Seeds Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
-    ],
-    reqs: [],
-    unlockCondition: (step, completed) => completed.includes("q1b_potionmaster_harvest")
-  },
-
-  {
-    id: "q1b_dewey_harvest",
-    type: "main",
-    sender: "Captain Dewey",
-    subject: "The Scurvy Report",
-    mailImage: "/images/mail/maildewey.png",
-    body: [
-      "Ahoy! I hope those onions are growin' strong.",
-      "A sailor without his onions is a sailor courtin' disaster. Bring me yer harvest and I'll see ye rewarded.",
-      "Yarr, the sea respects those who tend their land too."
-    ],
-    rewards: [
-      { id: 'honey', count: 650, name: "HNY", image: "/images/profile_bar/hny.png" },
-      { id: 'gems', count: 20, name: "Gems" },
-    ],
-    reqs: [
-      { id: ID_PRODUCE_ITEMS?.ONION, count: 2, name: "Onions", pos: 27 }
-    ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_dewey_welcome")
   },
 
   {
@@ -167,7 +128,7 @@ export const getQuestData = () => [
       { id: 'pico_pack', seeds: [getRaritySeedId(ID_SEEDS.CELERY, 1), getRaritySeedId(ID_SEEDS.CELERY, 1)], count: 1, name: "Pico Seeds Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
     ],
     reqs: [],
-    unlockCondition: (step, completed) => completed.includes("q1b_dewey_harvest")
+    unlockCondition: (step, completed) => completed.includes("q1b_potionmaster_harvest")
   },
 
   {
@@ -182,8 +143,8 @@ export const getQuestData = () => [
       "Produce said celery and the township will compensate you accordingly."
     ],
     rewards: [
-      { id: 'honey', count: 650, name: "HNY", image: "/images/profile_bar/hny.png" },
-      { id: 'gems', count: 20, name: "Gems" },
+      { id: 'honey', count: 900, name: "HNY", image: "/images/profile_bar/hny.png" },
+      { id: 'gems', count: 30, name: "Gems" },
     ],
     reqs: [
       { id: ID_PRODUCE_ITEMS?.CELERY, count: 2, name: "Celery" }
@@ -221,8 +182,8 @@ export const getQuestData = () => [
       "Bring them to me — scientifically! — and I shall reward you handsomely."
     ],
     rewards: [
-      { id: 'honey', count: 650, name: "HNY", image: "/images/profile_bar/hny.png" },
-      { id: 'gems', count: 20, name: "Gems" },
+      { id: 'honey', count: 850, name: "HNY", image: "/images/profile_bar/hny.png" },
+      { id: 'gems', count: 25, name: "Gems" },
     ],
     reqs: [
       { id: ID_PRODUCE_ITEMS?.RADISH, count: 2, name: "Radishes", pos: 28 }
@@ -302,7 +263,7 @@ export const getQuestData = () => [
     ],
     reqs: [],
     unlockCondition: (step, completed) => {
-      const WAVE1_QUESTS = ['q1_pabee_intro','q1_beejamin_welcome','q1_dewey_welcome','q1_mayor_welcome','q1_potionmaster_welcome','q1_queen_welcome','q1_end_papabee','q1b_mayor_harvest'];
+      const WAVE1_QUESTS = ['q1_pabee_intro','q1_beejamin_welcome','q1_mayor_welcome','q1_potionmaster_welcome','q1_queen_welcome','q1_end_papabee','q1b_mayor_harvest'];
       return WAVE1_QUESTS.every(id => completed.includes(id));
     }
   },
@@ -566,9 +527,7 @@ export const getQuestData = () => [
         }
       }
     ],
-    unlockCondition: (step, completed) =>
-      ["q1_pabee_intro","q1_beejamin_welcome","q1_dewey_welcome","q1_mayor_welcome","q1_potionmaster_welcome","q1_queen_welcome","q1_end_papabee"]
-        .every(id => completed.includes(id))
+    unlockCondition: (step, completed) => completed.includes("q1b_mayor_harvest")
   },
 
   // PFP Unlock Letters from Pabee
@@ -2613,32 +2572,32 @@ export const RegionalQuestBoard = ({ onClose, title, questType, tutorialStep, re
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {animState === 2 && (
-          <div style={{ backgroundColor: '#2c221a', border: '4px solid #a67c52', borderRadius: '16px', padding: '30px', textAlign: 'center', color: '#fff', fontFamily: 'monospace', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', minWidth: '350px', animation: 'popIn 0.3s ease-out' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', animation: 'popIn 0.4s ease-out' }}>
             <style>{`@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
-            <h2 style={{ color: '#ffea00', margin: '0 0 20px 0', fontSize: '24px' }}>Rewards Claimed!</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '30px', marginBottom: '30px' }}>
+            <h2 style={{ color: '#ffea00', margin: 0, fontSize: '28px', fontFamily: 'GROBOLD, Cartoonist, monospace', textShadow: '2px 2px 0 #000' }}>Rewards Claimed!</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px' }}>
               {activeQuest.rewards.map((rew, idx) => (
-                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                    {ALL_ITEMS[rew.id]?.pos >= 0 ? (
-                      <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundImage: `url(/images/crops/seeds.webp)`,
-                        backgroundSize: `${(159 * 60 / 207.7647).toFixed(1)}px auto`,
-                        backgroundPositionX: 'center',
-                        backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 60).toFixed(1)}px`,
-                        backgroundRepeat: 'no-repeat',
-                      }} />
-                    ) : rew.id === 'gems' ? (
-                      <img src="/images/profile_bar/diamond.png" alt="Gems" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-                    ) : rew.id === 'honey' ? (
-                      <img src="/images/profile_bar/hny.png" alt="HNY" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
-                    ) : (
-                      <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
-                    )}
-                  </div>
-                  <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
+                <div key={idx} style={{ width: '220px', height: '310px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.7)', flexShrink: 0 }}>
+                  {rew.id === 'honey' ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src="/images/cardfront/goldcard/goldcard.png" alt="HNY" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: 'calc(27% - 4px)', left: '50%', transform: 'translateX(-50%)', fontFamily: 'GROBOLD, Cartoonist, monospace', fontWeight: 'bold', fontSize: '15px', color: '#3b2000', whiteSpace: 'nowrap', textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>{rew.count} HONEY</div>
+                    </div>
+                  ) : rew.id === 'gems' ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src="/images/cardfront/gemcard/gemcard.png" alt="Gems" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: 'calc(27% - 4px)', left: '50%', transform: 'translateX(-50%)', fontFamily: 'GROBOLD, Cartoonist, monospace', fontWeight: 'bold', fontSize: '15px', color: '#3b2000', whiteSpace: 'nowrap', textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>{rew.count} GEMS</div>
+                    </div>
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                      {ALL_ITEMS[rew.id]?.pos >= 0 ? (
+                        <div style={{ width: '80px', height: '80px', backgroundImage: `url(/images/crops/seeds.webp)`, backgroundSize: `${(159 * 80 / 207.7647).toFixed(1)}px auto`, backgroundPositionX: 'center', backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 80).toFixed(1)}px`, backgroundRepeat: 'no-repeat' }} />
+                      ) : (
+                        <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80px', height: '80px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
+                      )}
+                      <span style={{ fontFamily: 'Cartoonist', fontSize: '18px', color: '#fff', textShadow: '1px 1px 0 #000', textAlign: 'center' }}>{rew.count} {rew.name}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -3013,32 +2972,32 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {animState === 3 && (
-          <div style={{ backgroundColor: '#2c221a', border: '4px solid #a67c52', borderRadius: '16px', padding: '30px', textAlign: 'center', color: '#fff', fontFamily: 'monospace', boxShadow: '0 10px 25px rgba(0,0,0,0.8)', minWidth: '350px', animation: 'popIn 0.3s ease-out' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', animation: 'popIn 0.4s ease-out' }}>
             <style>{`@keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
-            <h2 style={{ color: '#ffea00', margin: '0 0 20px 0', fontSize: '24px' }}>Rewards Claimed!</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '30px', marginBottom: '30px' }}>
+            <h2 style={{ color: '#ffea00', margin: 0, fontSize: '28px', fontFamily: 'GROBOLD, Cartoonist, monospace', textShadow: '2px 2px 0 #000' }}>Rewards Claimed!</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '16px' }}>
               {activeQuest.rewards.map((rew, idx) => (
-                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '60px', height: '60px', backgroundColor: 'rgba(0,0,0,0.5)', border: '2px solid #5a402a', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                    {ALL_ITEMS[rew.id]?.pos >= 0 ? (
-                      <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundImage: `url(/images/crops/seeds.webp)`,
-                        backgroundSize: `${(159 * 60 / 207.7647).toFixed(1)}px auto`,
-                        backgroundPositionX: 'center',
-                        backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 60).toFixed(1)}px`,
-                        backgroundRepeat: 'no-repeat',
-                      }} />
-                    ) : rew.id === 'gems' ? (
-                      <img src="/images/profile_bar/diamond.png" alt="Gems" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-                    ) : rew.id === 'honey' ? (
-                      <img src="/images/profile_bar/hny.png" alt="HNY" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
-                    ) : (
-                      <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80%', height: '80%', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
-                    )}
-                  </div>
-                  <span style={{ fontWeight: 'bold', color: '#00ff41', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}>{rew.count} {rew.name}</span>
+                <div key={idx} style={{ width: '220px', height: '310px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.7)', flexShrink: 0 }}>
+                  {rew.id === 'honey' ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src="/images/cardfront/goldcard/goldcard.png" alt="HNY" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: 'calc(27% - 4px)', left: '50%', transform: 'translateX(-50%)', fontFamily: 'GROBOLD, Cartoonist, monospace', fontWeight: 'bold', fontSize: '15px', color: '#3b2000', whiteSpace: 'nowrap', textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>{rew.count} HONEY</div>
+                    </div>
+                  ) : rew.id === 'gems' ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src="/images/cardfront/gemcard/gemcard.png" alt="Gems" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: 'calc(27% - 4px)', left: '50%', transform: 'translateX(-50%)', fontFamily: 'GROBOLD, Cartoonist, monospace', fontWeight: 'bold', fontSize: '15px', color: '#3b2000', whiteSpace: 'nowrap', textShadow: '0 1px 0 rgba(255,255,255,0.3)' }}>{rew.count} GEMS</div>
+                    </div>
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                      {ALL_ITEMS[rew.id]?.pos >= 0 ? (
+                        <div style={{ width: '80px', height: '80px', backgroundImage: `url(/images/crops/seeds.webp)`, backgroundSize: `${(159 * 80 / 207.7647).toFixed(1)}px auto`, backgroundPositionX: 'center', backgroundPositionY: `-${(ALL_ITEMS[rew.id].pos * 80).toFixed(1)}px`, backgroundRepeat: 'no-repeat' }} />
+                      ) : (
+                        <img src={ALL_ITEMS[rew.id]?.image || rew.image} alt={rew.name} style={{ width: '80px', height: '80px', objectFit: 'contain' }} onError={(e) => { e.target.onerror = null; }} />
+                      )}
+                      <span style={{ fontFamily: 'Cartoonist', fontSize: '18px', color: '#fff', textShadow: '1px 1px 0 #000', textAlign: 'center' }}>{rew.count} {rew.name}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -3264,7 +3223,7 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
               >
                 <img src={quest.mailImage || "/images/mail/mailpapabee.png"} alt="" style={{ width: '88%', display: 'block', borderRadius: '10px', margin: '0 auto' }} draggable={false} />
                 {isReady
-                  ? <img src="/images/farming/checkmark.png" alt="✓" style={{ position: 'absolute', top: '-11px', right: '14px', width: '28px', height: '28px', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))' }} draggable={false} />
+                  ? <img src="/images/farming/checkmark.png" alt="✓" className="badge-pulse" style={{ position: 'absolute', top: '-11px', right: '14px', width: '28px', height: '28px', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.7))', animation: 'badge-pulse 0.9s infinite ease-in-out' }} draggable={false} />
                   : !isRead && <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ position: 'absolute', top: '-11px', right: '14px', width: '28px', height: '28px' }} draggable={false} />
                 }
                 <div style={{ position: 'absolute', top: 0, left: 0, right: '23px', bottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: 'calc(30% - 10px)' }}>
@@ -6152,6 +6111,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
 
           // Weight tracking — per-crop all-time heaviest + weekly featured crop
           const { weight, name: cropName } = rollCropWeight(itemToHarvest.seedId);
+          window.dispatchEvent(new CustomEvent('cropHarvested', { detail: { cropName, weight } }));
           const storedHeaviest = JSON.parse(localStorage.getItem('sandbox_heaviest_crop') || 'null');
           if (!storedHeaviest || weight > storedHeaviest.weight) {
             localStorage.setItem('sandbox_heaviest_crop', JSON.stringify({ weight, name: cropName }));
@@ -6803,19 +6763,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         </div>
       </div>
 
-      {/* Festivals Button */}
-      {tutorialStep >= 32 && <div style={{ position: 'fixed', top: '130px', right: '-25px', zIndex: 100, pointerEvents: 'auto' }}>
-        <img
-          src="/images/fest/festivalsbutton.png"
-          alt="Festivals"
-          style={{ height: '130px', objectFit: 'contain', cursor: 'pointer', transition: 'transform 0.1s ease, filter 0.1s ease' }}
-          onClick={() => window.dispatchEvent(new CustomEvent('openFestivals'))}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'brightness(1)'; }}
-          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
-          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.08)'; }}
-        />
-      </div>}
+      {/* Festivals Button — temporarily hidden */}
 
       {/* Farming Board Overlay */}
 
@@ -7576,19 +7524,19 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         @keyframes lvlBgOpen { from { transform: scale(0.55); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes lvlLabelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', animation: 'lvlBgOpen 0.9s cubic-bezier(0.22,1,0.36,1) forwards' }}>
         <img
           src="/images/level/levelupbackground.png"
           alt="Level Up"
-          style={{ width: '520px', maxWidth: '90vw', objectFit: 'contain', display: 'block', animation: 'lvlBgOpen 0.9s cubic-bezier(0.22,1,0.36,1) forwards' }}
+          style={{ width: '520px', maxWidth: '90vw', objectFit: 'contain', display: 'block' }}
           draggable={false}
         />
-        <div style={{ position: 'absolute', bottom: 'calc(14% + 140px)', display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0, animation: 'lvlLabelIn 0.35s ease-out 0.9s forwards' }}>
+        <div style={{ position: 'absolute', bottom: 'calc(14% + 140px)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', textShadow: '1px 1px 3px #000, -1px -1px 3px #000', letterSpacing: '1px', textTransform: 'uppercase' }}>
-            {levelUpClaimPopup.skill} Level {levelUpClaimPopup.level}
+            Farming Level {levelUpClaimPopup.level}
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: 'calc(14% + 50px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: 0, animation: 'lvlLabelIn 0.35s ease-out 0.9s forwards' }}>
+        <div style={{ position: 'absolute', bottom: 'calc(14% + 50px)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <img
             src="/images/level/claimbutton.png"
             alt="Claim"
@@ -7767,11 +7715,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         />
       )}
 
-      {showFestivals && (
-        <React.Suspense fallback={null}>
-          <FestivalsDialog onClose={() => setShowFestivals(false)} />
-        </React.Suspense>
-      )}
+      {/* FestivalsDialog — temporarily hidden */}
 
       {/* Fixed Tool Belt — stays on screen regardless of zoom/pan */}
       {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 4)) && (

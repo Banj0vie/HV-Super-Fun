@@ -10,6 +10,7 @@ import { useAppSelector } from "../../solana/store";
 import { selectSettings } from "../../solana/store/slices/uiSlice";
 import { defaultSettings } from "../../utils/settings";
 import GlobalEventTicker from "../../components/GlobalEventTicker";
+import HarvestTicker from "../../components/HarvestTicker";
 
 if (typeof window !== 'undefined' && !window.__ls_patched_v2) {
   window.__ls_patched_v2 = true;
@@ -285,6 +286,7 @@ const PanZoomViewport = ({
   return isWalletConnected() ? (
     <>
       <GlobalEventTicker />
+      <HarvestTicker />
       <div className="panzoom-root">
 
         {!hideMenu && <GameMenu key={`game-menu-${menuKey}`} />}

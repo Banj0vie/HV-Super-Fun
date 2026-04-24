@@ -182,14 +182,18 @@ const CropItem = ({
     }
   }, []);
 
-  // Update growth progress
+  // Reset to 0 immediately when seedId changes (prevents stale frame flash)
   useEffect(() => {
     setGrowthProgress(0);
+  }, [data.seedId]);
+
+  // Update from cropArray once it's in sync with the current seedId
+  useEffect(() => {
     if (cropArray && data.seedId) {
       const progress = cropArray.getGrowthProgress(index);
       setGrowthProgress(progress);
     }
-  }, [cropArray, data.seedId, index]);
+  }, [cropArray, index]);
 
   // Load and listen for growth stage setting changes
   useEffect(() => {
@@ -224,37 +228,46 @@ const CropItem = ({
     };
   }, []);
 
+  // Plots at top >= 215 in scene_farm FARM_POSITIONS — these are the lower rows that
+  // would push the tooltip off the bottom of the screen, so always show to the right.
+  const RIGHT_TOOLTIP_PLOTS = new Set([5,6,7,8,9,10,11,12,13,14,20,21,22,23,24,25,26,27,28,29]);
+  const forceRight = RIGHT_TOOLTIP_PLOTS.has(index);
+
   const handleMouseMove = (e) => {
     if (!data.seedId) return;
 
-    // Determine offset direction based on cursor position on screen
-    const isBottomHalf = e.clientY > window.innerHeight / 2;
-    const xOffset = 25; // Middle to the right
-    const yOffset = isBottomHalf ? -130 : 20; // Bottom goes to top, top goes to bottom
+    const TOOLTIP_HEIGHT = 420;
 
-    // Compute tooltip position relative to the portal container (if present)
-    if (portalContainer && portalContainer !== document.body) {
-      const rect = portalContainer.getBoundingClientRect();
-      // Calculate scale factors in case the container is transformed (scaled)
-      const scaleX =
-        rect.width && portalContainer.offsetWidth
-          ? rect.width / portalContainer.offsetWidth
-          : 1;
-      const scaleY =
-        rect.height && portalContainer.offsetHeight
-          ? rect.height / portalContainer.offsetHeight
-          : 1;
-      // Map client coordinates into container local coordinates by dividing by scale
-      const localX = (e.clientX - rect.left) / (scaleX || 1) + xOffset;
-      const localY = (e.clientY - rect.top) / (scaleY || 1) + yOffset;
-      setTooltipPos({ x: localX, y: localY, isBottomHalf });
+    if (forceRight) {
+      // Always pin to the right of the cursor, vertically clamped
+      const xOffset = 30;
+      const rawY = e.clientY - 80;
+      const clampedClientY = Math.min(Math.max(rawY, 10), window.innerHeight - TOOLTIP_HEIGHT - 10);
+      if (portalContainer && portalContainer !== document.body) {
+        const rect = portalContainer.getBoundingClientRect();
+        const scaleX = rect.width && portalContainer.offsetWidth ? rect.width / portalContainer.offsetWidth : 1;
+        const scaleY = rect.height && portalContainer.offsetHeight ? rect.height / portalContainer.offsetHeight : 1;
+        setTooltipPos({ x: (e.clientX - rect.left) / (scaleX || 1) + xOffset, y: (clampedClientY - rect.top) / (scaleY || 1) });
+        return;
+      }
+      setTooltipPos({ x: e.clientX + xOffset, y: clampedClientY });
       return;
     }
 
-    // Fallback: position relative to viewport (use fixed positioning)
-    const x = e.clientX + xOffset;
-    const y = e.clientY + yOffset;
-    setTooltipPos({ x, y, isBottomHalf });
+    const xOffset = 25;
+    const isBottomHalf = e.clientY > window.innerHeight / 2;
+    const rawY = isBottomHalf ? e.clientY - 130 : e.clientY + 20;
+    const clampedClientY = Math.min(rawY, window.innerHeight - TOOLTIP_HEIGHT - 10);
+
+    if (portalContainer && portalContainer !== document.body) {
+      const rect = portalContainer.getBoundingClientRect();
+      const scaleX = rect.width && portalContainer.offsetWidth ? rect.width / portalContainer.offsetWidth : 1;
+      const scaleY = rect.height && portalContainer.offsetHeight ? rect.height / portalContainer.offsetHeight : 1;
+      setTooltipPos({ x: (e.clientX - rect.left) / (scaleX || 1) + xOffset, y: (clampedClientY - rect.top) / (scaleY || 1), isBottomHalf });
+      return;
+    }
+
+    setTooltipPos({ x: e.clientX + xOffset, y: clampedClientY, isBottomHalf });
   };
 
   const handleMouseEnter = (e) => {
@@ -581,49 +594,79 @@ const CropItem = ({
         style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
       ></div>
 
-      {/* Bug indicator and countdown */}
+      {/* Bug indicator — animated flies */}
       {data.bugCountdown !== undefined && data.bugCountdown > 0 && (
-        <div 
-          className="bug-container"
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            window.dispatchEvent(new CustomEvent('squashBug', { detail: { plotIndex: index } }));
-            localStorage.setItem('stat_bugs_smashed', (parseInt(localStorage.getItem('stat_bugs_smashed') || '0', 10) + 1).toString());
-          }}
-          style={{
-            position: "absolute",
-            top: "35%", // Overlay directly on the plant
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 9999, // Ensure it's above the bounding box
-            cursor: "crosshair",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pointerEvents: "auto" // Make sure it captures clicks
-          }}
-        >
-          {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && <div style={{
-            color: '#ff4444',
-            fontWeight: 'bold',
-            fontSize: '18px',
-            textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
-            marginBottom: '-5px',
-            zIndex: 31
-          }}>
-            {data.bugCountdown}s
-          </div>}
-          <img
-            src="/images/bug/bug.jpg"
-            alt="bug"
-            style={{ 
-              width: "45px", // Slightly bigger bug
-              height: "45px",
-              filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))" // Add a glowing red shadow to make it pop
+        <>
+          <style>{`
+            @keyframes flyOrbit0 {
+              0%   { transform: translate( 28px,  0px) scale(1);   opacity: 0.9; }
+              25%  { transform: translate( 10px,-22px) scale(1.2); opacity: 1;   }
+              50%  { transform: translate(-28px,  4px) scale(0.8); opacity: 0.7; }
+              75%  { transform: translate( -8px, 20px) scale(1.1); opacity: 1;   }
+              100% { transform: translate( 28px,  0px) scale(1);   opacity: 0.9; }
+            }
+            @keyframes flyOrbit1 {
+              0%   { transform: translate(-24px, 12px) scale(0.9); opacity: 0.8; }
+              25%  { transform: translate( 18px, 22px) scale(1.2); opacity: 1;   }
+              50%  { transform: translate( 26px,-10px) scale(0.8); opacity: 0.7; }
+              75%  { transform: translate(-14px,-20px) scale(1.1); opacity: 1;   }
+              100% { transform: translate(-24px, 12px) scale(0.9); opacity: 0.8; }
+            }
+            @keyframes flyOrbit2 {
+              0%   { transform: translate(  4px,-26px) scale(1.1); opacity: 1;   }
+              25%  { transform: translate(-26px, -6px) scale(0.8); opacity: 0.7; }
+              50%  { transform: translate(-10px, 24px) scale(1.2); opacity: 1;   }
+              75%  { transform: translate( 24px, 14px) scale(0.9); opacity: 0.8; }
+              100% { transform: translate(  4px,-26px) scale(1.1); opacity: 1;   }
+            }
+            @keyframes flyOrbit3 {
+              0%   { transform: translate( 18px,-18px) scale(0.9); opacity: 0.8; }
+              33%  { transform: translate(-22px,-12px) scale(1.2); opacity: 1;   }
+              66%  { transform: translate(  6px, 28px) scale(0.8); opacity: 0.7; }
+              100% { transform: translate( 18px,-18px) scale(0.9); opacity: 0.8; }
+            }
+            @keyframes flyWiggle {
+              0%,100% { border-radius: 50% 40% 50% 40%; }
+              50%     { border-radius: 40% 50% 40% 50%; }
+            }
+          `}</style>
+          <div
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent('squashBug', { detail: { plotIndex: index } }));
+              localStorage.setItem('stat_bugs_smashed', (parseInt(localStorage.getItem('stat_bugs_smashed') || '0', 10) + 1).toString());
             }}
-          />
-        </div>
+            style={{
+              position: 'absolute',
+              top: '35%',
+              left: '50%',
+              width: 0,
+              height: 0,
+              zIndex: 9999,
+              cursor: 'crosshair',
+              pointerEvents: 'auto',
+            }}
+          >
+            {[
+              { anim: 'flyOrbit0', dur: '1.4s', size: 5, color: '#1a1a0a', delay: '0s' },
+              { anim: 'flyOrbit1', dur: '1.1s', size: 4, color: '#2a1a00', delay: '-0.4s' },
+              { anim: 'flyOrbit2', dur: '1.6s', size: 5, color: '#111108', delay: '-0.8s' },
+              { anim: 'flyOrbit3', dur: '1.3s', size: 4, color: '#1a1208', delay: '-0.2s' },
+              { anim: 'flyOrbit0', dur: '1.8s', size: 3, color: '#2a2000', delay: '-1.0s' },
+            ].map((f, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                width: `${f.size}px`,
+                height: `${f.size}px`,
+                background: f.color,
+                animation: `${f.anim} ${f.dur} ease-in-out ${f.delay} infinite, flyWiggle 0.3s ease-in-out infinite`,
+                boxShadow: '0 0 2px rgba(0,0,0,0.6)',
+                pointerEvents: 'none',
+              }} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Crow indicator and countdown - portalled to body to escape stacking contexts */}
@@ -712,15 +755,6 @@ const CropItem = ({
               animation: crowLanded ? "none" : (index < 15 ? "crowFlyInFromRight 5s ease-in-out forwards" : "crowFlyInFromLeft 5s ease-in-out forwards")
             }}
           >
-            {parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 32 && crowLanded && <div style={{
-              color: '#ff4444',
-              fontWeight: 'bold',
-              fontSize: '18px',
-              textShadow: '1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black',
-              marginBottom: '-5px',
-            }}>
-              {data.crowCountdown}s
-            </div>}
             <img
               key={crowLanded ? 'peck' : 'fly'}
               src={crowLanded ? "/images/badanimals/crowpeck.gif" : "/images/badanimals/crowfly.gif"}
@@ -757,19 +791,18 @@ const CropItem = ({
         @keyframes statusBounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }
         @keyframes indicatorShrink { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
       `}</style>
-      {(data.needsWater || waterPhase === 'shrink') && (
+      {(data.needsWater || waterPhase === 'shrink' || data.bugCountdown > 0 || (data.crowCountdown > 0 && crowLanded)) && (
         <div style={{
           position: "absolute",
           top: "-25px",
           left: "50%",
-          transform: "translateX(-50%)",
           zIndex: 9999,
           pointerEvents: "none",
           animation: waterPhase === 'shrink' ? 'none' : 'statusBounce 1.5s infinite',
         }}>
           {(data.bugCountdown > 0 || (data.crowCountdown > 0 && crowLanded))
-            ? <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ width: '28px', height: '28px', filter: 'drop-shadow(0px 2px 2px black)', position: 'relative', left: '23px', top: '65px' }} />
-            : (pestJustKilled || data.crowCountdown > 0)
+            ? <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ width: '38px', height: '38px', filter: 'drop-shadow(0px 2px 2px black)', position: 'relative', left: '25px', top: '38px' }} />
+            : (pestJustKilled || crowLanded || data.growStatus === 2)
               ? null
               : <img
                   src="/images/farming/waterneeded.png"
@@ -802,7 +835,9 @@ const CropItem = ({
               width: '28px', height: '28px',
               filter: 'drop-shadow(0px 2px 2px black)',
               transformOrigin: '50% 50%',
-              animation: checkmarkPhase === 'shrink' ? 'indicatorShrink 0.2s ease-in forwards' : 'none',
+              animation: checkmarkPhase === 'shrink'
+                ? 'indicatorShrink 0.2s ease-in forwards'
+                : 'badge-pulse 0.9s infinite ease-in-out',
             }}
           />
         </div>
