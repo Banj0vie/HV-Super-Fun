@@ -1,37 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ALL_ITEMS } from '../constants/item_data';
 
-const CROP_IMAGES = {
-  'Potato':       '/images/cardfront/potatocard/potatocom.png',
-  'Lettuce':      '/images/cardfront/lettuce/letcom.png',
-  'Cabbage':      '/images/cardfront/califlower/calicom.png',
-  'Onion':        '/images/cardfront/onioncard/onioncom.png',
-  'Radish':       '/images/cardfront/radish/radcom.png',
-  'Turnip':       '/images/cardfront/turnip/turcom.png',
-  'Wheat':        '/images/cardfront/wheat/wheatcom.png',
-  'Tomato':       '/images/cardfront/tomato/tomatocom.png',
-  'Carrot':       '/images/cardfront/carrot/carcom.png',
-  'Corn':         '/images/cardfront/corn/corncom.png',
-  'Pumpkin':      '/images/cardfront/pumpkin/pumpcom.png',
-  'Pepper':       '/images/cardfront/pepper/peppercom.png',
-  'Celery':       '/images/cardfront/celery/celcom.png',
-  'Broccoli':     '/images/cardfront/broccoli/broccom.png',
-  'Cauliflower':  '/images/cardfront/califlower/calicom.png',
-  'Berry':        '/images/cardfront/blueberry/bbcom.png',
-  'Grapes':       '/images/cardfront/grape/grapecom.png',
-  'Banana':       '/images/cardfront/banana/bancom.png',
-  'Mango':        '/images/cardfront/mango/mangocom.png',
-  'Avocado':      '/images/cardfront/avocado/avocom.png',
-  'Pineapple':    '/images/cardfront/pineapplecard/pineapplecom.png',
-  'Blueberry':    '/images/cardfront/blueberry/bbcom.png',
-  'Papaya':       '/images/cardfront/papaya/papayacom.png',
-  'Lichi':        '/images/cardfront/lychee/lycom.png',
-  'Lavender':     '/images/cardfront/lavender/lavcom.png',
-  'Dragon Fruit': '/images/cardfront/dragonfruit/dragcom.png',
-  'Parsnip':      '/images/cardfront/radish/radcom.png',
-  'Artichoke':    '/images/cardfront/bokchoy/bokcom.png',
-  'Fig':          '/images/cardfront/grape/grapecom.png',
-  'Eggplant':     '/images/cardfront/eggplant/epcom.png',
-};
+const ONE_SEED_HEIGHT = 207.7647;
+const SCALE = 0.308;
+const SPRITE_W = Math.round(159 * SCALE);
 
 const DURATION = 7000;
 
@@ -45,7 +17,7 @@ export default function HarvestTicker() {
       clearTimeout(timerRef.current);
       window.__harvestTickerActive = true;
       setEvent(e.detail);
-      setAnimKey(k => k + 1); // restart animation
+      setAnimKey(k => k + 1);
       timerRef.current = setTimeout(() => {
         window.__harvestTickerActive = false;
       }, DURATION);
@@ -60,7 +32,8 @@ export default function HarvestTicker() {
 
   if (!event) return null;
 
-  const image = CROP_IMAGES[event.cropName];
+  const itemData = event.seedId ? ALL_ITEMS[event.seedId] : null;
+  const useDirectImage = itemData && itemData.pos === -1 && itemData.image;
 
   return (
     <>
@@ -105,29 +78,35 @@ export default function HarvestTicker() {
           whiteSpace: 'nowrap',
           minWidth: '360px',
         }}>
-          {/* Icon badge */}
+          {/* Crop icon badge */}
           <div style={{
             width: '52px', height: '52px', borderRadius: '50%',
             background: 'rgba(68,204,34,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '28px', flexShrink: 0,
+            flexShrink: 0, overflow: 'hidden', position: 'relative',
           }}>
-            🌾
+            {useDirectImage ? (
+              <img
+                src={itemData.image}
+                alt={event.cropName}
+                style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+              />
+            ) : itemData ? (
+              <div style={{
+                backgroundImage: 'url(/images/crops/seeds.webp)',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: `${SPRITE_W}px auto`,
+                backgroundPositionY: itemData.pos ? `-${itemData.pos * ONE_SEED_HEIGHT * SCALE}px` : 0,
+                backgroundPositionX: 0,
+                width: '64px',
+                height: '64px',
+                transform: 'scale(0.75)',
+                flexShrink: 0,
+              }} />
+            ) : (
+              <span style={{ fontSize: '28px' }}>🌾</span>
+            )}
           </div>
-
-          {/* Crop image */}
-          {image && (
-            <img
-              src={image}
-              alt={event.cropName}
-              style={{
-                width: '52px', height: '52px',
-                objectFit: 'contain', borderRadius: '8px', flexShrink: 0,
-                filter: 'drop-shadow(0 0 10px #44cc22)',
-              }}
-              onError={e => { e.target.style.display = 'none'; }}
-            />
-          )}
 
           {/* Text */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontFamily: 'GROBOLD, Cartoonist, monospace' }}>
@@ -138,11 +117,22 @@ export default function HarvestTicker() {
                 animation: 'harvestGlow 1.5s ease-in-out infinite',
                 color: '#aaff66',
               }}>
-                {event.cropName}
+                x1 {event.cropName} Seed
               </span>
             </div>
-            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
-              Weight: <span style={{ color: '#f5d87a', fontWeight: 'bold' }}>{event.weight} kg</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>
+                Weight: <span style={{ color: '#f5d87a', fontWeight: 'bold' }}>{event.weight} kg</span>
+              </span>
+              {event.rarityLabel && (
+                <span style={{
+                  fontSize: '10px', fontWeight: 'bold', padding: '2px 7px', borderRadius: '10px',
+                  background: event.rarityColor ?? '#f7efec',
+                  color: '#000', letterSpacing: '0.5px',
+                }}>
+                  {event.rarityLabel}
+                </span>
+              )}
             </div>
           </div>
 

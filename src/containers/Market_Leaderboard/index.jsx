@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+// Update this date to start a new leaderboard season — records harvested before this are excluded
+const SEASON_START_MS = new Date('2026-04-23').getTime();
+
 const MOCK_BEST_FARMER = [
   { rank: 1, name: 'FarmKing99',    pts: '284,500' },
   { rank: 2, name: 'HarvestMoon',   pts: '196,000' },
@@ -23,11 +26,36 @@ const ROW_STYLE = {
   pointerEvents: 'none',
 };
 
+const PotatoImg = () => (
+  <img src="/images/leaderboard/potato.png" alt="potato" style={{ width: '1.8vmin', height: '1.8vmin', objectFit: 'contain', verticalAlign: 'middle', position: 'relative', top: '-1.6px' }} />
+);
+
 const LeaderboardDialog = ({ onClose }) => {
   const [farmPts, setFarmPts] = useState(0);
+  const [heaviestPotato, setHeaviestPotato] = useState(null);
 
   useEffect(() => {
-    setFarmPts(parseInt(localStorage.getItem('sandbox_farming_points') || '0', 10));
+    // Season farming points (earned after SEASON_START_MS)
+    const pts = parseInt(localStorage.getItem('sandbox_season_farming_points') || '0', 10);
+    setFarmPts(pts);
+
+    // Heaviest potato — only count if harvested during current season
+    let stored = JSON.parse(localStorage.getItem('sandbox_heaviest_potato') || 'null');
+
+    // Migrate legacy sandbox_heaviest_crop if it was a Potato and no dedicated record exists yet
+    if (!stored) {
+      const legacy = JSON.parse(localStorage.getItem('sandbox_heaviest_crop') || 'null');
+      if (legacy && legacy.name === 'Potato') {
+        stored = { weight: legacy.weight, harvestedAt: legacy.harvestedAt ?? SEASON_START_MS };
+        localStorage.setItem('sandbox_heaviest_potato', JSON.stringify(stored));
+      }
+    }
+
+    if (stored && stored.harvestedAt >= SEASON_START_MS) {
+      setHeaviestPotato(stored);
+    } else {
+      setHeaviestPotato(null);
+    }
   }, []);
 
   return (
@@ -41,7 +69,7 @@ const LeaderboardDialog = ({ onClose }) => {
         justifyContent: 'center',
         background: 'rgba(0,0,0,0.6)',
       }}
-      onClick={onClose}
+      onClick={(e) => { e.stopPropagation(); onClose(); }}
     >
       <div
         style={{ position: 'relative', display: 'inline-block' }}
@@ -75,7 +103,7 @@ const LeaderboardDialog = ({ onClose }) => {
           }}
         />
 
-        {/* BEST FARMER rows — tops: r1=34.2, r2=40.8, r3=46.9 (up 3) */}
+        {/* BEST FARMER rows */}
         {[34.2, 40.8, 46.9].map((top, i) => (
           <div key={i} style={{ ...ROW_STYLE, top: `${top}%` }}>
             <span style={{ fontSize: '1.8vmin', color: '#3b1f0a', fontWeight: 'bold' }}>
@@ -112,10 +140,10 @@ const LeaderboardDialog = ({ onClose }) => {
         {/* You — Heaviest Potato */}
         <div style={{ ...ROW_STYLE, top: '84.4%' }}>
           <span style={{ fontSize: '1.8vmin', color: '#f5d87a', fontWeight: 'bold' }}>
-            27&nbsp;&nbsp;You
+            {heaviestPotato ? '4' : '—'}&nbsp;&nbsp;You
           </span>
           <span style={{ fontSize: '1.8vmin', color: '#f5d87a', fontWeight: 'bold' }}>
-            — KG <img src="/images/leaderboard/potato.png" alt="potato" style={{ width: '1.8vmin', height: '1.8vmin', objectFit: 'contain', verticalAlign: 'middle', position: 'relative', top: '-1.6px' }} />
+            {heaviestPotato ? `${heaviestPotato.weight} KG` : '— KG'} <PotatoImg />
           </span>
         </div>
 

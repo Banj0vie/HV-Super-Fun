@@ -6,7 +6,7 @@ export const FARM_VIEWPORT = {
 };
 
 export const FARM_HOTSPOTS = [
-  { id: ID_FARM_HOTSPOTS.FARMER, label: 'Mission Board', x: 595, y: 90, delay: 0 },
+  { id: ID_FARM_HOTSPOTS.FARMER, label: 'Mission Board', x: 595, y: 90, delay: 0, disableHoverSound: true },
 ];
 
 export const FARM_BEES = [];

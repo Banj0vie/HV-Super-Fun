@@ -237,6 +237,7 @@ const CropTooltip = ({
         <GrowStatusBox
           seedId={data.seedId}
           endTime={endTime}
+          growthTime={Number(data.growthTime) || 0}
           isPlanted={!!data.seedId}
           lockedAmount={locked}
           unlockedAmount={unlocked}
@@ -246,27 +247,6 @@ const CropTooltip = ({
             <div className="flex-text status-label">
               <div>Time Left:</div>
               <div className="highlight">{formatTime(timeLeft)}</div>
-            </div>
-            <div className="flex-text status-label">
-              <div>Total Harvest</div>
-              <div className="highlight">
-                {((Number(locked || 0) + Number(unlocked || 0)) / 1e9).toFixed(
-                  2
-                )}{" "}
-                $HNY
-              </div>
-            </div>
-            <div className="flex-text status-label">
-              <div className="">locked</div>
-              <div className="highlight">
-                {(Number(locked || 0) / 1e9).toFixed(2)} $HNY
-              </div>
-            </div>
-            <div className="flex-text status-label">
-              <div className="">unlocked</div>
-              <div className="highlight">
-                {(Number(unlocked || 0) / 1e9).toFixed(2)} $HNY
-              </div>
             </div>
           </div>
         </CardView>

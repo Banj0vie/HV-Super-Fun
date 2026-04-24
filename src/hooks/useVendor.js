@@ -4,7 +4,7 @@ import { ID_SEEDS, ID_CROP_CATEGORIES, getRaritySeedId } from '../constants/app_
 // Hidden crop pool per pack tier — player never sees these odds
 const CROP_POOLS = {
   2: [ // Pico
-    { seeds: [ID_SEEDS.POTATO, ID_SEEDS.TURNIP], weight: 45 },
+    { seeds: [ID_SEEDS.POTATO],                  weight: 45 },
     { seeds: [ID_SEEDS.LETTUCE],                 weight: 30 },
     { seeds: [ID_SEEDS.ONION],                   weight: 15 },
     { seeds: [ID_SEEDS.RADISH],                  weight: 10 },
@@ -12,7 +12,7 @@ const CROP_POOLS = {
   3: [ // Basic
     { seeds: [ID_SEEDS.WHEAT, ID_SEEDS.TOMATO, ID_SEEDS.CARROT, ID_SEEDS.CORN], weight: 40 },
     { seeds: [ID_SEEDS.PUMPKIN, ID_SEEDS.PEPPER],                                weight: 25 },
-    { seeds: [ID_SEEDS.CELERY, ID_SEEDS.BROCCOLI, ID_SEEDS.BOKCHOY, ID_SEEDS.EGGPLANT], weight: 20 },
+    { seeds: [ID_SEEDS.CELERY, ID_SEEDS.BROCCOLI],                               weight: 20 },
     { seeds: [ID_SEEDS.CAULIFLOWER],                                              weight: 10 },
     { seeds: [ID_SEEDS.GRAPES],                                                   weight:  5 },
   ],
@@ -20,8 +20,8 @@ const CROP_POOLS = {
     { seeds: [ID_SEEDS.BANANA, ID_SEEDS.MANGO, ID_SEEDS.AVOCADO],               weight: 40 },
     { seeds: [ID_SEEDS.PINEAPPLE, ID_SEEDS.BLUEBERRY],                           weight: 25 },
     { seeds: [ID_SEEDS.PAPAYA, ID_SEEDS.LICHI],                                  weight: 20 },
-    { seeds: [ID_SEEDS.LAVENDER, ID_SEEDS.POMEGRANATE],                          weight: 10 },
-    { seeds: [ID_SEEDS.DRAGON_FRUIT, ID_SEEDS.APPLE],                            weight:  5 },
+    { seeds: [ID_SEEDS.LAVENDER],                                                 weight: 10 },
+    { seeds: [ID_SEEDS.DRAGON_FRUIT],                                             weight:  5 },
   ],
 };
 

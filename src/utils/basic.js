@@ -174,21 +174,26 @@ export const getSubtype = (seedId) => {
   return x;
 }
 
+// Per-pack growth times in seconds. Basic uses the shared GROWTH_* constants.
+const PICO_TIMES    = [1*60, 2*60, 3*60, 4*60,  5*60];  // Common → Legendary
+const PREMIUM_TIMES = [8*60, 12*60, 18*60, 24*60, 35*60];
+
 export const getGrowthTime = (seedId) => {
+  const category = seedId >> 8;
   const x = getSubtype(seedId);
+  const idx = Math.max(0, x - 1);
+
+  if (category === 2) return PICO_TIMES[idx] ?? PICO_TIMES[0];
+  if (category === 4) return PREMIUM_TIMES[idx] ?? PREMIUM_TIMES[0];
+
+  // Basic (category 3) and fallback
   switch (x) {
-    case 1:
-      return GROWTH_COMMON;
-    case 2:
-      return GROWTH_UNCOMMON;
-    case 3:
-      return GROWTH_RARE;
-    case 4:
-      return GROWTH_EPIC;
-    case 5:
-      return GROWTH_LEGENDARY;
-    default:
-      return GROWTH_COMMON;
+    case 1: return GROWTH_COMMON;
+    case 2: return GROWTH_UNCOMMON;
+    case 3: return GROWTH_RARE;
+    case 4: return GROWTH_EPIC;
+    case 5: return GROWTH_LEGENDARY;
+    default: return GROWTH_COMMON;
   }
 }
 

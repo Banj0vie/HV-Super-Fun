@@ -2733,7 +2733,6 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
       if (remaining === 0) {
         localStorage.setItem('sandbox_dock_repaired', 'true');
         localStorage.setItem('sandbox_dock_unlocked', 'true');
-        unlockPfp('rodpfp');
         window.dispatchEvent(new CustomEvent('dockRepaired'));
       }
     };
@@ -2763,7 +2762,6 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
     trackGemSpend(DOCK_SKIP_GEMS);
     localStorage.setItem('sandbox_dock_repaired', 'true');
     localStorage.setItem('sandbox_dock_unlocked', 'true');
-    unlockPfp('rodpfp');
     window.dispatchEvent(new CustomEvent('dockRepaired'));
     setDockTimeLeft(0);
   };
@@ -2891,10 +2889,6 @@ export const MailboxDialog = ({ onClose, tutorialStep, refetch, onTutorialAdvanc
 
     // Claim pfp reward when completing any pfp letter
     if (quest.id === 'q_beta_gift') claimPfp('betapfp');
-    if (quest.id.startsWith('pfp_') && quest.id.endsWith('_letter')) {
-      const pfpId = quest.id.replace(/^pfp_/, '').replace(/_letter$/, '');
-      claimPfp(pfpId);
-    }
 
     // Auto-delete letter after completion (except q1_end_papabee — stays until first plot unlock)
     if (quest.id !== 'q1_end_papabee') {
@@ -4377,7 +4371,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
     const onSkipTutorial = () => {
       setTutorialStep(32);
       localStorage.setItem('sandbox_tutorial_step', '32');
-      unlockPfp('farmerpfp');
       setIsDigging(false);
       setIsDirting(false);
       setIsSeeding(false);
@@ -4832,7 +4825,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       const { plotIndex } = event.detail;
       if (destroyCrop) {
         await destroyCrop(plotIndex);
-        unlockPfp('crowattackpfp');
         show(`Oh no! A bug ate your crop at plot ${plotIndex + 1}!`, "error");
         await loadCropsFromContract();
         setPreviewUpdateKey(prev => prev + 1);
@@ -5200,7 +5192,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
                     hasChanges = true;
                     const prevSpawns = parseInt(localStorage.getItem('sandbox_total_bug_spawns') || '0', 10) + 1;
                     localStorage.setItem('sandbox_total_bug_spawns', String(prevSpawns));
-                    if (prevSpawns >= 10) unlockPfp('flyattackpfp');
                   }
                 }
               }
@@ -5723,7 +5714,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           const prevPotato = parseInt(localStorage.getItem('sandbox_potato_harvested') || '0', 10);
           const newPotato = prevPotato + potatoCount;
           localStorage.setItem('sandbox_potato_harvested', String(newPotato));
-          if (newPotato >= 10) unlockPfp('potatopfp');
         }
         window.dispatchEvent(new CustomEvent('soilProgressChanged'));
       }
@@ -6108,19 +6098,28 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           localStorage.setItem('sandbox_total_crops', (tc + 1).toString());
           const fp = parseInt(localStorage.getItem('sandbox_farming_points') || '0', 10);
           localStorage.setItem('sandbox_farming_points', (fp + pts).toString());
+          const sfp = parseInt(localStorage.getItem('sandbox_season_farming_points') || '0', 10);
+          localStorage.setItem('sandbox_season_farming_points', (sfp + pts).toString());
 
-          // Weight tracking — per-crop all-time heaviest + weekly featured crop
-          const { weight, name: cropName } = rollCropWeight(itemToHarvest.seedId);
-          window.dispatchEvent(new CustomEvent('cropHarvested', { detail: { cropName, weight } }));
+          // Weight tracking — per-crop all-time heaviest + potato + weekly featured crop
+          const { weight, name: cropName, bracket, rarityLabel, rarityColor } = rollCropWeight(itemToHarvest.seedId);
+          const harvestedAt = Date.now();
+          window.dispatchEvent(new CustomEvent('cropHarvested', { detail: { cropName, weight, seedId: itemToHarvest.seedId, bracket, rarityLabel, rarityColor } }));
           const storedHeaviest = JSON.parse(localStorage.getItem('sandbox_heaviest_crop') || 'null');
           if (!storedHeaviest || weight > storedHeaviest.weight) {
-            localStorage.setItem('sandbox_heaviest_crop', JSON.stringify({ weight, name: cropName }));
+            localStorage.setItem('sandbox_heaviest_crop', JSON.stringify({ weight, name: cropName, harvestedAt }));
+          }
+          if (cropName === 'Potato') {
+            const storedPotato = JSON.parse(localStorage.getItem('sandbox_heaviest_potato') || 'null');
+            if (!storedPotato || weight > storedPotato.weight) {
+              localStorage.setItem('sandbox_heaviest_potato', JSON.stringify({ weight, harvestedAt }));
+            }
           }
           const featured = getWeeklyFeaturedCrop();
           if ((itemToHarvest.seedId & 0xFFF) === featured.baseId) {
             const stored = JSON.parse(localStorage.getItem('sandbox_weekly_heaviest_crop') || 'null');
             if (!stored || stored.weekNum !== featured.weekNum || weight > stored.weight) {
-              localStorage.setItem('sandbox_weekly_heaviest_crop', JSON.stringify({ weight, name: cropName, weekNum: featured.weekNum }));
+              localStorage.setItem('sandbox_weekly_heaviest_crop', JSON.stringify({ weight, name: cropName, weekNum: featured.weekNum, harvestedAt }));
             }
           }
         }
@@ -7399,7 +7398,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
               setTutPageSync(1);
               setTutorialStep(32);
               localStorage.setItem('sandbox_tutorial_step', '32');
-              unlockPfp('farmerpfp');
               window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
             }
           }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>

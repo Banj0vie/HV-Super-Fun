@@ -26,5 +26,4 @@ export const trackGemSpend = (amount) => {
   const prev = parseInt(localStorage.getItem('sandbox_total_gems_spent') || '0', 10);
   const next = prev + amount;
   localStorage.setItem('sandbox_total_gems_spent', String(next));
-  if (next >= 1000) unlockPfp('spendingfirstgem');
 };

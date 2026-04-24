@@ -5,6 +5,7 @@ import "./style.css";
 const GrowStatusBox = ({
   seedId,
   endTime,
+  growthTime = 0,
   isPlanted = false,
   lockedAmount = 0,
   unlockedAmount = 0,
@@ -23,8 +24,9 @@ const GrowStatusBox = ({
 
     const updateProgress = () => {
       const now = Math.floor(Date.now() / 1000);
-      const totalGrowthTime = endTime - (endTime - 120); // Assuming growth started 2 minutes ago for demo
-      const elapsed = Math.max(0, now - (endTime - totalGrowthTime));
+      const totalGrowthTime = Number(growthTime) || (endTime - (endTime - 120));
+      const startTime = endTime - totalGrowthTime;
+      const elapsed = Math.max(0, now - startTime);
       const remaining = Math.max(0, endTime - now);
 
       setTimeLeft(remaining);

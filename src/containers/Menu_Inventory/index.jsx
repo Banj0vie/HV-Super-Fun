@@ -15,7 +15,6 @@ const FILTERS = [
   { id: 'ALL',                        label: 'All' },
   { id: ID_INVENTORY_MENUS.SEEDS,     label: 'Seeds' },
   { id: ID_INVENTORY_MENUS.PRODUCE,   label: 'Produce' },
-  { id: ID_INVENTORY_MENUS.CHESTS,    label: 'Chests' },
 ];
 
 const USABLE_FILTERS = new Set([ID_INVENTORY_MENUS.CHESTS]);
@@ -110,14 +109,12 @@ const InventoryDialog = ({ onClose }) => {
   const allItems = [
     ...seeds.filter(i => i.count > 0),
     ...productions.filter(i => i.count > 0),
-    ...chests.filter(i => i.count > 0),
   ];
 
   const filterMap = {
     'ALL': allItems,
     [ID_INVENTORY_MENUS.SEEDS]:   seeds.filter(i => i.count > 0),
     [ID_INVENTORY_MENUS.PRODUCE]: productions.filter(i => i.count > 0),
-    [ID_INVENTORY_MENUS.CHESTS]:  chests.filter(i => i.count > 0),
   };
 
   const visibleItems = filterMap[filter] || allItems;
@@ -207,7 +204,7 @@ const InventoryDialog = ({ onClose }) => {
                 ))}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 4px', justifyContent: 'flex-start' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 4px 16px 4px', justifyContent: 'flex-start' }}>
                 {visibleItems.map((item, i) => (
                   <div
                     key={i}

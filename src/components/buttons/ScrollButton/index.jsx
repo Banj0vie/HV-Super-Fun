@@ -20,6 +20,7 @@ const ScrollButton = ({
     if (!clickAudioRef.current) {
       clickAudioRef.current = new Audio("/sounds/ButtonClick.wav");
       clickAudioRef.current.preload = "auto";
+      clickAudioRef.current.volume = 0.7;
     }
   }, []);
 

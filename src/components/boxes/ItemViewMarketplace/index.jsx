@@ -1,10 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import BaseButton from "../../buttons/BaseButton";
 import { ONE_SEED_HEIGHT } from "../../../constants/item_seed";
 
 const ProduceListDialog = ({ item, onClose }) => {
-  const [expandedId, setExpandedId] = useState(null);
-
   // Generate an array of individual items with unique weights.
   // useMemo will prevent re-randomizing on every render.
   const individualItems = useMemo(() => {
@@ -68,53 +66,36 @@ const ProduceListDialog = ({ item, onClose }) => {
 
         {/* List of individual produce */}
         <div style={{ overflowY: 'auto', paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
-          {individualItems.map((prod) => {
-            const isExpanded = expandedId === prod.id;
-            return (
-              <div key={prod.id} style={{
-                backgroundColor: 'rgba(31, 22, 16, 0.8)', border: '2px solid #5a402a',
-                borderRadius: '8px', padding: '10px 16px', transition: 'all 0.2s ease'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden',
-                      display: 'flex', justifyContent: 'center', alignItems: 'center'
-                    }}>
-                      {shouldUseImageTag() ? (
-                        <img src={item.image || "/images/crops/seeds.png"} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                      ) : (
-                        <div
-                          className="item-icon item-icon-seeds"
-                          style={{
-                            transform: 'scale(0.8)',
-                            backgroundPositionY: item.pos ? `-${item.pos * ONE_SEED_HEIGHT * 0.308}px` : 0,
-                          }}
-                        ></div>
-                      )}
-                    </div>
-                    <span style={{ color: '#00ff41', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace' }}>
-                      {prod.name} - <span style={{ color: '#fff' }}>{prod.weight}kg</span>
-                    </span>
-                  </div>
-                  
-                  <BaseButton small label={isExpanded ? "Hide" : "Select"} onClick={() => setExpandedId(isExpanded ? null : prod.id)} />
+          {individualItems.map((prod) => (
+            <div key={prod.id} style={{
+              backgroundColor: 'rgba(31, 22, 16, 0.8)', border: '2px solid #5a402a',
+              borderRadius: '8px', padding: '10px 16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden',
+                  display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0
+                }}>
+                  {shouldUseImageTag() ? (
+                    <img src={item.image || "/images/crops/seeds.png"} alt={item.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <div className="item-icon item-icon-seeds" style={{ transform: 'scale(0.8)', backgroundPositionY: item.pos ? `-${item.pos * ONE_SEED_HEIGHT * 0.308}px` : 0 }} />
+                  )}
                 </div>
-
-                {/* Expanded Details View */}
-                {isExpanded && (
-                  <div style={{ marginTop: '12px', borderTop: '1px solid #5a402a', paddingTop: '10px', color: '#ccc', fontSize: '14px', fontFamily: 'monospace' }}>
-                    <p style={{ margin: '0 0 8px 0' }}>
-                      <strong style={{ color: '#fff' }}>Description:</strong> {item.description || (item.subCategory === 'ID_LOOT_CATEGORY_FISH' ? "A fresh catch, ready to be cooked or sold." : "A fresh piece of produce, ripe for cooking.")}
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      <strong style={{ color: '#fff' }}>Good for:</strong> {item.goodAt || (item.subCategory === 'ID_LOOT_CATEGORY_FISH' ? "Selling for tokens or feeding pets." : "General cooking and crafting.")}
-                    </p>
-                  </div>
-                )}
+                <span style={{ color: '#00ff41', fontWeight: 'bold', fontSize: '16px', fontFamily: 'monospace' }}>
+                  {prod.name} - <span style={{ color: '#fff' }}>{prod.weight}kg</span>
+                </span>
               </div>
-            )
-          })}
+              <div style={{ borderTop: '1px solid #5a402a', paddingTop: '10px', color: '#ccc', fontSize: '14px', fontFamily: 'monospace' }}>
+                <p style={{ margin: '0 0 8px 0' }}>
+                  <strong style={{ color: '#fff' }}>Description:</strong> {item.description || (item.subCategory === 'ID_LOOT_CATEGORY_FISH' ? "A fresh catch, ready to be cooked or sold." : "A fresh piece of produce, ripe for cooking.")}
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: '#fff' }}>Good for:</strong> {item.goodAt || (item.subCategory === 'ID_LOOT_CATEGORY_FISH' ? "Selling for tokens or feeding pets." : "General cooking and crafting.")}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Footer */}

@@ -89,8 +89,12 @@ const ProfileBar = ({ isFarmMenu }) => {
   }, [lockedTokensUi, stakedBalance, isBalanceRefreshing]);
 
   const honeyBalance = useMemo(() => {
-    const formatted = formatNumber((gameToken || "0").toString());
-    return formatted;
+    const num = Number(gameToken || "0");
+    if (isNaN(num)) return "-";
+    if (num >= 1_000_000_000) return Math.floor(num / 1_000_000_000) + "B";
+    if (num >= 1_000_000) return Math.floor(num / 1_000_000) + "M";
+    if (num >= 1_000) return Math.floor(num).toLocaleString('en-US');
+    return Math.floor(num).toString();
   }, [gameToken, isBalanceRefreshing]);
 
   return (
@@ -147,7 +151,7 @@ const ProfileBar = ({ isFarmMenu }) => {
           <div style={{ position: 'relative', top: '51.5px', marginLeft: '8px' }} className="news-btn-wrapper">
             <style>{`.news-btn-wrapper .pb-bg { top: calc(50% - 1px); }`}</style>
             <ProfileButton
-              icon={<img alt="News" src="/images/news/news.png" style={{ width: '44px', height: '44px', objectFit: 'contain' }} />}
+              icon={<img alt="News" src="/images/news/news.png" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />}
               title="News"
               bg="/images/profile_bar/profile_button_bg.png"
               onClick={() => {}}

@@ -32,14 +32,15 @@
   position: relative;
   transform-origin: center;
   width: fit-content;
+  transition: transform 0.15s ease-out;
 }
 
 /* hover effects only on the icon */
-.menu-item:hover { transform: scale(1.06); }
+.menu-item:hover { transform: scale(1.14); }
 
 .menu-item:hover .menu-icon { filter: brightness(1.25) contrast(1.15); }
 
-.menu-item:active { transform: scale(1.02); }
+.menu-item:active { transform: scale(1.06); }
 .menu-item:active .menu-icon { filter: brightness(1.1) contrast(1.05); }
 
 .menu-icon-highlight {

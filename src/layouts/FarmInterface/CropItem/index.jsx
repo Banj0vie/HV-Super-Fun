@@ -13,6 +13,44 @@ import { useAppSelector } from "../../../solana/store";
 import { selectSettings } from "../../../solana/store/slices/uiSlice";
 import { clampVolume } from "../../../utils/basic";
 
+// Module-level singleton so all CropItem instances share one fly audio
+let _flyAudio = null;
+let _flyFadeInterval = null;
+let _flyActiveBugCount = 0;
+
+const getFlyAudio = () => {
+  if (!_flyAudio) {
+    _flyAudio = new Audio("/sounds/fly/flysound.m4a");
+    _flyAudio.loop = true;
+    _flyAudio.preload = "auto";
+    _flyAudio.volume = 0;
+  }
+  return _flyAudio;
+};
+
+const startFlySound = () => {
+  const audio = getFlyAudio();
+  clearInterval(_flyFadeInterval);
+  audio.volume = 0;
+  audio.play().catch(() => {});
+  _flyFadeInterval = setInterval(() => {
+    audio.volume = Math.min(0.09, audio.volume + 0.005);
+    if (audio.volume >= 0.09) clearInterval(_flyFadeInterval);
+  }, 40);
+};
+
+const stopFlySound = () => {
+  const audio = getFlyAudio();
+  clearInterval(_flyFadeInterval);
+  _flyFadeInterval = setInterval(() => {
+    audio.volume = Math.max(0, audio.volume - 0.05);
+    if (audio.volume <= 0) {
+      clearInterval(_flyFadeInterval);
+      audio.pause();
+    }
+  }, 40);
+};
+
 const CropItem = ({
   data,
   index,
@@ -33,6 +71,18 @@ const CropItem = ({
   const prevCrowCountdownRef = useRef(data.crowCountdown);
   const [crowLanded, setCrowLanded] = useState(false);
   const crowLandedTimerRef = useRef(null);
+  const [crowFlyingAway, setCrowFlyingAway] = useState(false);
+  const [bugsFlyingAway, setBugsFlyingAway] = useState(false);
+  const [bugsGathering, setBugsGathering] = useState(false);
+  const bugsGatherTimerRef = useRef(null);
+  const bugAudioHandledRef = useRef(false);
+  const [dirtActive, setDirtActive] = useState(false);
+  const [dirtFading, setDirtFading] = useState(false);
+  const dirtTimerRef = useRef(null);
+  const dirtOffTimerRef = useRef(null);
+  const dirtFadeTimerRef = useRef(null);
+  const crowAudioRef = useRef(null);
+  const crowSpawnStopRef = useRef(null);
   const [crowScreenPos, setCrowScreenPos] = useState(null);
   const [growthProgress, setGrowthProgress] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
@@ -100,16 +150,59 @@ const CropItem = ({
   }, []);
 
   useEffect(() => {
+    const audio = new Audio('/sounds/crow/crowsoundeffect.m4a');
+    audio.preload = 'auto';
+    crowAudioRef.current = audio;
+    return () => {
+      clearTimeout(crowSpawnStopRef.current);
+      audio.pause();
+    };
+  }, []);
+
+  useEffect(() => {
     const bugKilled = prevBugCountdownRef.current > 0 && !(data.bugCountdown > 0);
+    const bugSpawned = !(prevBugCountdownRef.current > 0) && data.bugCountdown > 0;
     const crowKilled = prevCrowCountdownRef.current > 0 && !(data.crowCountdown > 0);
     if (bugKilled || crowKilled) {
       setPestJustKilled(true);
       clearTimeout(pestKillTimerRef.current);
       pestKillTimerRef.current = setTimeout(() => setPestJustKilled(false), 600);
     }
+    if (bugSpawned) {
+      _flyActiveBugCount += 1;
+      if (_flyActiveBugCount === 1) startFlySound();
+      clearTimeout(bugsGatherTimerRef.current);
+      setBugsGathering(true);
+      bugsGatherTimerRef.current = setTimeout(() => setBugsGathering(false), 900);
+    }
+    if (bugKilled) {
+      if (!bugAudioHandledRef.current) {
+        // Bug expired naturally — click didn't handle audio
+        _flyActiveBugCount = Math.max(0, _flyActiveBugCount - 1);
+        if (_flyActiveBugCount === 0) stopFlySound();
+      }
+      bugAudioHandledRef.current = false; // reset for next bug spawn
+    }
     prevBugCountdownRef.current = data.bugCountdown;
     prevCrowCountdownRef.current = data.crowCountdown;
   }, [data.bugCountdown, data.crowCountdown]);
+
+  // Handle bug already active on mount
+  useEffect(() => {
+    if (data.bugCountdown > 0) {
+      _flyActiveBugCount += 1;
+      if (_flyActiveBugCount === 1) startFlySound();
+      setBugsGathering(true);
+      bugsGatherTimerRef.current = setTimeout(() => setBugsGathering(false), 900);
+    }
+    return () => {
+      if (prevBugCountdownRef.current > 0 && !bugAudioHandledRef.current) {
+        _flyActiveBugCount = Math.max(0, _flyActiveBugCount - 1);
+        if (_flyActiveBugCount === 0) stopFlySound();
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handlePrepUpdate = (e) => {
@@ -182,8 +275,11 @@ const CropItem = ({
     }
   }, []);
 
+  const lastProgressSeedIdRef = useRef(data.seedId);
+
   // Reset to 0 immediately when seedId changes (prevents stale frame flash)
   useEffect(() => {
+    lastProgressSeedIdRef.current = data.seedId;
     setGrowthProgress(0);
   }, [data.seedId]);
 
@@ -191,6 +287,7 @@ const CropItem = ({
   useEffect(() => {
     if (cropArray && data.seedId) {
       const progress = cropArray.getGrowthProgress(index);
+      lastProgressSeedIdRef.current = data.seedId;
       setGrowthProgress(progress);
     }
   }, [cropArray, index]);
@@ -301,6 +398,28 @@ const CropItem = ({
   // Switch from flying to pecking after fly-in animation completes
   useEffect(() => {
     if (data.crowCountdown > 0) {
+      // Play first 3s of crow sound on spawn with fade in/out
+      const audio = crowAudioRef.current;
+      if (audio) {
+        clearTimeout(crowSpawnStopRef.current);
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0;
+        audio.play().catch(() => {});
+        // Fade in over 400ms
+        const fadeInStep = 0.05, fadeInMs = 40;
+        const fadeIn = setInterval(() => {
+          audio.volume = Math.min(1, audio.volume + fadeInStep);
+          if (audio.volume >= 1) clearInterval(fadeIn);
+        }, fadeInMs);
+        // Fade out over last 500ms of the 3s window
+        crowSpawnStopRef.current = setTimeout(() => {
+          const fadeOut = setInterval(() => {
+            audio.volume = Math.max(0, audio.volume - 0.1);
+            if (audio.volume <= 0) { clearInterval(fadeOut); audio.pause(); }
+          }, 50);
+        }, 2500);
+      }
       // Calculate screen position of this crop-item for portal rendering
       if (rootRef.current) {
         const rect = rootRef.current.getBoundingClientRect();
@@ -308,13 +427,43 @@ const CropItem = ({
       }
       setCrowLanded(false);
       clearTimeout(crowLandedTimerRef.current);
-      crowLandedTimerRef.current = setTimeout(() => setCrowLanded(true), 4800);
+      crowLandedTimerRef.current = setTimeout(() => {
+        setCrowLanded(true);
+        clearInterval(dirtTimerRef.current);
+        clearTimeout(dirtOffTimerRef.current);
+        clearTimeout(dirtFadeTimerRef.current);
+        const triggerDirt = () => {
+          // Cancel any ongoing fade, restart particles fresh
+          setDirtFading(false);
+          setDirtActive(false);
+          setTimeout(() => {
+            setDirtActive(true);
+            clearTimeout(dirtOffTimerRef.current);
+            clearTimeout(dirtFadeTimerRef.current);
+            // After peck duration, fade out instead of snap-off
+            dirtOffTimerRef.current = setTimeout(() => {
+              setDirtFading(true);
+              dirtFadeTimerRef.current = setTimeout(() => {
+                setDirtActive(false);
+                setDirtFading(false);
+              }, 800);
+            }, 1800);
+          }, 16);
+        };
+        triggerDirt();
+        dirtTimerRef.current = setInterval(triggerDirt, 2500);
+      }, 2800);
     } else {
       setCrowLanded(false);
+      setDirtActive(false);
+      setDirtFading(false);
       setCrowScreenPos(null);
       clearTimeout(crowLandedTimerRef.current);
+      clearInterval(dirtTimerRef.current);
+      clearTimeout(dirtOffTimerRef.current);
+      clearTimeout(dirtFadeTimerRef.current);
     }
-    return () => clearTimeout(crowLandedTimerRef.current);
+    return () => { clearTimeout(crowLandedTimerRef.current); clearInterval(dirtTimerRef.current); clearTimeout(dirtOffTimerRef.current); clearTimeout(dirtFadeTimerRef.current); };
   }, [data.crowCountdown > 0 ? 'active' : 'inactive']);
 
   const getStatusClass = () => {
@@ -340,6 +489,7 @@ const CropItem = ({
 
   // Determine sprite frame based on growth progress for smoother, real-time stages
   const FRAMES_PER_SEED = 6; // total frames across X for one seed line
+  const stableProgress = lastProgressSeedIdRef.current === data.seedId ? (growthProgress || 0) : 0;
   let frameIndex = 0;
   if (data.seedId && ALL_ITEMS[data.seedId]) {
     if (data.growStatus === 2) {
@@ -347,7 +497,7 @@ const CropItem = ({
     } else if (data.growStatus === -1 || data.growStatus === 0) {
       frameIndex = 0; // sign for newly planted and sprout stage
     } else {
-      const clamped = Math.max(0, Math.min(0.999, growthProgress || 0));
+      const clamped = Math.max(0, Math.min(0.999, stableProgress));
       if (clamped === 0) {
         frameIndex = 0; // sign until growth actually begins
       } else {
@@ -367,7 +517,7 @@ const CropItem = ({
       return 5; // ready frame (all 5 segments)
     } else {
       // growing: interpolate segments based on progress, same as sprite frames
-      const clamped = Math.max(0, Math.min(0.999, growthProgress || 0));
+      const clamped = Math.max(0, Math.min(0.999, stableProgress));
       return Math.floor(clamped * 5); // 0-4 segments based on progress
     }
   };
@@ -576,13 +726,6 @@ const CropItem = ({
             return; // Don't allow interaction with disabled plots
           }
 
-          const clickAudio = clickAudioRef.current;
-          if (clickAudio) {
-            const volumeSetting = parseFloat(settings?.soundVolume ?? defaultSettings.soundVolume) / 100;
-            clickAudio.volume = clampVolume(volumeSetting);
-            clickAudio.currentTime = 0;
-            clickAudio.play().catch(() => {});
-          }
           // Pass parameters in correct order: (isShift, index)
           // Don't update local highlighted state here - let parent handle it
           if (e.shiftKey) {
@@ -629,38 +772,63 @@ const CropItem = ({
               0%,100% { border-radius: 50% 40% 50% 40%; }
               50%     { border-radius: 40% 50% 40% 50%; }
             }
+            @keyframes bugScatter0 { 0%{transform:translate(0,0);opacity:1;} 100%{transform:translate(-70px,-80px) scale(0.3);opacity:0;} }
+            @keyframes bugScatter1 { 0%{transform:translate(0,0);opacity:1;} 100%{transform:translate(80px,-60px) scale(0.3);opacity:0;} }
+            @keyframes bugScatter2 { 0%{transform:translate(0,0);opacity:1;} 100%{transform:translate(-90px,20px) scale(0.3);opacity:0;} }
+            @keyframes bugScatter3 { 0%{transform:translate(0,0);opacity:1;} 100%{transform:translate(90px,30px) scale(0.3);opacity:0;} }
+            @keyframes bugScatter4 { 0%{transform:translate(0,0);opacity:1;} 100%{transform:translate(10px,-100px) scale(0.3);opacity:0;} }
+            @keyframes bugGather0 { 0%{transform:translate(-70px,-80px) scale(0.3);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes bugGather1 { 0%{transform:translate(80px,-60px) scale(0.3);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes bugGather2 { 0%{transform:translate(-90px,20px) scale(0.3);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes bugGather3 { 0%{transform:translate(90px,30px) scale(0.3);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes bugGather4 { 0%{transform:translate(10px,-100px) scale(0.3);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
           `}</style>
           <div
             onPointerDown={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              window.dispatchEvent(new CustomEvent('squashBug', { detail: { plotIndex: index } }));
-              localStorage.setItem('stat_bugs_smashed', (parseInt(localStorage.getItem('stat_bugs_smashed') || '0', 10) + 1).toString());
+              if (bugsFlyingAway) return;
+              setBugsFlyingAway(true);
+              bugAudioHandledRef.current = true;
+              _flyActiveBugCount = Math.max(0, _flyActiveBugCount - 1);
+              if (_flyActiveBugCount === 0) stopFlySound();
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('squashBug', { detail: { plotIndex: index } }));
+                localStorage.setItem('stat_bugs_smashed', (parseInt(localStorage.getItem('stat_bugs_smashed') || '0', 10) + 1).toString());
+                setBugsFlyingAway(false);
+              }, 900);
             }}
             style={{
               position: 'absolute',
-              top: '35%',
-              left: '50%',
-              width: 0,
-              height: 0,
+              top: 'calc(35% + 27.5px)',
+              left: 'calc(50% - 19px)',
+              width: '50px',
+              height: '50px',
+              marginLeft: '-25px',
               zIndex: 9999,
               cursor: 'crosshair',
               pointerEvents: 'auto',
             }}
           >
             {[
-              { anim: 'flyOrbit0', dur: '1.4s', size: 5, color: '#1a1a0a', delay: '0s' },
-              { anim: 'flyOrbit1', dur: '1.1s', size: 4, color: '#2a1a00', delay: '-0.4s' },
-              { anim: 'flyOrbit2', dur: '1.6s', size: 5, color: '#111108', delay: '-0.8s' },
-              { anim: 'flyOrbit3', dur: '1.3s', size: 4, color: '#1a1208', delay: '-0.2s' },
-              { anim: 'flyOrbit0', dur: '1.8s', size: 3, color: '#2a2000', delay: '-1.0s' },
+              { anim: 'flyOrbit0', dur: '1.4s', size: 5, color: '#1a1a0a', delay: '0s',    scatter: 'bugScatter0' },
+              { anim: 'flyOrbit1', dur: '1.1s', size: 4, color: '#2a1a00', delay: '-0.4s', scatter: 'bugScatter1' },
+              { anim: 'flyOrbit2', dur: '1.6s', size: 5, color: '#111108', delay: '-0.8s', scatter: 'bugScatter2' },
+              { anim: 'flyOrbit3', dur: '1.3s', size: 4, color: '#1a1208', delay: '-0.2s', scatter: 'bugScatter3' },
+              { anim: 'flyOrbit0', dur: '1.8s', size: 3, color: '#2a2000', delay: '-1.0s', scatter: 'bugScatter4' },
             ].map((f, i) => (
               <div key={i} style={{
                 position: 'absolute',
+                top: '50%',
+                left: '50%',
                 width: `${f.size}px`,
                 height: `${f.size}px`,
                 background: f.color,
-                animation: `${f.anim} ${f.dur} ease-in-out ${f.delay} infinite, flyWiggle 0.3s ease-in-out infinite`,
+                animation: bugsFlyingAway
+                  ? `${f.scatter} 0.8s ease-out ${i * 0.07}s forwards`
+                  : bugsGathering
+                    ? `bugGather${i} 0.8s ease-out ${i * 0.07}s both`
+                    : `${f.anim} ${f.dur} ease-in-out ${f.delay} infinite, flyWiggle 0.3s ease-in-out infinite`,
                 boxShadow: '0 0 2px rgba(0,0,0,0.6)',
                 pointerEvents: 'none',
               }} />
@@ -683,105 +851,152 @@ const CropItem = ({
               70% { opacity: 1; }
               100% { left: ${crowScreenPos.x + 7}px; top: ${crowScreenPos.y + 37}px; transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
-            @keyframes dirtParticle0  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle1  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle2  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle3  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle4  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle5  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle6  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(0px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle7  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle8  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle9  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle10 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle11 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle12 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle13 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle14 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle15 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle16 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle17 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle18 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle19 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle20 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle21 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle22 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle23 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle24 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle25 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle26 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle27 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle28 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle29 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle30 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle31 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle32 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle33 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle34 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle35 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle36 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle37 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle38 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle39 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle40 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle41 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle42 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle43 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle44 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle45 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle46 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle47 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle48 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
-            @keyframes dirtParticle49 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(0);opacity:0;} }
+            @keyframes dirtParticle0  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle1  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(20px,-30px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle2  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle3  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-35px,-20px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle4  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle5  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle6  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(0px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle7  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle8  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-28px,-32px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle9  { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle10 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-15px,-38px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle11 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle12 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-38px,-15px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle13 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle14 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-10px,-25px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle15 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle16 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-25px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle17 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle18 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-32px,-28px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle19 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle20 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-5px,-35px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle21 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle22 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-42px,-22px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle23 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle24 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-18px,-42px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle25 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle26 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-30px,-12px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle27 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle28 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-22px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle29 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle30 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle31 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-45px,-10px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle32 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle33 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-12px,-48px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle34 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle35 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-36px,-36px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle36 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle37 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-48px,-24px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle38 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle39 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-26px,-44px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle40 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle41 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-50px,-5px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle42 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle43 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-16px,-50px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle44 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle45 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-40px,-40px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle46 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle47 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-8px,-52px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle48 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
+            @keyframes dirtParticle49 { 0%{transform:translate(0,0) scale(1);opacity:1;} 70%{transform:translate(-52px,-18px) scale(0.2);opacity:0;} 100%{transform:translate(0,0) scale(1);opacity:1;} }
           `}</style>
           <div
             onPointerDown={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              window.dispatchEvent(new CustomEvent('scareCrow', { detail: { plotIndex: index } }));
-              localStorage.setItem('stat_crows_swatted', (parseInt(localStorage.getItem('stat_crows_swatted') || '0', 10) + 1).toString());
+              if (crowFlyingAway) return;
+              setCrowFlyingAway(true);
+              // Play last 4s of crow sound on fly-away
+              const audio = crowAudioRef.current;
+              if (audio) {
+                clearTimeout(crowSpawnStopRef.current);
+                audio.pause();
+                const playFlyAway = () => {
+                  audio.currentTime = Math.max(0, audio.duration - 4);
+                  audio.volume = 0;
+                  audio.play().catch(() => {});
+                  // Fade in over 400ms
+                  const fadeIn = setInterval(() => {
+                    audio.volume = Math.min(1, audio.volume + 0.05);
+                    if (audio.volume >= 1) clearInterval(fadeIn);
+                  }, 40);
+                  // Fade out over last 600ms
+                  setTimeout(() => {
+                    const fadeOut = setInterval(() => {
+                      audio.volume = Math.max(0, audio.volume - 0.06);
+                      if (audio.volume <= 0) { clearInterval(fadeOut); audio.pause(); }
+                    }, 40);
+                  }, 3400);
+                };
+                if (audio.readyState >= 1 && audio.duration) {
+                  playFlyAway();
+                } else {
+                  audio.addEventListener('loadedmetadata', playFlyAway, { once: true });
+                }
+              }
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('scareCrow', { detail: { plotIndex: index } }));
+                localStorage.setItem('stat_crows_swatted', (parseInt(localStorage.getItem('stat_crows_swatted') || '0', 10) + 1).toString());
+                setCrowFlyingAway(false);
+              }, 1500);
             }}
             style={{
               position: "fixed",
               left: crowLanded ? `${crowScreenPos.x + 2}px` : undefined,
               top: crowLanded ? `${crowScreenPos.y + 27}px` : undefined,
-              transform: "translate(-50%, -50%)",
+              transform: crowFlyingAway
+                ? (index < 15 ? "translate(-50%, -50%) translate(-500px, -300px) scale(0.2)" : "translate(-50%, -50%) translate(500px, -300px) scale(0.2)")
+                : "translate(-50%, -50%)",
+              opacity: crowFlyingAway ? 0 : 1,
+              transition: crowFlyingAway ? "transform 1.4s ease-in, opacity 1.4s ease-in 0.4s" : "none",
               zIndex: 999999,
-              cursor: "crosshair",
+              cursor: crowFlyingAway ? "default" : "crosshair",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               pointerEvents: "auto",
-              animation: crowLanded ? "none" : (index < 15 ? "crowFlyInFromRight 5s ease-in-out forwards" : "crowFlyInFromLeft 5s ease-in-out forwards")
+              animation: crowLanded || crowFlyingAway ? "none" : (index < 15 ? "crowFlyInFromRight 3s ease-in-out forwards" : "crowFlyInFromLeft 3s ease-in-out forwards")
             }}
           >
             <img
               key={crowLanded ? 'peck' : 'fly'}
-              src={crowLanded ? "/images/badanimals/crowpeck.gif" : "/images/badanimals/crowfly.gif"}
+              src={crowFlyingAway ? "/images/badanimals/crowfly.gif" : crowLanded ? "/images/badanimals/crowpeck.gif" : "/images/badanimals/crowfly.gif"}
               alt="crow"
               style={{
                 width: crowLanded ? "85px" : "70px",
                 height: crowLanded ? "85px" : "70px",
                 filter: "drop-shadow(0px 0px 5px rgba(255,0,0,0.8))",
-                transform: (!crowLanded && index >= 15) ? "scaleX(-1)" : "none"
+                transform: crowFlyingAway
+                  ? (index < 15 ? "scaleX(1)" : "scaleX(-1)")
+                  : (!crowLanded && index >= 15) ? "scaleX(-1)" : "none"
               }}
             />
           </div>
-          {crowLanded && Array.from({ length: 50 }, (_, i) => (
-            <div key={`dirt-${i}`} style={{
-              position: "fixed",
-              left: `${crowScreenPos.plotCX}px`,
-              top: `${crowScreenPos.plotCY}px`,
-              width: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
-              height: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
-              borderRadius: "50%",
-              backgroundColor: i % 4 === 0 ? "#6b4226" : i % 4 === 1 ? "#8B5E3C" : i % 4 === 2 ? "#a07040" : "#4a2e10",
-              pointerEvents: "none",
-              zIndex: 999998,
-              animation: `dirtParticle${i} 0.9s ease-out infinite`,
-              animationDelay: `${0.35 + i * 0.06}s`,
-            }} />
-          ))}
+          {(dirtActive || dirtFading) && (
+            <div style={{
+              position: "fixed", left: 0, top: 0, pointerEvents: "none", zIndex: 999998,
+              opacity: dirtFading ? 0 : 1,
+              transition: dirtFading ? "opacity 0.8s ease-out" : "none",
+            }}>
+              {Array.from({ length: 50 }, (_, i) => (
+                <div key={`dirt-${i}`} style={{
+                  position: "fixed",
+                  left: `${crowScreenPos.plotCX}px`,
+                  top: `${crowScreenPos.plotCY}px`,
+                  width: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
+                  height: i % 3 === 0 ? "10px" : i % 3 === 1 ? "8px" : "6px",
+                  borderRadius: "50%",
+                  backgroundColor: i % 4 === 0 ? "#6b4226" : i % 4 === 1 ? "#8B5E3C" : i % 4 === 2 ? "#a07040" : "#4a2e10",
+                  pointerEvents: "none",
+                  opacity: 0,
+                  animation: `dirtParticle${i} 0.9s ease-out infinite`,
+                  animationDelay: `${0.35 + i * 0.06}s`,
+                }} />
+              ))}
+            </div>
+          )}
         </div>,
         document.body
       )}
@@ -791,16 +1006,17 @@ const CropItem = ({
         @keyframes statusBounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-10px); } }
         @keyframes indicatorShrink { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
       `}</style>
-      {(data.needsWater || waterPhase === 'shrink' || data.bugCountdown > 0 || (data.crowCountdown > 0 && crowLanded)) && (
+      {((data.needsWater || waterPhase === 'shrink') && !(data.bugCountdown > 0) && !(data.crowCountdown > 0) || (data.bugCountdown > 0 && !bugsFlyingAway) || (data.crowCountdown > 0 && crowLanded && !crowFlyingAway)) && (
         <div style={{
           position: "absolute",
           top: "-25px",
           left: "50%",
           zIndex: 9999,
           pointerEvents: "none",
+          transform: waterPhase === 'shrink' ? 'translateX(-50%)' : undefined,
           animation: waterPhase === 'shrink' ? 'none' : 'statusBounce 1.5s infinite',
         }}>
-          {(data.bugCountdown > 0 || (data.crowCountdown > 0 && crowLanded))
+          {((data.bugCountdown > 0 && !bugsFlyingAway) || (data.crowCountdown > 0 && crowLanded && !crowFlyingAway))
             ? <img src="/images/mail/!.png" alt="!" className="badge-pulse" style={{ width: '38px', height: '38px', filter: 'drop-shadow(0px 2px 2px black)', position: 'relative', left: '25px', top: '38px' }} />
             : (pestJustKilled || crowLanded || data.growStatus === 2)
               ? null
@@ -818,7 +1034,7 @@ const CropItem = ({
           }
         </div>
       )}
-      {(data.growStatus === 2 || checkmarkPhase === 'shrink') && !data.needsWater && waterPhase !== 'shrink' && (
+      {(data.growStatus === 2 || checkmarkPhase === 'shrink') && !data.needsWater && waterPhase !== 'shrink' && !crowFlyingAway && !bugsFlyingAway && !pestJustKilled && (
         <div style={{
           position: "absolute",
           top: "60px",

@@ -3,37 +3,53 @@ import { ID_SEEDS } from './app_ids';
 // Per-crop realistic weight ranges (kg). Key = base seedId (seedId & 0xFFF).
 export const CROP_WEIGHTS = {
   // Pico
-  [ID_SEEDS.POTATO]:       { name: 'Potato',       min: 0.08, max: 0.45 },
-  [ID_SEEDS.LETTUCE]:      { name: 'Lettuce',       min: 0.05, max: 0.32 },
-  [ID_SEEDS.CABBAGE]:      { name: 'Cabbage',       min: 0.30, max: 1.80 },
-  [ID_SEEDS.ONION]:        { name: 'Onion',         min: 0.06, max: 0.38 },
-  [ID_SEEDS.RADISH]:       { name: 'Radish',        min: 0.03, max: 0.22 },
-  [ID_SEEDS.TURNIP]:       { name: 'Turnip',        min: 0.10, max: 0.55 },
+  [ID_SEEDS.POTATO]:       { name: 'Potato',       min:   50, max:   500 },
+  [ID_SEEDS.LETTUCE]:      { name: 'Lettuce',       min:   30, max:   300 },
+  [ID_SEEDS.CABBAGE]:      { name: 'Cabbage',       min:  300, max:  2000 },
+  [ID_SEEDS.ONION]:        { name: 'Onion',         min:   60, max:   400 },
+  [ID_SEEDS.RADISH]:       { name: 'Radish',        min:   25, max:   250 },
+  [ID_SEEDS.TURNIP]:       { name: 'Turnip',        min:  100, max:   600 },
   // Basic
-  [ID_SEEDS.WHEAT]:        { name: 'Wheat',         min: 0.02, max: 0.14 },
-  [ID_SEEDS.TOMATO]:       { name: 'Tomato',        min: 0.08, max: 0.52 },
-  [ID_SEEDS.CARROT]:       { name: 'Carrot',        min: 0.10, max: 0.65 },
-  [ID_SEEDS.CORN]:         { name: 'Corn',          min: 0.15, max: 0.80 },
-  [ID_SEEDS.PUMPKIN]:      { name: 'Pumpkin',       min: 2.00, max: 12.0 },
-  [ID_SEEDS.PEPPER]:       { name: 'Pepper',        min: 0.05, max: 0.30 },
-  [ID_SEEDS.PARSNIP]:      { name: 'Parsnip',       min: 0.10, max: 0.60 },
-  [ID_SEEDS.CELERY]:       { name: 'Celery',        min: 0.10, max: 0.55 },
-  [ID_SEEDS.BROCCOLI]:     { name: 'Broccoli',      min: 0.20, max: 0.90 },
-  [ID_SEEDS.CAULIFLOWER]:  { name: 'Cauliflower',   min: 0.40, max: 1.90 },
-  [ID_SEEDS.BERRY]:        { name: 'Berry',         min: 0.01, max: 0.08 },
-  [ID_SEEDS.GRAPES]:       { name: 'Grapes',        min: 0.20, max: 1.20 },
+  [ID_SEEDS.WHEAT]:        { name: 'Wheat',         min:   20, max:   150 },
+  [ID_SEEDS.TOMATO]:       { name: 'Tomato',        min:   80, max:   500 },
+  [ID_SEEDS.CARROT]:       { name: 'Carrot',        min:  100, max:   650 },
+  [ID_SEEDS.CORN]:         { name: 'Corn',          min:  150, max:   800 },
+  [ID_SEEDS.PUMPKIN]:      { name: 'Pumpkin',       min: 2000, max: 15000 },
+  [ID_SEEDS.PEPPER]:       { name: 'Pepper',        min:   50, max:   300 },
+  [ID_SEEDS.PARSNIP]:      { name: 'Parsnip',       min:  100, max:   600 },
+  [ID_SEEDS.CELERY]:       { name: 'Celery',        min:  100, max:   600 },
+  [ID_SEEDS.BROCCOLI]:     { name: 'Broccoli',      min:  200, max:  1000 },
+  [ID_SEEDS.CAULIFLOWER]:  { name: 'Cauliflower',   min:  400, max:  2000 },
+  [ID_SEEDS.BERRY]:        { name: 'Berry',         min:   10, max:   100 },
+  [ID_SEEDS.GRAPES]:       { name: 'Grapes',        min:  200, max:  1500 },
   // Premium
-  [ID_SEEDS.BANANA]:       { name: 'Banana',        min: 0.10, max: 0.32 },
-  [ID_SEEDS.MANGO]:        { name: 'Mango',         min: 0.20, max: 0.85 },
-  [ID_SEEDS.AVOCADO]:      { name: 'Avocado',       min: 0.15, max: 0.55 },
-  [ID_SEEDS.PINEAPPLE]:    { name: 'Pineapple',     min: 0.80, max: 3.50 },
-  [ID_SEEDS.BLUEBERRY]:    { name: 'Blueberry',     min: 0.01, max: 0.05 },
-  [ID_SEEDS.ARTICHOKE]:    { name: 'Artichoke',     min: 0.20, max: 0.75 },
-  [ID_SEEDS.PAPAYA]:       { name: 'Papaya',        min: 0.50, max: 2.60 },
-  [ID_SEEDS.FIG]:          { name: 'Fig',           min: 0.03, max: 0.12 },
-  [ID_SEEDS.LICHI]:        { name: 'Lichi',         min: 0.01, max: 0.04 },
-  [ID_SEEDS.LAVENDER]:     { name: 'Lavender',      min: 0.01, max: 0.05 },
-  [ID_SEEDS.DRAGON_FRUIT]: { name: 'Dragon Fruit',  min: 0.30, max: 1.20 },
+  [ID_SEEDS.BANANA]:       { name: 'Banana',        min:  100, max:   400 },
+  [ID_SEEDS.MANGO]:        { name: 'Mango',         min:  200, max:  1000 },
+  [ID_SEEDS.AVOCADO]:      { name: 'Avocado',       min:  150, max:   600 },
+  [ID_SEEDS.PINEAPPLE]:    { name: 'Pineapple',     min: 1000, max:  5000 },
+  [ID_SEEDS.BLUEBERRY]:    { name: 'Blueberry',     min:   50, max:   300 },
+  [ID_SEEDS.ARTICHOKE]:    { name: 'Artichoke',     min:  200, max:   800 },
+  [ID_SEEDS.PAPAYA]:       { name: 'Papaya',        min:  500, max:  3000 },
+  [ID_SEEDS.FIG]:          { name: 'Fig',           min:   50, max:   200 },
+  [ID_SEEDS.LICHI]:        { name: 'Lichi',         min:   50, max:   200 },
+  [ID_SEEDS.LAVENDER]:     { name: 'Lavender',      min:   50, max:   250 },
+  [ID_SEEDS.DRAGON_FRUIT]: { name: 'Dragon Fruit',  min:  500, max:  2500 },
+};
+
+// Weight brackets: the range is split into 5 equal sections.
+// bracket 1 = Common (lowest 20%), 5 = Legendary (top 20%)
+export const WEIGHT_BRACKET_LABELS = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+export const WEIGHT_BRACKET_COLORS = ['#f7efec', '#81c935', '#29b2c2', '#db6595', '#eedb33'];
+
+export const getWeightBracket = (seedId, weight) => {
+  const baseId = seedId & 0xFFF;
+  const info = CROP_WEIGHTS[baseId];
+  if (!info) return 1;
+  const range = info.max - info.min;
+  if (range <= 0) return 1;
+  const fraction = (weight - info.min) / range;
+  const bracket = Math.floor(fraction * 5) + 1;
+  return Math.min(5, Math.max(1, bracket));
 };
 
 // Ordered rotation — one crop spotlighted per week (repeats every 18 weeks)
@@ -66,11 +82,21 @@ export const getWeeklyFeaturedCrop = () => {
   return { baseId, weekNum, ...CROP_WEIGHTS[baseId] };
 };
 
-// Returns { weight: number, name: string } for the given seedId
+// Returns { weight, name, bracket (1-5), rarityLabel, rarityColor }
 export const rollCropWeight = (seedId) => {
   const baseId = seedId & 0xFFF;
   const info = CROP_WEIGHTS[baseId];
-  if (!info) return { weight: parseFloat((0.1 + Math.random() * 0.4).toFixed(2)), name: 'Crop' };
-  const w = info.min + Math.random() * (info.max - info.min);
-  return { weight: parseFloat(w.toFixed(2)), name: info.name };
+  if (!info) {
+    const weight = Math.round(50 + Math.random() * 450);
+    return { weight, name: 'Crop', bracket: 1, rarityLabel: 'COMMON', rarityColor: WEIGHT_BRACKET_COLORS[0] };
+  }
+  const w = Math.round(info.min + Math.random() * (info.max - info.min));
+  const bracket = getWeightBracket(seedId, w);
+  return {
+    weight: w,
+    name: info.name,
+    bracket,
+    rarityLabel: WEIGHT_BRACKET_LABELS[bracket - 1],
+    rarityColor: WEIGHT_BRACKET_COLORS[bracket - 1],
+  };
 };

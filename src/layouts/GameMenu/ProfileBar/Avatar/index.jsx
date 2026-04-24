@@ -15,6 +15,7 @@ const Avatar = ({ src, alt = "avatar" }) => {
     } catch { return false; }
   };
   const [hasNewPfp, setHasNewPfp] = useState(checkHasNewPfp);
+  const [profileTab, setProfileTab] = useState(0);
   const clickAudioRef = useRef(null);
 
 
@@ -96,7 +97,8 @@ const Avatar = ({ src, alt = "avatar" }) => {
               audio.currentTime = 0;
               audio.play().catch(() => {});
             }
-            setIsAvatarDialog(true);
+            setProfileTab(0);
+            setIsAvatarDialog(prev => !prev);
           }}
           onError={(e) => {
             e.target.src = fallbackSrc;
@@ -114,7 +116,140 @@ const Avatar = ({ src, alt = "avatar" }) => {
           />
         </>
       )}
-      {isAvatarDialog && <AvatarDialog onClose={() => { setIsAvatarDialog(false); setHasNewPfp(checkHasNewPfp()); }} />}
+      {isAvatarDialog && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={() => { setIsAvatarDialog(false); setHasNewPfp(checkHasNewPfp()); }}
+        >
+          <div style={{ position: 'relative', userSelect: 'none' }} onClick={e => e.stopPropagation()}>
+            <img src="/images/profile/profile/profiles.png" alt="Profile" draggable={false} style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain', display: 'block' }} />
+            <img
+              src="/images/profile/profile/x.png"
+              alt="Close"
+              draggable={false}
+              onClick={() => { setIsAvatarDialog(false); setHasNewPfp(checkHasNewPfp()); }}
+              style={{ position: 'absolute', top: 'calc(2% + 60px)', right: 'calc(-2% - 4px)', width: '8%', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.filter = 'brightness(1.2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = 'none'; }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+            />
+            <style>{`
+              .profile-tab-btn { transition: transform 0.1s, filter 0.1s; cursor: pointer; flex: 1; width: 0; object-fit: contain; }
+              .profile-tab-btn:hover { transform: scale(1.06); filter: brightness(1.15); }
+              .profile-tab-btn:active { transform: scale(0.95); filter: brightness(0.9); }
+              .profile-tab-btn.active { filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,80,0.7)); }
+            `}</style>
+            {/* Tab buttons */}
+            <div style={{ position: 'absolute', top: 'calc(27% - 60px)', left: '8%', width: '84%', display: 'flex', gap: '2%' }}>
+              {[
+                { src: '/images/profile/pfp/pfps.png', activeSrc: '/images/profile/pfp/pfpselect.png', label: 'pfp', clip: false },
+                { src: '/images/profile/background/bgs.png', activeSrc: '/images/profile/background/bgselect.png', label: 'bg', clip: false },
+                { src: '/images/profile/badges/badges.png', activeSrc: '/images/profile/badges/badgeselect.png', label: 'badges', clip: true },
+              ].map((tab, i) => {
+                const isActive = profileTab === i;
+                const usingSrc = isActive ? tab.activeSrc : tab.src;
+                if (tab.clip && isActive) {
+                  return (
+                    <div key={tab.label} style={{ flex: 1, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.1s, filter 0.1s' }}
+                      className={`profile-tab-btn${isActive ? ' active' : ''}`}
+                      onClick={() => setProfileTab(i)}>
+                      <img src={usingSrc} draggable={false} style={{ width: '300%', transform: 'translateX(-66.67%)', display: 'block', pointerEvents: 'none' }} />
+                    </div>
+                  );
+                }
+                return (
+                  <img
+                    key={tab.label}
+                    src={usingSrc}
+                    draggable={false}
+                    className={`profile-tab-btn${isActive ? ' active' : ''}`}
+                    onClick={() => setProfileTab(i)}
+                  />
+                );
+              })}
+            </div>
+            {profileTab === 2 ? (
+              <>
+                <img src="/images/profile/profile/comingsoon.png" draggable={false} style={{ position: 'absolute', top: '35%', left: '20%', width: '60%', objectFit: 'contain' }} />
+                <img src="/images/profile/profile/comingsoon.png" draggable={false} style={{ position: 'absolute', top: '55%', left: '20%', width: '60%', objectFit: 'contain' }} />
+                <img src="/images/profile/profile/comingsoon.png" draggable={false} style={{ position: 'absolute', top: '74%', left: '20%', width: '60%', objectFit: 'contain' }} />
+              </>
+            ) : profileTab === 0 ? (
+              ['calc(32% - 10px)', 'calc(40% - 12px)', 'calc(52% - 13px)', 'calc(60% - 15px)', 'calc(72% - 15px)', 'calc(80% - 17px)'].map((top, i) => (
+                <div key={i} style={{ position: 'absolute', top, left: 'calc(9% + 12px)', width: '83%', display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 'calc(1% - 2px)' }}>
+                  {Array.from({ length: 10 }).map((_, j) => {
+                    const isPfp = i === 0 && j === 0;
+                    const pfpSrc = '/images/pfp/defultpfp.png';
+                    const isSelected = isPfp && avatarImage === pfpSrc;
+                    return isPfp ? (
+                      <img
+                        key={j}
+                        src={pfpSrc}
+                        draggable={false}
+                        onClick={() => {
+                          localStorage.setItem('sandbox_pfp', pfpSrc);
+                          setAvatarImage(pfpSrc);
+                          window.dispatchEvent(new CustomEvent('pfpUpdated', { detail: pfpSrc }));
+                        }}
+                        style={{
+                          width: '100%', objectFit: 'contain', cursor: 'pointer',
+                          borderRadius: '6px',
+                          outline: isSelected ? '2px solid #ffea00' : 'none',
+                          filter: isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none',
+                          transition: 'transform 0.1s, filter 0.1s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.2) drop-shadow(0 0 4px rgba(255,234,0,0.9))' : 'brightness(1.15)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none'; }}
+                        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                        onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      />
+                    ) : (
+                      <img key={j} src="/images/profile/profile/questionmark.png" draggable={false} style={{ width: '100%', objectFit: 'contain' }} />
+                    );
+                  })}
+                </div>
+              ))
+            ) : profileTab === 1 ? (
+              ['calc(32% - 10px)', 'calc(40% - 12px)', 'calc(52% - 13px)', 'calc(60% - 15px)', 'calc(72% - 15px)', 'calc(80% - 17px)'].map((top, i) => (
+                <div key={i} style={{ position: 'absolute', top, left: 'calc(9% + 12px)', width: '83%', display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 'calc(1% - 2px)' }}>
+                  {Array.from({ length: 10 }).map((_, j) => {
+                    const isBg = i === 0 && j === 0;
+                    const bgSrc = '/images/profile/background/defultbg.png';
+                    const bgId = 'bg_default';
+                    const isSelected = isBg && localStorage.getItem('sandbox_profile_bg') === bgId;
+                    return isBg ? (
+                      <img
+                        key={j}
+                        src={bgSrc}
+                        draggable={false}
+                        onClick={() => {
+                          localStorage.setItem('sandbox_profile_bg', bgId);
+                          localStorage.removeItem('sandbox_profile_banner_img');
+                          window.dispatchEvent(new CustomEvent('profileBgUpdated', { detail: 'linear-gradient(135deg, #2d1a0e, #4a2c10)' }));
+                        }}
+                        style={{
+                          width: '100%', objectFit: 'contain', cursor: 'pointer',
+                          borderRadius: '6px',
+                          outline: isSelected ? '2px solid #ffea00' : 'none',
+                          filter: isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none',
+                          transition: 'transform 0.1s, filter 0.1s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.filter = isSelected ? 'brightness(1.15) drop-shadow(0 0 4px rgba(255,234,0,0.7))' : 'none'; }}
+                        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; }}
+                        onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      />
+                    ) : (
+                      <img key={j} src="/images/profile/profile/questionmark.png" draggable={false} style={{ width: '100%', objectFit: 'contain' }} />
+                    );
+                  })}
+                </div>
+              ))
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

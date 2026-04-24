@@ -95,12 +95,6 @@ const VendorMenu = ({
           onClick={() => onRollChancesClicked()}
           disabled={hasPendingRequests || buyingItem !== null || isRevealing}
         />
-        <BaseButton
-          className="vendor-button px-2rem"
-          label={"🎰 Scratch Off"}
-          onClick={() => onScratchOffClicked()}
-          disabled={hasPendingRequests || buyingItem !== null || isRevealing}
-        />
       </div>
 
     </div>
