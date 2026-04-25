@@ -10,9 +10,9 @@ export const MARKET_HOTSPOTS = [
   { id: ID_MARKET_HOTSPOTS.DEX, label: '', labelImg: '/images/label/stats.png', x: 422, y: 252, delay: 0.4, disableHoverSound: true },
   { id: ID_MARKET_HOTSPOTS.BANKER, label: 'BANKER', x: 682, y: 124, delay: 0.6, disableHoverSound: true },
   // { id: ID_MARKET_HOTSPOTS.HELPER, label: 'HELPER', x: 360, y: 330, delay: 0.8 },
-  { id: ID_MARKET_HOTSPOTS.MARKET, label: 'MARKET', x: 193, y: 288, delay: 0.2, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.MARKET, label: '', x: 193, y: 288, delay: 0.2, disableHoverSound: true },
   { id: ID_MARKET_HOTSPOTS.LEADERBOARD, label: 'LEADERBOARD', x: 532, y: 105, delay: 0.4, disableHoverSound: true },
-  { id: ID_MARKET_HOTSPOTS.SAGE, label: 'QUEEN', x: 239, y: 135, delay: 0.6, disableHoverSound: true },
+  { id: ID_MARKET_HOTSPOTS.SAGE, label: '', x: 239, y: 135, delay: 0.6, disableHoverSound: true },
 ];
 
 export const MARKET_STUFFS = [

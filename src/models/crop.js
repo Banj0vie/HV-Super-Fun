@@ -122,12 +122,10 @@ export class CropItemArrayClass {
     // Plant a seed across all empty slots up to count (helper)
     plantAll(seedId, maxCount = Infinity, growthTime = 60) {
         let planted = 0;
-        console.log(`plantAll: seedId=${seedId}, maxCount=${maxCount}, growthTime=${growthTime}`);
-        
+
         for (let i = 0; i < this.arrays.length && planted < maxCount; i++) {
             const item = this.arrays[i];
             if (item.seedId === null || item.seedId === undefined) {
-                console.log(`✓ Planting at plot ${i}: seedId=${seedId}, status=-1`);
                 item.seedId = seedId;
                 item.growStatus = -1;
                 item.plantedAt = Date.now();
@@ -135,12 +133,9 @@ export class CropItemArrayClass {
                 item.needsWater = false;
                 item.growthTime = growthTime;
                 planted++;
-            } else {
-                console.log(`✗ Plot ${i} already has seed: ${item.seedId} (status: ${item.growStatus})`);
             }
         }
-        
-        console.log(`plantAll completed: planted ${planted} seeds out of ${maxCount} requested`);
+
         return planted;
     }
 

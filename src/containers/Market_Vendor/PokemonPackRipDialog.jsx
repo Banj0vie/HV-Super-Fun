@@ -490,9 +490,14 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
   const bonusCards = isLevelUp
     ? (LEVEL_UP_REWARDS[rollingInfo.skill]?.(rollingInfo.level) || []).map((r, i) => ({ ...r, type: `reward_${i}` }))
     : rollingInfo.id === 'pabee_pack' ? [
-        { type: 'gold', label: '1000 HONEY', image: '/images/profile_bar/hny.png', color: '#ffea00' },
-        { type: 'gems', label: '250 Gems', image: '/images/profile_bar/diamond.png', color: '#00bfff' },
-      ] : [];
+        { type: 'gold', label: '1000 HONEY', image: '/images/profile_bar/hny.png', color: '#ffea00', cardImage: '/images/cardfront/goldcard/goldcard.png', cardBack: '/images/cardback/legendaryback.png' },
+        { type: 'gems', label: '250 Gems', image: '/images/profile_bar/diamond.png', color: '#00bfff', cardImage: '/images/cardfront/gemcard/gemcard.png', cardBack: '/images/cardback/rareback.png' },
+      ]
+    : rollingInfo.id === 'tutorial_farewell_pack' ? [
+        { type: 'gold', label: '2000 HONEY', image: '/images/profile_bar/hny.png', color: '#ffea00', cardImage: '/images/cardfront/goldcard/goldcard.png', cardBack: '/images/cardback/legendaryback.png' },
+        { type: 'gems', label: '250 Gems', image: '/images/profile_bar/diamond.png', color: '#00bfff', cardImage: '/images/cardfront/gemcard/gemcard.png', cardBack: '/images/cardback/rareback.png' },
+      ]
+    : [];
   const totalCards = revealedSeeds.length + bonusCards.length;
 
   const flipCard = (idx) => {
@@ -539,16 +544,22 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
         >
           {/* Back face */}
           <div className="card-face card-back-face">
-            <img src="/images/cardback/commonback.png" alt="Card Back" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }} />
+            <img src={bonus.cardBack || "/images/cardback/commonback.png"} alt="Card Back" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }} />
           </div>
           {/* Front face */}
-          <div className="card-face card-front-face" style={{ backgroundColor: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-            {bonus.emoji
-              ? <span style={{ fontSize: '64px', lineHeight: 1, filter: `drop-shadow(0 0 12px ${bonus.color})` }}>{bonus.emoji}</span>
-              : <img src={bonus.image} alt={bonus.label} style={{ width: '80px', height: '80px', objectFit: 'contain', filter: `drop-shadow(0 0 12px ${bonus.color})` }} />
-            }
-            <span style={{ fontFamily: 'Cartoonist', fontSize: '20px', color: bonus.color, textShadow: '1px 1px 0 #000', textAlign: 'center' }}>{bonus.label}</span>
-          </div>
+          {bonus.cardImage ? (
+            <div className="card-face card-front-face">
+              <img src={bonus.cardImage} alt={bonus.label} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }} />
+            </div>
+          ) : (
+            <div className="card-face card-front-face" style={{ backgroundColor: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+              {bonus.emoji
+                ? <span style={{ fontSize: '64px', lineHeight: 1, filter: `drop-shadow(0 0 12px ${bonus.color})` }}>{bonus.emoji}</span>
+                : <img src={bonus.image} alt={bonus.label} style={{ width: '80px', height: '80px', objectFit: 'contain', filter: `drop-shadow(0 0 12px ${bonus.color})` }} />
+              }
+              <span style={{ fontFamily: 'Cartoonist', fontSize: '20px', color: bonus.color, textShadow: '1px 1px 0 #000', textAlign: 'center' }}>{bonus.label}</span>
+            </div>
+          )}
         </div>
       </div>
     );

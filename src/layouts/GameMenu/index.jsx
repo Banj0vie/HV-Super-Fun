@@ -32,7 +32,7 @@ const GameMenu = () => {
     <nav className="game-menu">
       <div style={{marginBottom: 120}}></div>
       <div style={{marginLeft: '-20px'}}>
-      {MENU_ITEMS.map((item) => {
+      {MENU_ITEMS.filter(item => item.path !== '/market' && item.path !== '/valley').map((item) => {
         const isActive = location.pathname === item.path;
         const isTavernItem = item.path === '/tavern';
         const tavernOverride = isTavernItem && !isTavernUnlocked
@@ -49,6 +49,7 @@ const GameMenu = () => {
             isActive={isActive}
             highlight={false}
             onClickOverride={tavernOverride}
+            noHover={tutState.step < 32}
           />
         );
       })}

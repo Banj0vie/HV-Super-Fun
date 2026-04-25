@@ -465,7 +465,7 @@ const Tavern = () => {
   };
 
   const getActiveHotspots = () => {
-    if (tutorialStep >= 32) return hotspots;
+    if (tutorialStep >= 36) return hotspots;
     if (tutorialStep >= 24) return hotspots.map(h => ({ ...h, disabled: true }));
     return [];
   };

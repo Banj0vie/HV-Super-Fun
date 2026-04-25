@@ -21,19 +21,15 @@ const ProfileAuthBox = ({ onCreateProfile }) => {
       return;
     }
 
-    console.log('🚀 Creating profile:', { username: username.trim(), referralCode: referralCode.trim() });
     setIsCreatingProfile(true);
     setError(null);
     try {
       const txHash = await createProfile(username.trim(), referralCode.trim());
-      console.log('✅ Profile creation transaction:', txHash);
-      
+
       // Add a delay to allow blockchain state to update
-      console.log('⏳ Waiting for blockchain state to update...');
       await new Promise(resolve => setTimeout(resolve, 3000));
-      
+
       // Refresh profile status after creation
-      console.log('🔄 Refreshing profile status...');
       await fetchReferralData();
       
       onCreateProfile(username.trim(), referralCode.trim());

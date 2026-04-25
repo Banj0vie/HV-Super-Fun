@@ -100,9 +100,9 @@ const House = () => {
 
   useEffect(() => {
     const onSkip = () => {
-      setTutorialStep(32);
+      setTutorialStep(36);
       setDockTutPage(0);
-      localStorage.setItem('sandbox_tutorial_step', '32');
+      localStorage.setItem('sandbox_tutorial_step', '36');
       window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
     };
     window.addEventListener('skipTutorial', onSkip);
@@ -129,7 +129,7 @@ const House = () => {
 
 
   const getActiveHotspots = () => {
-    if (tutorialStep >= 32) return hotspots;
+    if (tutorialStep >= 36) return hotspots;
     const makeDummy = (arr) => arr.map(h => ({ ...h, id: h.id + '_dummy' }));
     if (tutorialStep === 20 && dockTutPage === 20) return makeDummy(hotspots.filter(h => h.id === ID_HOUSE_HOTSPOTS.ANGLER || h.id === ID_HOUSE_HOTSPOTS.REFERRALS));
     if (tutorialStep === 20 && dockTutPage === 19) return makeDummy(hotspots.filter(h => h.id === ID_HOUSE_HOTSPOTS.ANGLER || h.id === ID_HOUSE_HOTSPOTS.GARDNER));
@@ -352,7 +352,7 @@ const House = () => {
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/house.webp"
         hotspots={getActiveHotspots()}
-        dialogs={tutorialStep >= 32 ? dialogs : []}
+        dialogs={tutorialStep >= 36 ? dialogs : []}
         width={width}
         height={height}
         bees={bees}

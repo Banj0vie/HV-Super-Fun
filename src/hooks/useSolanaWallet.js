@@ -78,23 +78,10 @@ export const useSolanaWallet = () => {
   }, [dispatch]);
 
   // 3. Fake functions so buttons don't crash when clicked
-  const connectWallet = useCallback(async () => {
-    console.log("Sandbox: Connection is automatic.");
-  }, []);
-
-  const disconnectWallet = useCallback(async () => {
-    console.log("Sandbox: Disconnect disabled in dev mode.");
-  }, []);
-
-  const signMessage = useCallback(async (message) => {
-    console.log("Sandbox signing message:", message);
-    return new Uint8Array([1, 2, 3]);
-  }, []);
-
-  const sendTransaction = useCallback(async (tx) => {
-    console.log("Sandbox simulating transaction...");
-    return "SANDBOX_TX_SUCCESS_LOGAN";
-  }, []);
+  const connectWallet = useCallback(async () => {}, []);
+  const disconnectWallet = useCallback(async () => {}, []);
+  const signMessage = useCallback(async (message) => new Uint8Array([1, 2, 3]), []);
+  const sendTransaction = useCallback(async (tx) => "SANDBOX_TX_SUCCESS_LOGAN", []);
 
   return {
     // Wallet state

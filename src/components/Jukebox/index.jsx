@@ -15,7 +15,14 @@ const Jukebox = () => {
   const [playing, setPlaying] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const [tick, setTick] = useState(0);
+  const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
   const audioRef = useRef(null);
+
+  useEffect(() => {
+    const handler = () => setTutorialStep(parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+    window.addEventListener('tutorialStepChanged', handler);
+    return () => window.removeEventListener('tutorialStepChanged', handler);
+  }, []);
 
   const volume = clampVolume(parseFloat(settings?.musicVolume ?? defaultSettings.musicVolume) / 100);
 
@@ -81,6 +88,9 @@ const Jukebox = () => {
 
   const rotation = (tick * 3) % 360;
   const track = TRACKS[trackIdx];
+
+  // Hide the UI during the tutorial (music keeps playing)
+  if (tutorialStep < 36) return null;
 
   return (
     <div

@@ -94,6 +94,5 @@ export const getFinalCluster = () => {
   // if (urlCluster !== 'devnet' || (typeof window !== 'undefined' && window.location.search.includes('cluster'))) {
   //   return urlCluster;
   // }
-  console.log("envCluster", envCluster)
   return envCluster;
 };

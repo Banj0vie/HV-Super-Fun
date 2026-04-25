@@ -221,6 +221,17 @@ const App = () => {
                 <BackgroundMusic />
                 <Jukebox />
                 <AppContent />
+                {/* Subtle vignette — shadows bleeding in from all four edges */}
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    pointerEvents: 'none',
+                    zIndex: 850,
+                    boxShadow: 'inset 0 0 140px 20px rgba(0,0,0,0.55)',
+                  }}
+                />
               </Router>
             </NotificationProvider>
           </WalletModalProvider>

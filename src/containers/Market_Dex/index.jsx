@@ -72,7 +72,6 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
             return;
           }
           const solOut = await getSolOut(gameTokenAmount);
-          console.log("🚀 ~ calculateAmounts ~ SOL amount for", gameTokenAmount, "Game Tokens:", solOut);
           setSolAmount(solOut);
         } else {
           // SOL → Game Token: Calculate Game Token amount based on SOL input
@@ -81,7 +80,6 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
             return;
           }
           const tokensOut = await getTokensOut(solAmount);
-          console.log("🚀 ~ calculateAmounts ~ Game Token amount for", solAmount, "SOL:", tokensOut);
           setGameTokenAmount(tokensOut);
         }
       } catch (err) {
@@ -115,8 +113,6 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
     audio.currentTime = 0;
     audio.play().catch(() => {});
 
-    console.log("started dex;")
-
     if (isReversed) {
       // Game Token → SOL swap
       if (!gameTokenAmount || parseFloat(gameTokenAmount) <= 0) {
@@ -148,7 +144,6 @@ const DexDialog = ({ onClose, label = "DEX", header = "" }) => {
       }
 
       try {
-        console.log('buy token')
         const result = await buyTokens(parseFloat(solAmount));
 
         if (result && result.success) {

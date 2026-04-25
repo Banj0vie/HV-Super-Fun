@@ -32,7 +32,6 @@ export const getRaydiumSwapOutputAmount = async (uiAmount, solInput, connection,
   const amount = uiAmount * (solInput?LAMPORTS_PER_SOL:10**9);
   const slippage = 0.5 // in percent, for this example, 0.5 means 0.5%
   const txVersion = 'LEGACY'  // 'LEGACY' | 'VO'
-  console.log("call swap.js")
   const { data: swapResponse } = await axios.get(
     `${
       API_URLS.SWAP_HOST
@@ -41,7 +40,6 @@ export const getRaydiumSwapOutputAmount = async (uiAmount, solInput, connection,
     }&txVersion=${txVersion}`
   )
   if (!swapResponse.success) {
-    console.log("swapResponse error", swapResponse);
     return 0;
   }
   const uiOutputAmount = Number(swapResponse?.data?.outputAmount ?? 0) / 10**9;

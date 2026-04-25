@@ -750,7 +750,6 @@ const AdminPanel = () => {
 
     if (cmd === 'cord') {
       const handler = (e) => {
-        console.log(`Coordinates -> X: ${e.clientX}, Y: ${e.clientY}`);
         alert(`Coordinates logged to console -> X: ${e.clientX}, Y: ${e.clientY}`);
         window.removeEventListener('click', handler);
       };
@@ -1205,7 +1204,7 @@ const AdminPanel = () => {
 
       {(() => {
         const needsToFish = hasNewFishingMissions;
-        return (((!isDockRepaired && !seenDockPrompt) || needsToFish) || (!isTavernUnlocked && tutorialStep >= 32)) ? (
+        return (((!isDockRepaired && !seenDockPrompt) || needsToFish) || (!isTavernUnlocked && tutorialStep >= 36)) ? (
         <style>{`
           @keyframes quest-pulse {
             0%, 100% { transform: scale(1); }
@@ -1274,7 +1273,7 @@ const AdminPanel = () => {
           }
           ` : ''}
 
-          ${(!isTavernUnlocked && tutorialStep >= 32) ? `
+          ${(!isTavernUnlocked && tutorialStep >= 36) ? `
           /* Tavern Quest Indicator */
           a[href*="/tavern" i] {
             position: relative;

@@ -47,14 +47,11 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
   const [selectedSeed, setSelectedSeed] = useState({});
   
   useEffect(() => {
-    console.log('SeedRollingBox received seedPackId:', seedPackId, 'type:', typeof seedPackId);
-    
     // If seedPackId is 0 or falsy, show rolling animation
     if (!seedPackId || seedPackId === 0 || seedPackId === "0") {
       const timer = setTimeout(() => {
         setIsRolling(false);
         const randomSeed = getRandomSeedEntry();
-        console.log('Using random seed fallback:', randomSeed);
         setSelectedSeed(randomSeed);
       }, 5000 + delay); // stop after 3s
 
@@ -62,13 +59,11 @@ const SeedRollingBox = ({ seedPackId, delay = 0 }) => {
     } else {
       // If we have a real seedId, convert it and show immediately
       const seedData = convertSeedIdToSeedData(seedPackId);
-      console.log('Converted seed data:', seedData);
       if (seedData) {
         setIsRolling(false);
         setSelectedSeed(seedData);
       } else {
         // Fallback to random if conversion fails
-        console.log('Conversion failed, using random seed fallback');
         setIsRolling(false);
         const randomSeed = getRandomSeedEntry();
         setSelectedSeed(randomSeed);

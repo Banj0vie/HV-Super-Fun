@@ -38,6 +38,9 @@
 
 /* hover effects only on the icon */
 .menu-item:hover { transform: scale(1.14); }
+.menu-item.no-hover:hover { transform: none; }
+.menu-item.no-hover:active { transform: none; }
+.menu-item.no-hover:hover .menu-icon { filter: none; }
 
 .menu-item:hover .menu-icon { filter: brightness(1.25) contrast(1.15); }
 

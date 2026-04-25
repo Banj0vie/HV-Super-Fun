@@ -18,7 +18,7 @@ export const getSimulatedDateInfo = () => {
 
 const getEffectiveWeather = (simulatedDate) => {
   const tutorialStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-  if (tutorialStep < 32) return '☀️';
+  if (tutorialStep < 36) return '☀️';
   const override = localStorage.getItem('sandbox_weather_override');
   if (override === 'rain') return '🌧️';
   if (override === 'storm') return '⚡';

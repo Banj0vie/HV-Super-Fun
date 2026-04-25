@@ -311,12 +311,10 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
           };
           setRollingInfo(rollingInfo);
           setIsRollingDlg(true);
-          console.log("🚀 ~ VendorDialog ~ txSig:", txSig)
           // Set up event listener with the fulfill transaction block number
           const eventCleanup = await listenForSeedsRevealed(
             txSig,
             (revealedSeeds) => {
-              console.log("🚀 ~ VendorDialog ~ revealedSeeds:", revealedSeeds)
               // Update the rolling dialog with the actual revealed seeds
               setRollingInfo((prev) => ({
                 ...prev,
@@ -451,8 +449,6 @@ const VendorDialog = ({ onClose, label = "VENDOR", header = "", headerOffset = 0
                status: SEED_PACK_STATUS.COMMITED,
              },
            }));
-           console.log("Seed pack purchase successful:", result);
-           
            // Show success message
            const successMessage = item.count === 1 
              ? "✅ Successfully bought seed pack!" 

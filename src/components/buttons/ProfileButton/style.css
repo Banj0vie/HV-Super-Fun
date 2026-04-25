@@ -14,6 +14,11 @@
   filter: brightness(1.1) contrast(1.05);
 }
 
+.no-hover .profile-btn:hover,
+.profile-btn.no-hover:hover {
+  filter: none;
+}
+
 .profile-btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;

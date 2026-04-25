@@ -27,7 +27,6 @@ export const useBalanceRefresh = () => {
 
   const refreshBalances = useCallback(async (retryCount = 0, maxRetries = 3) => {
     if (!program || !publicKey || !connection) {
-      console.warn('Cannot refresh balances: missing program, publicKey, or connection');
       return;
     }
 

@@ -88,11 +88,29 @@ const Avatar = ({ src, alt = "avatar" }) => {
       ) : (
         <div
           style={{ width: '100%', height: '100%', position: 'relative', transition: 'transform 0.15s ease-out', transformOrigin: 'center' }}
-          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.12)'; }}
+          onMouseEnter={e => {
+            const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            const skipped = localStorage.getItem('sandbox_tutorial_skipped') === 'true';
+            if (tutStep < 36 && !skipped) return;
+            e.currentTarget.style.transform = 'scale(1.12)';
+          }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-          onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.93)'; }}
-          onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.12)'; }}
+          onMouseDown={e => {
+            const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            const skipped = localStorage.getItem('sandbox_tutorial_skipped') === 'true';
+            if (tutStep < 36 && !skipped) return;
+            e.currentTarget.style.transform = 'scale(0.93)';
+          }}
+          onMouseUp={e => {
+            const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            const skipped = localStorage.getItem('sandbox_tutorial_skipped') === 'true';
+            if (tutStep < 36 && !skipped) return;
+            e.currentTarget.style.transform = 'scale(1.12)';
+          }}
           onClick={() => {
+            const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            const skipped = localStorage.getItem('sandbox_tutorial_skipped') === 'true';
+            if (tutStep < 36 && !skipped) return;
             const audio = clickAudioRef.current;
             if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
             setProfileTab(0);

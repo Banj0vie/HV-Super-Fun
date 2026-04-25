@@ -108,42 +108,32 @@ export const handleSimulationError = async (tx, connection, sendTransactionFn, o
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Simulation attempt ${attempt}/${maxRetries}`);
-      
       const simulationResult = await connection.simulateTransaction(tx, {
         commitment: attempt === 1 ? 'processed' : 'confirmed',
         sigVerify: false,
         replaceRecentBlockhash: attempt > 1
       });
-      
+
       if (simulationResult.value.err) {
-        console.warn(`Simulation attempt ${attempt} failed:`, simulationResult.value.err);
-        
         if (attempt < maxRetries) {
-          console.log('Getting fresh blockhash for retry...');
           await new Promise(resolve => setTimeout(resolve, retryDelay));
           if (onRetry) await onRetry(attempt);
           continue;
         }
-        
+
         // If all attempts failed, we should skip preflight
-        console.log('All simulation attempts failed, will use skipPreflight=true');
         return { success: false, shouldSkipPreflight: true };
       }
-      
-      console.log(`Simulation attempt ${attempt} successful`);
+
       return { success: true, simulationResult: simulationResult.value };
     } catch (err) {
-      console.warn(`Simulation attempt ${attempt} error:`, err.message);
-      
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, retryDelay));
         if (onRetry) await onRetry(attempt);
         continue;
       }
-      
+
       // If simulation fails, we can still try to send with skipPreflight
-      console.log('Simulation failed, will attempt with skipPreflight=true');
       return { success: false, shouldSkipPreflight: true };
     }
   }
@@ -161,8 +151,6 @@ export const handlePhantomSimulationError = async (tx, connection, sendTransacti
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Phantom simulation attempt ${attempt}/${maxRetries}`);
-      
       // For Phantom, try different simulation strategies
       const simulationOptions = {
         commitment: attempt === 1 ? 'processed' : 'confirmed',
@@ -171,35 +159,27 @@ export const handlePhantomSimulationError = async (tx, connection, sendTransacti
       };
 
       const simulationResult = await connection.simulateTransaction(tx, simulationOptions);
-      
+
       if (simulationResult.value.err) {
-        console.warn(`Phantom simulation attempt ${attempt} failed:`, simulationResult.value.err);
-        
         if (attempt < maxRetries) {
-          console.log('Getting fresh blockhash for retry...');
           await new Promise(resolve => setTimeout(resolve, retryDelay));
           if (onRetry) await onRetry(attempt);
           continue;
         }
-        
+
         // For Phantom, if simulation fails, we should skip preflight
-        console.log('Phantom simulation failed, will use skipPreflight=true');
         return { success: false, shouldSkipPreflight: true };
       }
-      
-      console.log(`Phantom simulation attempt ${attempt} successful`);
+
       return { success: true, simulationResult: simulationResult.value };
     } catch (err) {
-      console.warn(`Phantom simulation attempt ${attempt} error:`, err.message);
-      
       if (attempt < maxRetries) {
         await new Promise(resolve => setTimeout(resolve, retryDelay));
         if (onRetry) await onRetry(attempt);
         continue;
       }
-      
+
       // For Phantom, if simulation fails, we can still try to send with skipPreflight
-      console.log('Phantom simulation failed, will attempt with skipPreflight=true');
       return { success: false, shouldSkipPreflight: true };
     }
   }
@@ -239,7 +219,6 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         commitment: 'processed',
         replaceRecentBlockhash: true,
       });
-      console.log("🚀 ~ sendTransactionForPhantom ~ sim:", sim);
 
       if (sim?.value?.err) {
         if (sim.value.err?.toString?.()?.includes('already been processed')) {
@@ -248,9 +227,6 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         throw new Error('simulation failed');
       }
     } catch (simError) {
-      if (simError.message !== 'simulation failed') {
-        console.warn('Simulation exception:', simError.message);
-      }
       throw new Error('simulation failed');
     }
     
@@ -263,7 +239,6 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         }
     } catch (rawSendErr) {
       if (isUserRejectError(rawSendErr)) throw rawSendErr; // do not retry on user reject
-      console.warn('Raw send (non-skip) failed, falling back to wallet adapter:', rawSendErr?.message);
     }
 
     if (!signature) {
@@ -275,7 +250,6 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         });
       } catch (adapterErr) {
         if (isUserRejectError(adapterErr)) throw adapterErr; // do not retry on user reject
-        console.warn('Wallet adapter sendTransaction failed, retrying via raw sign+send with skipPreflight:', adapterErr?.message);
         if (typeof window !== 'undefined' && window?.solana?.signTransaction) {
           const signed = await window.solana.signTransaction(tx);
           signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, maxRetries: 3 });
@@ -296,15 +270,12 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
   } catch (error) {
     // Check if it's an "already processed" error - treat as success
     if (error.message && error.message.includes('already been processed')) {
-      console.log('Transaction already processed, treating as success');
       return 'already_processed_' + Date.now();
     }
-    
+
     // Check if it's a simulation error or "Failed to simulate" error
     const errMsg = (error?.message || '').toLowerCase();
     if (errMsg && (errMsg.includes('simulation') || errMsg.includes('failed to simulate'))) {
-      console.warn('Simulation failed, retrying with skipPreflight...');
-
       try {
         const instruction = await method.instruction();
         const instructions = [...preIx, instruction];
@@ -329,7 +300,6 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
         }
         } catch (rawErr) {
           if (isUserRejectError(rawErr)) throw rawErr; // do not fallback on user reject
-          console.warn('Raw sign/send failed, falling back to wallet adapter:', rawErr?.message);
         }
 
         if (!signature) {
@@ -351,10 +321,9 @@ export const sendTransactionForPhantom = async (method, connection, sendTransact
       } catch (retryError) {
         // Check if retry also failed with "already processed"
         if (retryError.message && retryError.message.includes('already been processed')) {
-          console.log('Retry also shows already processed, treating as success');
           return 'already_processed_' + Date.now();
         }
-        
+
         console.error('Retry with skipPreflight also failed:', retryError);
         throw retryError;
       }

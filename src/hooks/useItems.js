@@ -85,9 +85,7 @@ export const useItems = () => {
       let balances = {};
       try {
         balances = await fetchAllItemBalances(connection, publicKey) || {};
-      } catch (err) {
-        console.warn("Sandbox Mode: Bypassing on-chain inventory fetch.");
-      }
+      } catch (err) {}
 
       // --- SANDBOX HACK: Load harvested produce ---
       try {

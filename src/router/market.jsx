@@ -73,7 +73,7 @@ const Market = () => {
   };
 
   const getActiveHotspots = () => {
-    if (tutorialStep >= 32) return hotspots;
+    if (tutorialStep >= 36) return hotspots;
     const makeDummy = (arr) => arr.map(h => ({ ...h, id: h.id + '_dummy' }));
     // New tutMarketPage flow (tutorialStep === 3)
     if (tutMarketPage === 12) return makeDummy(hotspots.filter(h => h.id === ID_MARKET_HOTSPOTS.BANKER));
@@ -160,7 +160,7 @@ const Market = () => {
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/market.webp"
         hotspots={getActiveHotspots()}
-        dialogs={tutorialStep >= 32 ? dialogs : []}
+        dialogs={tutorialStep >= 36 ? dialogs : []}
         width={width}
         height={height}
         stuffs={MARKET_STUFFS}

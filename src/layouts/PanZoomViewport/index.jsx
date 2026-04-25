@@ -378,7 +378,6 @@ const PanZoomViewport = ({
                   if (h.disabled) return;
                   if (onHotspotClick && onHotspotClick(h.id)) return;
                   if (h.id === "ID_HOUSE_HOTSPOTS_ANGLER" || h.id === "angler") {
-                    console.log("angler click");
                     playAnglerClickSound();
 
                     // If the dock hasn't been repaired yet, prompt the user for planks

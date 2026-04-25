@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
 
-const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive, highlight, onClickOverride }) => {
+const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive, highlight, onClickOverride, noHover = false }) => {
   const clickAudioRef = useRef(null);
   const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ const MenuItem = ({ path, icon, label, labelIcon, iconScale, isActive, highlight
   return (
     <a
       href={path}
-      className={`menu-item ${isActive ? 'active' : ''}`}
+      className={`menu-item ${isActive ? 'active' : ''} ${noHover ? 'no-hover' : ''}`}
       onClick={handleClick}
     >
       <div className={`menu-icon${highlight ? ' menu-icon-highlight' : ''}`}>

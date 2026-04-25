@@ -18,16 +18,12 @@ export const useROIData = () => {
       setError(null);
   
       try {
-        console.log('Getting ROI data for level:', level);
-  
         const commonMult = Number(getMultiplier(1, level));
         const uncommonMult = Number(getMultiplier(2, level));
         const rareMult = Number(getMultiplier(3, level));
         const epicMult = Number(getMultiplier(4, level));
         const legendaryMult = Number(getMultiplier(5, level));
-  
-        console.log('Multipliers:', { commonMult, uncommonMult, rareMult, epicMult, legendaryMult });
-  
+
         // Base rates from contract constants (in parts per million)
         const baseRates = {
           commons: 273400,    // 27.34%
@@ -46,7 +42,6 @@ export const useROIData = () => {
           legendaries: (baseRates.legendaries * Number(legendaryMult)) / 1000000
         };
   
-        console.log('Adjusted rates:', adjustedRates);
         setRoiData(adjustedRates);
         setFarmLevel(level);
       } catch (err) {

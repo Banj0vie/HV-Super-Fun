@@ -33,26 +33,382 @@ import PokemonPackRipDialog from "../containers/Market_Vendor/PokemonPackRipDial
 import { getRaritySeedId } from "../constants/app_ids";
 const FestivalsDialog = React.lazy(() => import("../containers/FestivalsDialog"));
 
+// Renders bright X/hole overlays at the exact position of the starter plots (6, 7, 8).
+// On step 11: always render Xs (staggered). On step 13: render X or hole depending on plot status (no stagger).
+// Full-screen dim with circular cutouts at any dirt plots — keeps the real dirt bright
+const TutorialDirtSpotlight = () => {
+  const [centers, setCenters] = useState([]);
+
+  useEffect(() => {
+    const measure = () => {
+      const STARTER = [6, 7, 8];
+      const next = STARTER.map((idx) => {
+        const el = document.querySelector(`.plot-dirt-marker[data-plot-dirt='${idx}']`);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { idx, cx: r.left + r.width / 2, cy: r.top + r.height / 2, r: Math.max(r.width, r.height) * 0.65 };
+      }).filter(Boolean);
+      setCenters(next);
+    };
+    measure();
+    const timer = setInterval(measure, 80);
+    window.addEventListener('resize', measure);
+    return () => { clearInterval(timer); window.removeEventListener('resize', measure); };
+  }, []);
+
+  if (centers.length === 0) {
+    return <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', pointerEvents: 'none', zIndex: 100000 }} />;
+  }
+
+  const maskLayers = centers
+    .map(p => `radial-gradient(circle ${p.r}px at ${p.cx}px ${p.cy}px, transparent ${p.r - 8}px, black ${p.r}px)`)
+    .join(', ');
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.45)',
+        pointerEvents: 'none',
+        zIndex: 100000,
+        WebkitMaskImage: maskLayers,
+        maskImage: maskLayers,
+        WebkitMaskComposite: 'source-in',
+        maskComposite: 'intersect',
+      }}
+    />
+  );
+};
+
+// Persistent Papabee — stays mounted across tutorial steps so the float animation doesn't reset.
+const TutorialPapabee = ({ step, dimmedBehind = false }) => {
+  const silhouette = step === 0 || step === 2;
+  const reveal = step === 3;
+  // Papabee visible on all tutorial bubble steps (hidden on step 7 name prompt + post-tutorial)
+  const visible = step >= 0 && step <= 35 && step !== 1 && step !== 7;
+  // During the pack-opening step (32), push papabee behind the pack dialog and blur it
+  const dimmedBehindPack = step === 32;
+  const effectiveDimmed = dimmedBehind || dimmedBehindPack;
+  const shiftX = step === 11 ? 600 : 0;
+  const shiftY = step === 11 ? 50 : 0;
+
+  const [revealed, setRevealed] = useState(!reveal);
+  useEffect(() => {
+    if (!reveal) { setRevealed(true); return; }
+    setRevealed(false);
+    const t = setTimeout(() => setRevealed(true), 600);
+    return () => clearTimeout(t);
+  }, [reveal, step]);
+
+  if (!visible) return null;
+
+  return (
+    <>
+      <style>{`@keyframes papabeeFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }`}</style>
+      <img
+        src="/images/tutorial/papabee.png"
+        alt="Papabee"
+        draggable={false}
+        style={{
+          position: 'fixed',
+          right: `${620 + shiftX}px`,
+          bottom: `${200 + shiftY}px`,
+          width: '180px',
+          objectFit: 'contain',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          zIndex: effectiveDimmed ? 500 : 100002,
+          animation: 'papabeeFloat 2.4s ease-in-out infinite',
+          transition: 'filter 0.25s ease-out',
+          filter: effectiveDimmed
+            ? 'blur(4px) brightness(0.6)'
+            : (silhouette || (reveal && !revealed))
+              ? 'brightness(0.05) blur(2.5px) drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 0 4px rgba(255,255,255,0.9))'
+              : 'none',
+        }}
+      />
+    </>
+  );
+};
+
+const TutorialStarterPlotsBright = ({ staggered = false, onlyHoles = false, onlyDirt = false, allowHover = false }) => {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const measure = () => {
+      const STARTER = [8, 7, 6]; // left → right order
+      const next = STARTER.map((idx) => {
+        const plotEl = document.querySelector(`.crop-item[data-plot-index='${idx}']`);
+        const status = plotEl ? parseInt(plotEl.getAttribute('data-plot-prep-status') || '0', 10) : 0;
+        const holeEl = document.querySelector(`.plot-hole-marker[data-plot-hole='${idx}']`);
+        const xEl    = document.querySelector(`.plot-x-marker[data-plot-x='${idx}']`);
+        let el = null;
+        let type = null;
+        // For dirt (empty or planted), use the crop-item itself — we copy its sprite background.
+        if (status === 3 && plotEl) { el = plotEl; type = 'dirt'; }
+        else if (holeEl) { el = holeEl; type = 'hole'; }
+        else if (xEl)    { el = xEl;    type = 'x'; }
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const hoverAttr = type === 'dirt'
+          ? (plotEl && plotEl.getAttribute('data-plot-hover') === 'true')
+          : (el.getAttribute('data-hover') === 'true');
+        const hovered = allowHover && !!hoverAttr;
+        if (onlyHoles && type !== 'hole') return null;
+        if (onlyDirt  && type !== 'dirt') return null;
+        // For dirt/planted plots, copy the crop-item's actual sprite position so the overlay matches the real visual.
+        let bgPosX = 0, bgPosY = 0;
+        if (type === 'dirt' && plotEl) {
+          const cs = window.getComputedStyle(plotEl);
+          const bp = cs.backgroundPosition || '0px 0px';
+          const parts = bp.split(' ');
+          bgPosX = parseFloat(parts[0]) || 0;
+          bgPosY = parseFloat(parts[1]) || 0;
+        }
+        return { idx, type, hovered, left: r.left, top: r.top, width: r.width, height: r.height, bgPosX, bgPosY };
+      }).filter(Boolean);
+      setItems(next);
+    };
+    measure();
+    const timer = setInterval(measure, 50);
+    window.addEventListener('resize', measure);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('resize', measure);
+    };
+  }, [onlyHoles, allowHover]);
+
+  return (
+    <>
+      <style>{`
+        @keyframes tutXPop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes tutXPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+      `}</style>
+      {items.map((p, i) => (
+        <div
+          key={p.idx}
+          style={{
+            position: 'fixed',
+            left: p.left,
+            top: p.top,
+            width: p.width,
+            height: p.height,
+            pointerEvents: 'none',
+            zIndex: 100001,
+            transformOrigin: 'center',
+            transform: (p.hovered && p.type === 'dirt') ? 'scale(1.1)' : 'scale(1)',
+            transition: 'transform 0.15s ease-out',
+          }}
+        >
+          {p.type === 'dirt' ? (
+            <div
+              key={`${p.idx}-dirt`}
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: '158.86px',
+                height: '207.76px',
+                transform: `scale(${p.width / 158.86})`,
+                transformOrigin: 'top left',
+                backgroundImage: 'url(/images/crops/bigger_plants.webp)',
+                backgroundPositionX: `${p.bgPosX}px`,
+                backgroundPositionY: `${p.bgPosY}px`,
+                backgroundRepeat: 'no-repeat',
+                pointerEvents: 'none',
+                animation: `tutXPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both`,
+              }}
+            />
+          ) : (
+            <img
+              key={`${p.idx}-${p.type}`}
+              src={p.type === 'hole' ? '/images/farming/hole.png' : (p.hovered ? '/images/farming/xhover.png' : '/images/farming/x.png')}
+              alt=""
+              draggable={false}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+                transformOrigin: 'center',
+                filter: (p.type === 'hole' && p.hovered)
+                  ? 'brightness(1.2) drop-shadow(0 0 6px rgba(255,220,100,0.9)) drop-shadow(0 0 12px rgba(255,180,40,0.7))'
+                  : 'none',
+                transition: 'filter 0.15s ease-out',
+                animation: (p.type === 'x' || p.type === 'hole')
+                  ? (staggered
+                      ? `tutXPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.3}s both, tutXPulse 1.4s ease-in-out ${0.4 + i * 0.3}s infinite`
+                      : `tutXPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, tutXPulse 1.4s ease-in-out 0.4s infinite`)
+                  : (staggered
+                      ? `tutXPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.3}s both`
+                      : `tutXPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both`),
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </>
+  );
+};
+
+const TutorialNamePrompt = ({ setTutorialStep, advanceTo }) => {
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, []);
+
+  const submit = () => {
+    const trimmed = name.trim();
+    if (!trimmed) { setError('Please enter a name.'); return; }
+    if (trimmed.length > 12) { setError('Max 12 characters.'); return; }
+    localStorage.setItem('sandbox_username', trimmed);
+    window.dispatchEvent(new CustomEvent('sandboxUsernameChanged', { detail: trimmed }));
+    setTutorialStep(advanceTo);
+    localStorage.setItem('sandbox_tutorial_step', String(advanceTo));
+    window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100000, pointerEvents: 'none' }}>
+      {/* Dim overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', pointerEvents: 'none', zIndex: 1 }} />
+
+      {/* Centered prompt */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        background: 'linear-gradient(135deg, #2d1a0e, #4a2c10)',
+        border: '3px solid #c8821a', borderRadius: 16,
+        padding: '32px 36px', minWidth: 360, textAlign: 'center',
+        fontFamily: 'GROBOLD, Cartoonist, sans-serif',
+        pointerEvents: 'auto', zIndex: 2,
+        boxShadow: '0 8px 28px rgba(0,0,0,0.7)',
+      }}>
+        <div style={{ fontSize: 22, color: '#f5d87a', marginBottom: 10, textShadow: '1px 1px 0 #000' }}>
+          What's your name?
+        </div>
+        <div style={{ fontSize: 12, color: '#c8a46a', marginBottom: 18 }}>
+          This is what will show on your name tag.
+        </div>
+        <input
+          ref={inputRef}
+          value={name}
+          onChange={e => { setName(e.target.value); setError(''); }}
+          onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          maxLength={12}
+          placeholder="Enter your name"
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            padding: '12px 14px', fontSize: 18,
+            borderRadius: 10, border: '2px solid #c8821a',
+            background: '#1a0e05', color: '#fff',
+            fontFamily: 'inherit', outline: 'none', marginBottom: 10, textAlign: 'center',
+          }}
+        />
+        {error && (
+          <div style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10 }}>{error}</div>
+        )}
+        <button
+          onClick={submit}
+          style={{
+            padding: '11px 32px', background: '#c8821a', border: 'none', borderRadius: 10,
+            color: '#fff', fontWeight: 'bold', cursor: 'pointer', fontSize: 15, fontFamily: 'inherit',
+            marginTop: 6,
+          }}
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc = '/images/tutorial/bubblequestion.png', showPapabee = false, papabeeSilhouette = false, papabeeReveal = false, fontSize = '56px', textMaxWidth = null, shiftX = 0, shiftY = 0, textShiftY = 0, noDim = false, noAdvance = false }) => {
+  const [typed, setTyped] = useState('');
+  const [revealed, setRevealed] = useState(!papabeeReveal);
+  const [revealComplete, setRevealComplete] = useState(!papabeeReveal);
+
+  useEffect(() => {
+    if (!papabeeReveal) return;
+    setRevealed(false);
+    setRevealComplete(false);
+    const t1 = setTimeout(() => setRevealed(true), 600);
+    const t2 = setTimeout(() => setRevealComplete(true), 1600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [papabeeReveal]);
+
+  useEffect(() => {
+    setTyped('');
+    // If papabee is revealing from silhouette, wait for the reveal transition to finish before typing.
+    const startDelay = papabeeReveal ? 1600 : 0;
+    let i = 0;
+    let id;
+    const startTimer = setTimeout(() => {
+      id = setInterval(() => {
+        i++;
+        setTyped(fullText.slice(0, i));
+        if (i >= fullText.length) clearInterval(id);
+      }, 30);
+    }, startDelay);
+    return () => {
+      clearTimeout(startTimer);
+      if (id) clearInterval(id);
+    };
+  }, [fullText, papabeeReveal]);
+
+  const advance = () => {
+    if (noAdvance) return;
+    setTutorialStep(advanceTo);
+    localStorage.setItem('sandbox_tutorial_step', String(advanceTo));
+    window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+  };
+
+  return (
+    <>
+      {/* Dim overlay at root stacking context — papabee (z 100002) sits above this, bubble (z 100003) above papabee */}
+      {!noDim && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', pointerEvents: 'none', zIndex: 100001 }} />}
+
+      {/* Bubble — above papabee */}
+      <div
+        onClick={advance}
+        style={{ position: 'fixed', right: `${20 + shiftX}px`, bottom: `${-70 + shiftY}px`, width: '820px', cursor: 'pointer', pointerEvents: 'auto', userSelect: 'none', zIndex: 100003 }}
+      >
+        <img
+          src={(papabeeReveal && !revealComplete) ? '/images/tutorial/bubblequestion.png' : bubbleSrc}
+          alt="Papabee says..."
+          draggable={false}
+          style={{ width: '100%', display: 'block', objectFit: 'contain' }}
+        />
+        {/* Typewriter text overlay */}
+        <div style={{
+          position: 'absolute',
+          top: `calc(38% + ${45 + textShiftY}px)`,
+          left: 'calc(44% - 295px)',
+          transform: 'translateY(-50%)',
+          fontFamily: '"Cartoonist", "GROBOLD", "Courier New", monospace',
+          fontSize,
+          color: '#3b1f0a',
+          fontWeight: 'bold',
+          textShadow: '2px 2px 0 rgba(0,0,0,0.12)',
+          whiteSpace: textMaxWidth ? 'normal' : 'nowrap',
+          maxWidth: textMaxWidth || 'none',
+          lineHeight: 1.15,
+          letterSpacing: '2px',
+          pointerEvents: 'none',
+        }}>
+          {typed}
+        </div>
+      </div>
+    </>
+  );
+};
+
 export const getQuestData = () => [
 
   // Wave 1: Early Bliss (0-60 min)
-
-  {
-    id: "q1_pabee_intro",
-    type: "main",
-    sender: "Pabee",
-    subject: "Welcome to the Farm",
-    body: [
-      "Hey son, thanks for watching over my farm! There is alot for you to do and alot for you achieve, this is your farm now so make it yours and make it the best farm it can be!",
-      "Ive left you some supplies make sure to read what they do...",
-      "Also before I left the cat ran away again, please leave him a bowl of water and a nice fish, he should come back when he smells it, thank you and enjoy the wonders of being a farmer!"
-    ],
-    rewards: [
-      { id: 'pabee_pack', count: 1, name: "Papabee's Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
-    ],
-    reqs: [],
-    unlockCondition: (step, completed) => true
-  },
 
   {
     id: "q1b_pabee_first_crop",
@@ -71,7 +427,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.CARROT, count: 2, name: "Carrots", pos: 3 }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_pabee_intro")
+    unlockCondition: (step, completed) => step >= 36
   },
 
   {
@@ -110,46 +466,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.POTATO, count: 2, name: "Potatoes", pos: 24 }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_beejamin_welcome")
-  },
-
-  {
-    id: "q1_mayor_welcome",
-    type: "main",
-    sender: "Mayor Prezibee",
-    subject: "Welcome to Harvest Valley!",
-    mailImage: "/images/mail/mailmayor.png",
-    body: [
-      "Dear New Resident of Harvest Valley,",
-      "On behalf of the township, I extend my most formal welcome. Our valley thrives when its farmers thrive, and I have every confidence in your potential.",
-      "Enclosed you will find a fine selection of celery seeds — a crop that speaks of discipline and patience. The valley is watching."
-    ],
-    rewards: [
-      { id: 'pico_pack', seeds: [getRaritySeedId(ID_SEEDS.CELERY, 1), getRaritySeedId(ID_SEEDS.CELERY, 1)], count: 1, name: "Pico Seeds Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
-    ],
-    reqs: [],
-    unlockCondition: (step, completed) => completed.includes("q1b_potionmaster_harvest")
-  },
-
-  {
-    id: "q1b_mayor_harvest",
-    type: "main",
-    sender: "Mayor Prezibee",
-    subject: "A Civic Update Request",
-    mailImage: "/images/mail/mailmayor.png",
-    body: [
-      "Greetings, Farmer.",
-      "As part of our ongoing Valley Growth Initiative, I am formally requesting a progress update in the form of a celery sample.",
-      "Produce said celery and the township will compensate you accordingly."
-    ],
-    rewards: [
-      { id: 'honey', count: 8000, name: "HNY", image: "/images/profile_bar/hny.png" },
-      { id: 'gems', count: 30, name: "Gems" },
-    ],
-    reqs: [
-      { id: ID_PRODUCE_ITEMS?.CELERY, count: 2, name: "Celery" }
-    ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_mayor_welcome")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q1_beejamin_welcome")
   },
 
   {
@@ -188,7 +505,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.RADISH, count: 2, name: "Radishes", pos: 28 }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_potionmaster_welcome")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q1_potionmaster_welcome")
   },
 
   {
@@ -227,7 +544,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.LETTUCE, count: 2, name: "Lettuce", pos: 26 }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q1_queen_welcome")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q1_queen_welcome")
   },
 
   {
@@ -263,7 +580,7 @@ export const getQuestData = () => [
     ],
     reqs: [],
     unlockCondition: (step, completed) => {
-      const WAVE1_QUESTS = ['q1_pabee_intro','q1_beejamin_welcome','q1_mayor_welcome','q1_potionmaster_welcome','q1_queen_welcome','q1_end_papabee','q1b_mayor_harvest'];
+      const WAVE1_QUESTS = ['q1_beejamin_welcome','q1_potionmaster_welcome','q1_queen_welcome','q1_end_papabee'];
       return WAVE1_QUESTS.every(id => completed.includes(id));
     }
   },
@@ -305,7 +622,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.WHEAT, count: 3, name: "Wheat" }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q2_basic_intro")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q2_basic_intro")
   },
 
   {
@@ -346,7 +663,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.CORN, count: 5, name: "Corn" }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q3_pabee_grow_tip")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q3_pabee_grow_tip")
   },
 
   {
@@ -367,7 +684,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.PUMPKIN, count: 3, name: "Pumpkins" }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q4_tavern_corn")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q4_tavern_corn")
   },
 
   {
@@ -389,7 +706,7 @@ export const getQuestData = () => [
       { id: ID_PRODUCE_ITEMS?.CARROT, count: 5, name: "Carrots", pos: 3 },
       { id: ID_PRODUCE_ITEMS?.TOMATO, count: 5, name: "Tomatoes" }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q5_pumpkin_king")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q5_pumpkin_king")
   },
 
   {
@@ -411,7 +728,7 @@ export const getQuestData = () => [
     reqs: [
       { id: ID_PRODUCE_ITEMS?.BROCCOLI, count: 3, name: "Broccoli" }
     ],
-    unlockCondition: (step, completed) => step >= 32 && completed.includes("q6_beejamin_gains")
+    unlockCondition: (step, completed) => step >= 36 && completed.includes("q6_beejamin_gains")
   },
 
   {
@@ -527,7 +844,7 @@ export const getQuestData = () => [
         }
       }
     ],
-    unlockCondition: (step, completed) => completed.includes("q1b_mayor_harvest")
+    unlockCondition: (step, completed) => completed.includes("q1_end_papabee")
   },
 
   // PFP Unlock Letters from Pabee
@@ -2084,20 +2401,20 @@ export const CraftingDialog = ({ onClose, refetchSeeds, tutorialStep, onAdvanceT
               style={{
                 padding: '10px 20px',
                 backgroundColor: activeTab === 'buildings' ? 'rgba(255, 165, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
-                color: activeTab === 'buildings' ? '#ffa500' : tutorialStep < 32 ? '#555' : '#ccc',
+                color: activeTab === 'buildings' ? '#ffa500' : tutorialStep < 36 ? '#555' : '#ccc',
                 border: `2px solid ${activeTab === 'buildings' ? '#ffa500' : '#5a402a'}`,
                 borderRadius: '8px',
-                cursor: tutorialStep < 32 ? 'not-allowed' : 'pointer',
+                cursor: tutorialStep < 36 ? 'not-allowed' : 'pointer',
                 fontFamily: 'monospace',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                pointerEvents: tutorialStep < 32 ? 'none' : 'auto',
-                opacity: tutorialStep < 32 ? 0.5 : 1
+                pointerEvents: tutorialStep < 36 ? 'none' : 'auto',
+                opacity: tutorialStep < 36 ? 0.5 : 1
               }}
             >
               Buildings
             </button>
-            {tutorialStep < 32 && (
+            {tutorialStep < 36 && (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', pointerEvents: 'all', cursor: 'not-allowed' }}>
                 <span style={{ fontSize: '18px', filter: 'drop-shadow(0px 1px 2px black)' }}>🔒</span>
               </div>
@@ -3335,13 +3652,13 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
-      const { seeds, onClosed } = e.detail;
+      const { seeds, onClosed, tier } = e.detail;
       const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
       for (const seedId of seeds) {
         loot[seedId] = (loot[seedId] || 0) + 1;
       }
       localStorage.setItem('sandbox_loot', JSON.stringify(loot));
-      setCharPackInfo({ seeds, tier: 'pico_pack', pendingLevelUp: onClosed || null });
+      setCharPackInfo({ seeds, tier: tier || 'pico_pack', pendingLevelUp: onClosed || null });
     };
     window.addEventListener('charPackOpen', handler);
     return () => window.removeEventListener('charPackOpen', handler);
@@ -3595,77 +3912,16 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
     window.dispatchEvent(new CustomEvent('seedDialogOpen', { detail: isSelectCropDialog }));
   }, [isSelectCropDialog]);
 
-  const [sirBeePos, setSirBeePos] = useState('-200px');
-
-
-  useEffect(() => {
-    if (tutorialStep === 1) {
-      setSirBeePos('670px');
-      const t2 = setTimeout(() => {
-         setTutorialStep(2);
-         localStorage.setItem('sandbox_tutorial_step', '2');
-      }, 600);
-      return () => clearTimeout(t2);
-    } else if (tutorialStep >= 2) {
-      setSirBeePos('670px');
-    }
-  }, [tutorialStep]);
-  
-  useEffect(() => {
-    if (tutorialStep === 24) {
-      setTutorialStep(25);
-      localStorage.setItem('sandbox_tutorial_step', '25');
-    }
-  }, [tutorialStep]);
-
-  // Auto-open gem popup when advancing to tutPage 11
-  useEffect(() => {
-    if (tutorialStep !== 3 || tutPage !== 11) return;
-    const plotIdx = tutWaterPlotRef.current;
-    if (plotIdx !== null) {
-      setTutGemPlotIndex(plotIdx);
-      setTutGemPopupOpen(true);
-      // Deselect watercan tool
-      setSelectedTool(null);
-      setIsWatering(false);
-      // growStatus visual update happens AFTER gems are paid (see gem popup onClick)
-    }
-  }, [tutPage, tutorialStep]);
-
-
-  // Set market tutorial flag when user is on tutPage 12
-  useEffect(() => {
-    if (tutorialStep !== 3 || tutPage !== 12) return;
-    const handleClick = (e) => {
-      if (e.target.closest('a[href*="/market"]')) {
-        localStorage.setItem('sandbox_tut_market', 'true');
-      }
-    };
-    document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
-  }, [tutorialStep, tutPage]);
-
-  const [tutSticks, setTutSticks] = useState(0);
-  const [tutAxe, setTutAxe] = useState(0);
-  const [tutPickaxe, setTutPickaxe] = useState(0);
-
-  useEffect(() => {
-    if (tutorialStep === 26) {
-      const updateTutCounts = () => {
-        const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
-        setTutSticks(loot[9995] || 0);
-        setTutAxe(loot[9991] || 0);
-        setTutPickaxe(loot[9992] || 0);
-      };
-      updateTutCounts();
-      const timer = setInterval(updateTutCounts, 500);
-      return () => clearInterval(timer);
-    }
-  }, [tutorialStep]);
 
   const autoSpawnRef = useRef(localStorage.getItem('auto_spawn_enabled') !== 'false');
   const [simulatedDay, setSimulatedDay] = useState(() => getSimulatedDateInfo().day);
   const [simulatedDate, setSimulatedDate] = useState(() => getSimulatedDateInfo().date);
+  const [weatherOverride, setWeatherOverride] = useState(() => localStorage.getItem('sandbox_weather_override') || null);
+  useEffect(() => {
+    const handler = () => setWeatherOverride(localStorage.getItem('sandbox_weather_override') || null);
+    window.addEventListener('weatherOverrideChanged', handler);
+    return () => window.removeEventListener('weatherOverrideChanged', handler);
+  }, []);
   const simulatedDateRef = useRef(simulatedDate);
   useEffect(() => {
     simulatedDateRef.current = simulatedDate;
@@ -3708,6 +3964,255 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   const [plotPrep, setPlotPrep] = useState(() => JSON.parse(localStorage.getItem('sandbox_plot_prep') || '{}'));
   const [prepDialogTarget, setPrepDialogTarget] = useState(null);
 
+  // Tutorial step 14 → 15 auto-advance when user digs their first hole
+  useEffect(() => {
+    if (tutorialStep !== 14) return;
+    const STARTER = [6, 7, 8];
+    const anyDug = STARTER.some(idx => (plotPrep[idx]?.status || 0) >= 1);
+    if (anyDug) {
+      const t = setTimeout(() => {
+        setTutorialStep(15);
+        localStorage.setItem('sandbox_tutorial_step', '15');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 500); // small delay so the dig animation can play
+      return () => clearTimeout(t);
+    }
+  }, [tutorialStep, plotPrep]);
+
+  // Tutorial step 15 → 16 auto-advance when user fills a hole with dirt (status 3)
+  useEffect(() => {
+    if (tutorialStep !== 15) return;
+    const STARTER = [6, 7, 8];
+    const anyDirt = STARTER.some(idx => (plotPrep[idx]?.status || 0) === 3);
+    if (anyDirt) {
+      const t = setTimeout(() => {
+        setTutorialStep(16);
+        localStorage.setItem('sandbox_tutorial_step', '16');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [tutorialStep, plotPrep]);
+
+  // When entering step 16, grant the user an uncommon potato seed (once)
+  useEffect(() => {
+    if (tutorialStep !== 16) return;
+    if (localStorage.getItem('sandbox_tutorial_gave_potato') === 'true') return;
+    const seedId = getRaritySeedId(ID_SEEDS.POTATO, 2); // rarity 2 = uncommon
+    const loot = JSON.parse(localStorage.getItem('sandbox_loot') || '{}');
+    loot[seedId] = (loot[seedId] || 0) + 1;
+    localStorage.setItem('sandbox_loot', JSON.stringify(loot));
+    localStorage.setItem('sandbox_tutorial_gave_potato', 'true');
+    if (typeof refetchSeeds === 'function') refetchSeeds();
+  }, [tutorialStep]);
+
+  // Tutorial step 19 — spawn a crow while the WOAH text is typing, auto-advance to 20 once it lands
+  useEffect(() => {
+    if (tutorialStep !== 19) return;
+    const STARTER = [6, 7, 8];
+    const plantedIdx = STARTER.find(idx => {
+      const it = cropArray.getItem(idx);
+      return it && it.seedId && it.seedId !== 0n;
+    });
+    if (plantedIdx == null) return;
+    // Spawn crow ~1.8s in (while text is typing) so the 3s fly-in finishes around step advance
+    const spawnT = setTimeout(() => {
+      crowsRef.current[plantedIdx] = 60;
+      setCropArray(prev => {
+        const newArr = new CropItemArrayClass(30);
+        newArr.copyFrom(prev);
+        const item = newArr.getItem(plantedIdx);
+        if (item) item.crowCountdown = 60;
+        return newArr;
+      });
+    }, 1800);
+    // After the crow's 3s fly-in completes, advance to step 20
+    const advanceT = setTimeout(() => {
+      setTutorialStep(20);
+      localStorage.setItem('sandbox_tutorial_step', '20');
+      window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+    }, 4900);
+    return () => { clearTimeout(spawnT); clearTimeout(advanceT); };
+  }, [tutorialStep]);
+
+  // Tutorial step 20 → 21 auto-advance when the crow is scared away
+  useEffect(() => {
+    if (tutorialStep !== 20) return;
+    const onScareCrow = (e) => {
+      const STARTER = [6, 7, 8];
+      if (!STARTER.includes(e.detail?.plotIndex)) return;
+      setTimeout(() => {
+        setTutorialStep(21);
+        localStorage.setItem('sandbox_tutorial_step', '21');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 800);
+    };
+    window.addEventListener('scareCrow', onScareCrow);
+    return () => window.removeEventListener('scareCrow', onScareCrow);
+  }, [tutorialStep]);
+
+  // Tutorial step 22 — spawn bugs on the planted plot as the bubble opens
+  useEffect(() => {
+    if (tutorialStep !== 22) return;
+    const STARTER = [6, 7, 8];
+    const plantedIdx = STARTER.find(idx => {
+      const it = cropArray.getItem(idx);
+      return it && it.seedId && it.seedId !== 0n;
+    });
+    if (plantedIdx == null) return;
+    const t = setTimeout(() => {
+      bugsRef.current[plantedIdx] = 60;
+      setCropArray(prev => {
+        const newArr = new CropItemArrayClass(30);
+        newArr.copyFrom(prev);
+        const item = newArr.getItem(plantedIdx);
+        if (item) item.bugCountdown = 60;
+        return newArr;
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [tutorialStep]);
+
+  // Tutorial step 22 → 23 auto-advance when a bug is squashed on a starter plot
+  useEffect(() => {
+    if (tutorialStep !== 22) return;
+    const onSquashBug = (e) => {
+      const STARTER = [6, 7, 8];
+      if (!STARTER.includes(e.detail?.plotIndex)) return;
+      setTimeout(() => {
+        setTutorialStep(23);
+        localStorage.setItem('sandbox_tutorial_step', '23');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 800);
+    };
+    window.addEventListener('squashBug', onSquashBug);
+    return () => window.removeEventListener('squashBug', onSquashBug);
+  }, [tutorialStep]);
+
+  // During tutorial steps 16-23, keep resetting plantedAt on the planted potato so it never grows
+  // (kicks in ~1s after the seed is planted, freezing growth for the whole lesson)
+  useEffect(() => {
+    if (tutorialStep < 16 || tutorialStep > 23) return;
+    const STARTER = [6, 7, 8];
+    const freeze = () => {
+      setCropArray(prev => {
+        let changed = false;
+        const newArr = new CropItemArrayClass(30);
+        newArr.copyFrom(prev);
+        STARTER.forEach(idx => {
+          const item = newArr.getItem(idx);
+          if (item && item.seedId && item.seedId !== 0n) {
+            item.growthTime = 9e12;
+            item.plantedAt = Date.now();
+            changed = true;
+          }
+        });
+        return changed ? newArr : prev;
+      });
+    };
+    freeze(); // run immediately on step change
+    const id = setInterval(freeze, 500);
+    return () => clearInterval(id);
+  }, [tutorialStep]);
+
+  // Tutorial step 24 → 25 auto-advance when the planted potato is harvested (its seedId clears)
+  useEffect(() => {
+    if (tutorialStep !== 24) return;
+    const STARTER = [6, 7, 8];
+    const stillPlanted = STARTER.some(idx => {
+      const it = cropArray.getItem(idx);
+      return it && it.seedId && it.seedId !== 0n;
+    });
+    // We started this step with a planted plot; once it's gone, the user harvested → advance
+    const sawPlant = localStorage.getItem('sandbox_tutorial_step24_seen_plant') === 'true';
+    if (stillPlanted && !sawPlant) {
+      localStorage.setItem('sandbox_tutorial_step24_seen_plant', 'true');
+      return;
+    }
+    if (!stillPlanted && sawPlant) {
+      localStorage.removeItem('sandbox_tutorial_step24_seen_plant');
+      const t = setTimeout(() => {
+        setTutorialStep(25);
+        localStorage.setItem('sandbox_tutorial_step', '25');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [tutorialStep, cropArray]);
+
+  // Tutorial step 32 — fire the pack (once) + grant gold + gems (once); always poll for advance
+  useEffect(() => {
+    if (tutorialStep !== 32) return;
+    if (localStorage.getItem('sandbox_tutorial_gave_farewell_pack') !== 'true') {
+      localStorage.setItem('sandbox_tutorial_gave_farewell_pack', 'true');
+      const seeds = [
+        getRaritySeedId(ID_SEEDS.POTATO, 1),  // common
+        getRaritySeedId(ID_SEEDS.CARROT, 2),  // uncommon
+        getRaritySeedId(ID_SEEDS.ONION, 3),   // rare
+      ];
+      const curGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
+      localStorage.setItem('sandbox_gold', String(curGold + 2000));
+      window.dispatchEvent(new CustomEvent('goldChanged', { detail: String(curGold + 2000) }));
+      const curGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+      localStorage.setItem('sandbox_gems', String(curGems + 250));
+      window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
+      window.dispatchEvent(new CustomEvent('charPackOpen', { detail: { seeds, tier: 'tutorial_farewell_pack' } }));
+    }
+    // Polling always runs while on step 32: advance once a pack has opened and then closed
+    let packEverOpened = false;
+    const pollId = setInterval(() => {
+      const packOpen = !!document.querySelector('.card-inner');
+      if (packOpen) {
+        packEverOpened = true;
+      } else if (packEverOpened) {
+        clearInterval(pollId);
+        setTutorialStep(33);
+        localStorage.setItem('sandbox_tutorial_step', '33');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }
+    }, 400);
+    return () => clearInterval(pollId);
+  }, [tutorialStep]);
+
+  // Tutorial step 23 — animate gems from 0 to 50 with a stock-ticker style count-up
+  useEffect(() => {
+    if (tutorialStep !== 23) return;
+    if (localStorage.getItem('sandbox_tutorial_gave_gems') === 'true') return;
+    localStorage.setItem('sandbox_tutorial_gave_gems', 'true');
+    // Delay until text is mostly done
+    const startDelay = setTimeout(() => {
+      const start = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
+      const target = start + 50;
+      const duration = 1400;
+      const startTime = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const current = Math.round(start + (target - start) * eased);
+        localStorage.setItem('sandbox_gems', String(current));
+        window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, 3000);
+    return () => clearTimeout(startDelay);
+  }, [tutorialStep]);
+
+  // Tutorial step 16 → 17 auto-advance when a starter plot gets a seed planted (instant, seamless dim transition)
+  useEffect(() => {
+    if (tutorialStep !== 16) return;
+    const STARTER = [6, 7, 8];
+    const anyPlanted = STARTER.some(idx => {
+      const item = cropArray.getItem(idx);
+      return item && item.seedId && item.seedId !== 0n;
+    });
+    if (anyPlanted) {
+      setTutorialStep(17);
+      localStorage.setItem('sandbox_tutorial_step', '17');
+      window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+    }
+  }, [tutorialStep, cropArray]);
+
   // Watering State
   const waterStateRef = useRef(JSON.parse(localStorage.getItem('sandbox_water_state') || '{}'));
   const [isWatering, setIsWatering] = useState(false);
@@ -3716,6 +4221,34 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   const [isDirting, setIsDirting] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [waterEffects, setWaterEffects] = useState([]);
+
+  // Tutorial step 17 → 18 auto-advance when the user waters a starter plot
+  // Also freezes growth on the planted potato so it doesn't grow during the lesson
+  useEffect(() => {
+    if (tutorialStep !== 17) return;
+    const STARTER = [6, 7, 8];
+    const watered = waterEffects.some(e => STARTER.includes(e.index));
+    if (watered) {
+      setCropArray(prev => {
+        const newArr = new CropItemArrayClass(30);
+        newArr.copyFrom(prev);
+        STARTER.forEach(idx => {
+          const item = newArr.getItem(idx);
+          if (item && item.seedId && item.seedId !== 0n) {
+            item.growthTime = 9e12; // effectively pause growth during tutorial
+            item.plantedAt = Date.now();
+          }
+        });
+        return newArr;
+      });
+      const t = setTimeout(() => {
+        setTutorialStep(18);
+        localStorage.setItem('sandbox_tutorial_step', '18');
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [tutorialStep, waterEffects]);
 
   useEffect(() => {
     const handleShake = () => {
@@ -3898,7 +4431,14 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   const [forestLockTime, setForestLockTime] = useState(0);
   const [mineLockTime, setMineLockTime] = useState(0);
   const [selectedTool, setSelectedTool] = useState(null);
+  const [flashTool, setFlashTool] = useState(null);
+  const flashToolTimerRef = useRef(null);
   const toggleTool = (name) => setSelectedTool(prev => prev === name ? null : name);
+  const flashToolBriefly = (name) => {
+    setFlashTool(name);
+    if (flashToolTimerRef.current) clearTimeout(flashToolTimerRef.current);
+    flashToolTimerRef.current = setTimeout(() => setFlashTool(prev => prev === name ? null : prev), 600);
+  };
 
   useEffect(() => {
     const checkLock = () => {
@@ -3934,6 +4474,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       if (cmd === 'skip') {
           setTutorialStep(9);
           localStorage.setItem('sandbox_tutorial_step', '9');
+          localStorage.setItem('sandbox_tutorial_skipped', 'true');
+          window.dispatchEvent(new CustomEvent('tutorialSkipChanged'));
         setIsDigging(false);
         setIsDirting(false);
         setIsSeeding(false);
@@ -4387,8 +4929,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       window.dispatchEvent(new CustomEvent('plotPrepUpdated', { detail: next }));
     };
     const onSkipTutorial = () => {
-      setTutorialStep(32);
-      localStorage.setItem('sandbox_tutorial_step', '32');
+      setTutorialStep(36);
+      localStorage.setItem('sandbox_tutorial_step', '36');
       setIsDigging(false);
       setIsDirting(false);
       setIsSeeding(false);
@@ -4826,7 +5368,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   // Listen for crop refresh events (after planting)
   useEffect(() => {
     const handleCropsRefresh = async (event) => {
-      console.log('Crops refresh event received:', event.detail);
       await loadCropsFromContract();
     };
 
@@ -5196,7 +5737,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
 
               const tutPestsDone = localStorage.getItem('sandbox_tutorial_pests_done') === 'true';
               const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
-              const inTutorial = tutStep > 0 && tutStep < 32;
+              const inTutorial = tutStep > 0 && tutStep < 36;
               if (autoSpawnRef.current && bugsRef.current[i] === undefined && crowsRef.current[i] === undefined && !(inTutorial && tutPestsDone)) {
                 const roll = Math.random();
                 if (roll < 0.005) { // 0.5% chance per second for a crow
@@ -5399,7 +5940,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           const subtype = getSubtype(seed.id);
           encodedIdsToPlant.push((plotIdx << 24) | (category << 16) | (subtype << 8) | localId);
           plantedSeedIds.push(seed.id);
-          newWaterState[plotIdx] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
+          newWaterState[plotIdx] = { needsInitial: true, needsMid: tutorialStep >= 36, pausedMs: 0, contractPlantedAt: Date.now() };
       }
     }
 
@@ -5696,8 +6237,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       // Force a re-render by updating the preview update key
       setPreviewUpdateKey(prev => prev + 1);
 
-      // Award XP
-      if (totalXpToAward > 0) {
+      // Award XP (skipped during tutorial)
+      if (totalXpToAward > 0 && tutorialStep >= 36) {
         const currentFarmingXp = parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10);
         const oldLevel = getLevelFromXp(currentFarmingXp);
         const newFarmingXp = currentFarmingXp + totalXpToAward;
@@ -5798,7 +6339,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       }
 
       if (cropsToPlant.length === 0) {
-        console.log("🚀 ~ handlePlant ~ selectedSeed:", selectedSeed)
         if (!selectedSeed) {
           show("Please select a seed first!", "info");
         } else {
@@ -5825,7 +6365,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         const id = numericSeedId & 0xFF;
         const subtype = getSubtype(numericSeedId);
         const plotId = crop.plotNumber;
-        console.log("🚀 ~ handlePlant ~ plotId:", plotId, category, subtype, id)
         return (plotId << 24) | (category << 16) | (subtype << 8) | id
       });
       const result = await plantBatch(seedIds);
@@ -5839,7 +6378,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         
         const newWaterState = { ...waterStateRef.current };
         for (let i = 0; i < cropsToPlant.length; i++) {
-          newWaterState[cropsToPlant[i].plotNumber] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
+          newWaterState[cropsToPlant[i].plotNumber] = { needsInitial: true, needsMid: tutorialStep >= 36, pausedMs: 0, contractPlantedAt: Date.now() };
         }
         waterStateRef.current = newWaterState;
         localStorage.setItem('sandbox_water_state', JSON.stringify(newWaterState));
@@ -5976,8 +6515,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       setPreviewUpdateKey(prev => prev + 1);
 
       if (successCount > 0) {
-        // Award XP
-        if (totalXpToAward > 0) {
+        // Award XP (skipped during tutorial)
+        if (totalXpToAward > 0 && tutorialStep >= 36) {
           const currentFarmingXp = parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10);
           const newFarmingXp = currentFarmingXp + totalXpToAward;
           localStorage.setItem('sandbox_farming_xp', newFarmingXp.toString());
@@ -6114,13 +6653,15 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           const base = TIER_BASE[seedCat] ?? 500;
           const step = TIER_STEP[seedCat] ?? 100;
           const pts = base + Math.max(0, subtype - 1) * step;
-          const tc = parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10);
-          localStorage.setItem('sandbox_total_crops', (tc + 1).toString());
-          const fp = parseInt(localStorage.getItem('sandbox_farming_points') || '0', 10);
-          localStorage.setItem('sandbox_farming_points', (fp + pts).toString());
-          const sfp = parseInt(localStorage.getItem('sandbox_season_farming_points') || '0', 10);
-          localStorage.setItem('sandbox_season_farming_points', (sfp + pts).toString());
-          window.dispatchEvent(new CustomEvent('seasonPointsChanged'));
+          if (tutorialStep >= 36) {
+            const tc = parseInt(localStorage.getItem('sandbox_total_crops') || '0', 10);
+            localStorage.setItem('sandbox_total_crops', (tc + 1).toString());
+            const fp = parseInt(localStorage.getItem('sandbox_farming_points') || '0', 10);
+            localStorage.setItem('sandbox_farming_points', (fp + pts).toString());
+            const sfp = parseInt(localStorage.getItem('sandbox_season_farming_points') || '0', 10);
+            localStorage.setItem('sandbox_season_farming_points', (sfp + pts).toString());
+            window.dispatchEvent(new CustomEvent('seasonPointsChanged'));
+          }
 
           // Weight tracking — per-crop all-time heaviest + potato + weekly featured crop
           const { weight, name: cropName, bracket, rarityLabel, rarityColor } = rollCropWeight(itemToHarvest.seedId);
@@ -6157,15 +6698,17 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           }
         }
 
-        const currentFarmingXp = parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10);
-        const oldLevel = getLevelFromXp(currentFarmingXp);
-        const newFarmingXp = currentFarmingXp + 10;
-        localStorage.setItem('sandbox_farming_xp', newFarmingXp.toString());
-        window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `+10 Farming XP!`, type: "info" } }));
-        setFarmingXp(newFarmingXp);
-        const newLevel = getLevelFromXp(newFarmingXp);
-        if (newLevel > oldLevel) {
-          window.dispatchEvent(new CustomEvent('levelUp', { detail: { skill: 'Farming', level: newLevel } }));
+        if (tutorialStep >= 36) {
+          const currentFarmingXp = parseInt(localStorage.getItem('sandbox_farming_xp') || '0', 10);
+          const oldLevel = getLevelFromXp(currentFarmingXp);
+          const newFarmingXp = currentFarmingXp + 10;
+          localStorage.setItem('sandbox_farming_xp', newFarmingXp.toString());
+          window.dispatchEvent(new CustomEvent('showNotification', { detail: { msg: `+10 Farming XP!`, type: "info" } }));
+          setFarmingXp(newFarmingXp);
+          const newLevel = getLevelFromXp(newFarmingXp);
+          if (newLevel > oldLevel) {
+            window.dispatchEvent(new CustomEvent('levelUp', { detail: { skill: 'Farming', level: newLevel } }));
+          }
         }
 
         const ringExpiry = parseInt(localStorage.getItem('sandbox_ring_expiry') || '0', 10);
@@ -6340,6 +6883,16 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   };
 
   const onClickCrop = (isShift, index) => {
+
+    // During tutorial, X plots are only clickable on step 14 (when explicitly prompted to dig).
+    // On every other tutorial step, clicking an X shakes the plot instead of digging.
+    if (tutorialStep < 36 && tutorialStep !== 14) {
+      const pStatus = plotPrep[index]?.status || 0;
+      if (pStatus === 0) {
+        window.dispatchEvent(new CustomEvent('tutorialPlotShake', { detail: index }));
+        return;
+      }
+    }
 
     // Check if userCrops are loaded before allowing any plot interaction
     if (!userCropsLoaded) {
@@ -6518,6 +7071,37 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       const endTime = Math.floor((plotData.plantedAt || 0) / 1000) + (plotData.growthTime || 0);
       const isReady = (plotData.growStatus === 2) || (nowSec >= endTime);
 
+      // Auto-water: if the crop needs water and isn't ready yet, just water it on click
+      if (!isReady && plotData.needsWater) {
+        flashToolBriefly('bucket');
+        const wState = waterStateRef.current[index];
+        if (wState) {
+          if (wState.needsInitial) wState.needsInitial = false;
+          else if (wState.needsMid) wState.needsMid = false;
+          waterStateRef.current = { ...waterStateRef.current };
+          localStorage.setItem('sandbox_water_state', JSON.stringify(waterStateRef.current));
+          setWaterEffects(prev => [...prev, { id: Date.now() + Math.random(), index, time: Date.now() }]);
+        }
+        playWaterSound();
+        if (tutorialStep === 3 && tutPage === 8) {
+          const plotIdx = tutWaterPlotRef.current !== null ? tutWaterPlotRef.current : index;
+          setTutPageSync(9);
+          tutPostWaterRef.current = true;
+          tutBugKilledRef.current = false;
+          setTimeout(() => {
+            bugsRef.current[plotIdx] = 60;
+            setCropArray(prev => {
+              const newArr = new CropItemArrayClass(30);
+              newArr.copyFrom(prev);
+              const it = newArr.getItem(plotIdx);
+              if (it) it.bugCountdown = 60;
+              return newArr;
+            });
+          }, 1000);
+        }
+        return;
+      }
+
       if (tutorialStep === 3 && tutPage === 11) {
         if (isReady) {
           if (farmingLoading) return;
@@ -6534,7 +7118,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         handleInstantHarvest(index);
         return;
       } else {
-        if (tutorialStep >= 32) setSkipGrowTarget(index);
+        if (tutorialStep >= 36 || tutorialStep === 24) setSkipGrowTarget(index);
         return;
       }
     }
@@ -6603,13 +7187,32 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
     }
 
     if (pStatus === 0) {
-      show("Equip your shovel to dig a hole!", "info");
+      if (tutorialStep === 3) {
+        const existingHoles = Object.values(plotPrep).filter(p => p.status === 1 || p.status === 3).length;
+        if (existingHoles >= 1) {
+          show("Dig just one hole for now!", "info");
+          return;
+        }
+      }
+      flashToolBriefly('shovel');
+      playPlantConfirmSound();
+      updatePlotPrep(index, { status: 1 });
+      if (tutorialStep === 3 && tutPage < 6) {
+        setTutPageSync(6);
+      }
       return;
     } else if (pStatus === 1 || pStatus === 2) {
-      setPrepDialogTarget(index);
+      flashToolBriefly('soil');
+      updatePlotPrep(index, { ...plotPrep[index], status: 3 });
+      playPlantConfirmSound();
+      if (tutorialStep === 3 && tutPage < 7) {
+        setTutPageSync(7);
+      }
       return;
     } else if (pStatus === 3) {
-      show("Select the Seed Bag tool to plant a seed!", "info");
+      flashToolBriefly('seeds');
+      setCurrentFieldIndex(index);
+      setIsSelectCropDialog(true);
       return;
     }
   };
@@ -6692,7 +7295,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         localStorage.setItem('sandbox_loot', JSON.stringify(sandboxLoot));
         
         const newWaterState = { ...waterStateRef.current };
-        newWaterState[idx] = { needsInitial: true, needsMid: tutorialStep >= 32, pausedMs: 0, contractPlantedAt: Date.now() };
+        newWaterState[idx] = { needsInitial: true, needsMid: tutorialStep >= 36, pausedMs: 0, contractPlantedAt: Date.now() };
         waterStateRef.current = newWaterState;
         localStorage.setItem('sandbox_water_state', JSON.stringify(newWaterState));
 
@@ -6739,7 +7342,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
     },
   ];
 
-  const bees = tutorialStep < 32 ? [] : FARM_BEES;
+  const bees = tutorialStep < 36 ? [] : FARM_BEES;
   return (
     <div className={isCatShaking ? "shake-screen" : ""}>
       <style>{`
@@ -6776,9 +7379,130 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       )}
 
       {tutorialStep >= 11 && <WeatherOverlay />}
-      
 
-      {/* Farming Level Banner - Top Right */}
+      {/* Drifting cloud shadows + wind streaks — only when weather is sunny (tutorial is always sunny) */}
+      {(tutorialStep < 36 || (weatherOverride === 'sunny') || (weatherOverride !== 'rain' && weatherOverride !== 'storm' && getWeatherForDay(simulatedDate) === '☀️')) && (
+      <>
+        <style>{`
+          /* Each cycle is 48s. A cloud is visible for ~6s (0-12.5%), then hidden until its next turn. */
+          @keyframes cloudDriftE   { 0% { transform: translate(-60vw,  0);    opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(160vw,  0);    opacity: 1; } 13% { opacity: 0; } 100% { transform: translate(-60vw,  0);    opacity: 0; } }
+          @keyframes cloudDriftW   { 0% { transform: translate( 60vw,  0);    opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(-160vw, 0);    opacity: 1; } 13% { opacity: 0; } 100% { transform: translate( 60vw,  0);    opacity: 0; } }
+          @keyframes cloudDriftS   { 0% { transform: translate( 0, -60vh);    opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(  0, 160vh);   opacity: 1; } 13% { opacity: 0; } 100% { transform: translate( 0, -60vh);    opacity: 0; } }
+          @keyframes cloudDriftN   { 0% { transform: translate( 0,  60vh);    opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(  0, -160vh);  opacity: 1; } 13% { opacity: 0; } 100% { transform: translate( 0,  60vh);    opacity: 0; } }
+          @keyframes cloudDriftSE  { 0% { transform: translate(-60vw, -60vh); opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(160vw, 160vh); opacity: 1; } 13% { opacity: 0; } 100% { transform: translate(-60vw, -60vh); opacity: 0; } }
+          @keyframes cloudDriftSW  { 0% { transform: translate( 60vw, -60vh); opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(-160vw, 160vh);opacity: 1; } 13% { opacity: 0; } 100% { transform: translate( 60vw, -60vh); opacity: 0; } }
+          @keyframes cloudDriftNE  { 0% { transform: translate(-60vw,  60vh); opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(160vw, -160vh);opacity: 1; } 13% { opacity: 0; } 100% { transform: translate(-60vw,  60vh); opacity: 0; } }
+          @keyframes cloudDriftNW  { 0% { transform: translate( 60vw,  60vh); opacity: 0; } 1% { opacity: 1; } 12.5% { transform: translate(-160vw,-160vh); opacity: 1; } 13% { opacity: 0; } 100% { transform: translate( 60vw,  60vh); opacity: 0; } }
+        `}</style>
+
+        {/* → East, along top */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', top: '-32vh', left: 0, width: '70vw', height: '55vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.14) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftE 160s linear infinite',
+          animationDelay: '0s',
+          filter: 'blur(28px)',
+        }} />
+        {/* ↘ Southeast diagonal */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', top: '-25vh', left: 0, width: '55vw', height: '45vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftSE 160s linear infinite',
+          animationDelay: '-20s',
+          filter: 'blur(30px)',
+        }} />
+        {/* ↓ South, along left edge */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', top: 0, left: '-35vw', width: '55vw', height: '70vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftS 160s linear infinite',
+          animationDelay: '-40s',
+          filter: 'blur(32px)',
+        }} />
+        {/* ↙ Southwest diagonal */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', top: '-25vh', right: 0, width: '55vw', height: '45vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftSW 160s linear infinite',
+          animationDelay: '-60s',
+          filter: 'blur(30px)',
+        }} />
+        {/* ← West, along bottom */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', bottom: '-32vh', left: 0, width: '70vw', height: '55vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.23) 0%, rgba(0,0,0,0.13) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftW 160s linear infinite',
+          animationDelay: '-80s',
+          filter: 'blur(28px)',
+        }} />
+        {/* ↖ Northwest diagonal */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', bottom: '-25vh', right: 0, width: '55vw', height: '45vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftNW 160s linear infinite',
+          animationDelay: '-100s',
+          filter: 'blur(30px)',
+        }} />
+        {/* ↑ North, along right edge */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', top: 0, right: '-35vw', width: '55vw', height: '70vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftN 160s linear infinite',
+          animationDelay: '-120s',
+          filter: 'blur(32px)',
+        }} />
+        {/* ↗ Northeast diagonal */}
+        <div aria-hidden="true" style={{
+          position: 'fixed', bottom: '-25vh', left: 0, width: '55vw', height: '45vh',
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
+          borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
+          animation: 'cloudDriftNE 160s linear infinite',
+          animationDelay: '-140s',
+          filter: 'blur(30px)',
+        }} />
+
+        {/* Wind streaks — thin horizontal lines that sweep across occasionally */}
+        <style>{`
+          @keyframes windStreak {
+            0%   { opacity: 0; transform: translateX(-20vw) scaleX(0.3); }
+            2%   { opacity: 0.5; transform: translateX(10vw) scaleX(1); }
+            6%   { opacity: 0.5; transform: translateX(85vw) scaleX(1); }
+            9%   { opacity: 0; transform: translateX(120vw) scaleX(0.3); }
+            100% { opacity: 0; transform: translateX(120vw) scaleX(0.3); }
+          }
+          .wind-streak {
+            position: fixed; left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.7) 50%, transparent 100%);
+            pointerEvents: none;
+            z-index: 401;
+            opacity: 0;
+            filter: blur(0.5px);
+          }
+        `}</style>
+        {[
+          { top: '14vh', width: '30vw', duration: 55, delay: -5 },
+          { top: '42vh', width: '26vw', duration: 70, delay: -30 },
+          { top: '78vh', width: '34vw', duration: 60, delay: -48 },
+        ].map((w, i) => (
+          <div key={`wind-${i}`} aria-hidden="true" className="wind-streak" style={{
+            top: w.top, width: w.width,
+            animation: `windStreak ${w.duration}s ease-in-out infinite`,
+            animationDelay: `${w.delay}s`,
+          }} />
+        ))}
+      </>
+      )}
+
+      {/* Farming Level Banner - Top Right (hidden during tutorial) */}
+      {tutorialStep >= 36 && (
       <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 100, pointerEvents: 'none', display: 'inline-flex', flexDirection: 'column', alignItems: 'stretch' }}>
         <div style={{ position: 'relative', display: 'flex' }}>
           <img src="/images/label/farmerlevellabel.png" style={{ height: '92px', objectFit: 'contain', display: 'block' }} />
@@ -6794,6 +7518,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           </div>
         </div>
       </div>
+      )}
 
       {/* Festivals Button — temporarily hidden */}
 
@@ -6802,7 +7527,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
 
       <PanZoomViewport
         backgroundSrc="/images/backgrounds/realfarm.png"
-        hotspots={tutorialStep >= 32 ? hotspots.filter(h => h.id !== ID_FARM_HOTSPOTS.FARMER || completedQuests.includes('q2_missionboard_intro') || JSON.parse(localStorage.getItem('sandbox_read_quests') || '[]').includes('q2_missionboard_intro')) : []}
+        hotspots={tutorialStep >= 36 ? hotspots.filter(h => h.id !== ID_FARM_HOTSPOTS.FARMER || completedQuests.includes('q2_missionboard_intro') || JSON.parse(localStorage.getItem('sandbox_read_quests') || '[]').includes('q2_missionboard_intro')) : []}
         width={width}
         height={height}
         dialogs={dialogs}
@@ -6938,47 +7663,6 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           />
         )}
 
-        {/* Sir Bee Tutorial Overlay */}
-        {tutorialStep >= 1 && tutorialStep < 3 && (
-          <>
-            <img
-              src="/images/bees/sir.png"
-              alt="Sir Bee"
-              style={{
-                position: 'absolute', left: `calc(${sirBeePos} - 30px)`, top: '300px', width: '100px', zIndex: 20,
-                transition: 'none',
-                filter: tutorialStep === 2 ? 'drop-shadow(0 0 10px yellow)' : 'none',
-                cursor: tutorialStep === 2 ? 'pointer' : 'default',
-                animation: tutorialStep >= 2 ? 'mapFloat 2s ease-in-out infinite' : 'none',
-                pointerEvents: tutorialStep >= 2 ? 'auto' : 'none'
-              }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                if (tutorialStep === 2) {
-                  setTutorialStep(3);
-                  localStorage.setItem('sandbox_tutorial_step', '3');
-                }
-              }}
-            />
-            {tutorialStep === 2 && (
-              <img
-                src="/images/mail/!.png"
-                alt="!"
-                style={{
-                  position: 'absolute',
-                  left: `calc(${sirBeePos} + 40px)`,
-                  top: '280px',
-                  width: '24px',
-                  height: '24px',
-                  zIndex: 21,
-                  pointerEvents: 'none',
-                  animation: 'mapFloat 2s ease-in-out infinite'
-                }}
-              />
-            )}
-          </>
-        )}
 
         {/* Protector Spots Overlay */}
         {FARM_POSITIONS && SHARED_SPOTS_CONFIG.map((spot) => {
@@ -7163,7 +7847,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           </div>
         )}
 
-        {tutorialStep >= 32 && (
+        {tutorialStep >= 36 && (
           <>
         {/* Forest Label Overlay - temporarily hidden */}
         {false && <div
@@ -7336,7 +8020,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       )}
 
       {/* Interactive Bowls */}
-      {false && tutorialStep >= 32 && !hideIcons && (
+      {false && tutorialStep >= 36 && !hideIcons && (
         <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'flex-end', gap: '15px', zIndex: 9999 }}>
           
           {/* Tamagotchi Pet Device */}
@@ -7406,194 +8090,98 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
     .tutorial-img:active { transform: scale(0.96); filter: brightness(0.8); }
   `}</style>
 
-  {tutorialStep === 3 && (
-    <div style={{ position: 'fixed', right: tutPage === 4 ? '520px' : '20px', bottom: tutPage === 4 ? '260px' : '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img
-          src={tutPage === 1 ? '/images/tutorial/tutmessagep1.png' : tutPage === 2 ? '/images/tutorial/tutmessagep2.png' : tutPage === 3 ? '/images/tutorial/tutmessagep3.png' : tutPage === 4 ? '/images/tutorial/tutp4.png' : tutPage === 5 ? '/images/tutorial/tutp5.png' : tutPage === 6 ? '/images/tutorial/tutp6.png' : tutPage === 8 ? '/images/tutorial/tutp7and5.png' : tutPage === 9 ? '/images/tutorial/bugandcrow.png' : tutPage === 10 ? '/images/tutorial/tutpart8.png' : tutPage === 11 ? '/images/tutorial/tutp9.png' : tutPage === 12 ? '/images/tutorial/tutp10.png' : '/images/tutorial/tutp7.png'}
-          alt="Tutorial"
-          className="tutorial-img"
-          style={{ width: '490px', objectFit: 'contain', display: 'block' }}
-        />
-        {tutPage !== 5 && tutPage !== 6 && tutPage !== 7 && tutPage !== 8 && tutPage !== 9 && tutPage !== 11 && tutPage !== 12 && (
-          <div className="tut-arrow" style={tutPage === 4 ? { top: 'calc(50% + 55px)' } : tutPage === 11 ? { top: 'auto', bottom: '-30px', transform: 'none' } : {}} onClick={() => {
-            if (tutPage === 1) {
-              setTutPageSync(2);
-            } else if (tutPage === 2) {
-              setTutPageSync(3);
-            } else if (tutPage === 3) {
-              setTutPageSync(4);
-            } else if (tutPage === 4) {
-              setTutPageSync(5);
-            } else if (tutPage === 10) {
-              setTutPageSync(11);
-            } else if (tutPage === 11) {
-              setTutPageSync(1);
-              setTutorialStep(32);
-              localStorage.setItem('sandbox_tutorial_step', '32');
-              window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
-            }
-          }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-        )}
-      </div>
-    </div>
+  {/* Tutorial step indicator — top-right debug readout */}
+  {tutorialStep < 36 && (
+    <div style={{
+      position: 'fixed',
+      top: 20,
+      right: 20,
+      zIndex: 100003,
+      background: 'rgba(0,0,0,0.75)',
+      color: '#f5d87a',
+      fontFamily: 'GROBOLD, Cartoonist, monospace',
+      fontSize: 14,
+      padding: '6px 12px',
+      borderRadius: 8,
+      border: '1px solid rgba(200,130,26,0.6)',
+      pointerEvents: 'none',
+      letterSpacing: 1,
+    }}>STEP {tutorialStep}</div>
   )}
 
-  {tutorialStep > 0 && tutorialStep < 4 && tutPage < 12 && (
-    <style>{`
-      a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-    `}</style>
-  )}
-  {tutorialStep === 3 && tutPage === 12 && (
-    <style>{`
-      a[href*="/house"], a[href*="/valley"], a[href*="/tavern"] { pointer-events: none !important; }
-      a[href*="/market"] { pointer-events: auto !important; }
-      @keyframes marketIconPulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px #ffe033); } 50% { transform: scale(1.18); filter: drop-shadow(0 0 18px #ffe033) drop-shadow(0 0 32px #ffb800); } }
-      a[href*="/market"] .menu-icon { overflow: visible !important; animation: marketIconPulse 1.2s ease-in-out infinite; transform-origin: center; }
-    `}</style>
-  )}
+  {/* Persistent Papabee — one mount, keeps floating across step transitions */}
+  <TutorialPapabee step={tutorialStep} dimmedBehind={isSelectCropDialog} />
 
-  {tutorialStep === 25 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000, pointerEvents: 'none' }}>
-      <style>{`
-        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-        @keyframes craftingGlow {
-          0%, 100% { box-shadow: 0 0 20px 5px #00ff41; transform: scale(1.1); background-color: rgba(0,255,65,0.3); }
-          50% { box-shadow: 0 0 10px 2px #00ff41; transform: scale(1); background-color: transparent; }
-        }
-      `}</style>
-      <div style={{ position: 'relative', width: '490px', pointerEvents: 'auto' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" className="tutorial-img" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(26); localStorage.setItem('sandbox_tutorial_step', '26'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
+  {/* Tutorial Part 1 — Papabee intro */}
+  {tutorialStep === 0 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="HEY!" advanceTo={2} showPapabee={true} papabeeSilhouette={true} />}
+  {/* Tutorial Part 2 */}
+  {tutorialStep === 2 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="COME OVER HERE!" advanceTo={3} showPapabee={true} papabeeSilhouette={true} />}
+  {/* Tutorial Part 3 — Papabee appears */}
+  {tutorialStep === 3 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Hey! Its me your great once removed uncle papabee... remeber?" advanceTo={4} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} papabeeReveal={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 4 — Papabee addresses the player */}
+  {tutorialStep === 4 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="And its you... the one with the name..." advanceTo={5} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 5 — Papabee apologizes */}
+  {tutorialStep === 5 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="sorry I have a terrible memory and its been years." advanceTo={6} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 6 — Papabee asks for name */}
+  {tutorialStep === 6 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="remind me, what is your name?" advanceTo={7} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 7 — Name prompt popup */}
+  {tutorialStep === 7 && <TutorialNamePrompt setTutorialStep={setTutorialStep} advanceTo={8} />}
+  {/* Tutorial Part 8 — Papabee remembers the name */}
+  {tutorialStep === 8 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText={`AH ${localStorage.getItem('sandbox_username') || 'friend'}! how could I forget, its great to see you again!`} advanceTo={9} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 9 — Welcome to the farm */}
+  {tutorialStep === 9 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="well welcome to my farm... well actually its now yours!" advanceTo={10} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 10 — Papabee offers a lesson */}
+  {tutorialStep === 10 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="let me give you a quick lesson on how to be the best farmer in the valley, second to me of course HAHA!" advanceTo={11} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 11 — Toolbelt intro (bubble + papabee moved up & left) */}
+  {tutorialStep === 11 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="This is your toolbelt, it holds everything you need to get to growing crops, dont lose it thats the only one I have..." advanceTo={12} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" shiftX={600} shiftY={50} />}
+  {/* Tutorial Part 12 — Show the 3 starter plots (Xs appear, no dim) */}
+  {tutorialStep === 12 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Here are your plots. I know its not alot but you will be able to get more later." advanceTo={13} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {tutorialStep === 12 && <TutorialStarterPlotsBright staggered={true} />}
+  {/* Tutorial Part 13 — Shovel intro */}
+  {tutorialStep === 13 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="This is your Shovel you can use it to dig holes, thats step 1 to growing a crop... You're lucky you have such a great teacher!" advanceTo={14} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" />}
+  {/* Tutorial Part 14 — Prompt to click a plot (dim on, bright X/hole overlay, auto-advances to 15) */}
+  {tutorialStep === 14 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Click on any plot to dig your first hole!" advanceTo={15} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" noAdvance={true} />}
+  {tutorialStep === 14 && <TutorialStarterPlotsBright staggered={false} allowHover={true} />}
+  {/* Tutorial Part 15 — Dirt bag intro (dim on, holes bright, shovel hidden, soil highlighted) */}
+  {tutorialStep === 15 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Wow great job! you see the bag of dirt, thats what you use to fill up the hole. Click on the hole to fill it with dirt." advanceTo={16} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" noAdvance={true} />}
+  {tutorialStep === 15 && <TutorialStarterPlotsBright staggered={false} onlyHoles={true} allowHover={true} />}
+  {/* Tutorial Part 16 — Seed bag intro (dim on, dirt bright, soil hidden, seeds highlighted) */}
+  {tutorialStep === 16 && !isSelectCropDialog && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Ok have you done this before? Must be genetics! here is a potato seed, click on the dirt to plant the potato!" advanceTo={17} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 17 — Water bucket intro */}
+  {tutorialStep === 17 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Perfect! Now you see the water bucket, thats what you use to water your plants! Click on your pile now to give that soil and seed some well deserved H20" advanceTo={18} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" textShiftY={7} />}
+  {/* Tutorial Part 18 — Heat mention (click to advance) */}
+  {tutorialStep === 18 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Ouf I might need some water soon, its hot!" advanceTo={19} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 19 — WOAH, crow flies in, auto-advances when it lands */}
+  {tutorialStep === 19 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="WOAH whats that coming down from the sky! WATCH YOUR HEAD." advanceTo={20} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" noAdvance={true} />}
+  {/* Tutorial Part 20 — Tap the crow */}
+  {tutorialStep === 20 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="HURRY Tap the bird to SHooo it away!" advanceTo={21} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" noAdvance={true} />}
+  {/* Tutorial Part 21 — Crows are dangerous */}
+  {tutorialStep === 21 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Man, crows are very dangeruos to your crops, if they stay on the crop too long they will eat it! Now as I was saying... wait... whats that sound" advanceTo={22} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" />}
+  {/* Tutorial Part 22 — Tap the bugs */}
+  {tutorialStep === 22 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Ugh I hate bugs... wait Im a bug... Well these ones are still super annoying if you let them buzz around your crop will stop growing, tap them, hurry!" advanceTo={23} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" textShiftY={5} />}
+  {/* Tutorial Part 23 — Gems gift */}
+  {tutorialStep === 23 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Finnally peace and quite, I guess all there is to do is Well... wait... But you know busy bees, we cant wait forever... here are some gems to speed up the process" advanceTo={24} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" textShiftY={5} />}
+  {/* Tutorial Part 24 — Click pile to skip wait time */}
+  {tutorialStep === 24 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="click on the pile to skip the wait time" advanceTo={25} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" noAdvance={true} />}
+  {/* Tutorial Part 25 — Congrats on first harvest */}
+  {tutorialStep === 25 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="CONGRATS on your first harvest, I see you going far and this is just the beggining" advanceTo={26} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 26 — Your farm, your story */}
+  {tutorialStep === 26 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="This is your farm, your valley, and your story" advanceTo={27} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 27 — Where am I going? */}
+  {tutorialStep === 27 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Where am I going? Well its about time your once removed great uncle hand over the keys to a young folk and go live the slow life" advanceTo={28} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="18px" textMaxWidth="620px" />}
+  {/* Tutorial Part 28 — Letters */}
+  {tutorialStep === 28 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Dont worry, Ill send you some letters and you can send me some too... Only if you want too." advanceTo={29} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 29 — One last gift */}
+  {tutorialStep === 29 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="I do have one last gift for you" advanceTo={30} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 30 — Pico Seed pack intro */}
+  {tutorialStep === 30 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Here is a Pico Seed pack, open it and lets see what you get" advanceTo={32} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 33 — Reaction to pack contents */}
+  {tutorialStep === 33 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Wow you got some good seeds, and look at all that gold and gems..." advanceTo={34} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="20px" textMaxWidth="620px" />}
+  {/* Tutorial Part 34 — Heading off */}
+  {tutorialStep === 34 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Well I think ill be heading off now" advanceTo={35} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {/* Tutorial Part 35 — Farewell (uses username) */}
+  {tutorialStep === 35 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText={`so long ${localStorage.getItem('sandbox_username') || 'friend'}, Make me proud!`} advanceTo={36} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
 
-  {tutorialStep === 26 && (
-    <>
-      <style>{`
-        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-        @keyframes craftingGlow {
-          0%, 100% { transform: scale(1.1); }
-          50% { transform: scale(1); }
-        }
-      `}</style>
-      <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-        <div style={{ position: 'relative', width: '490px' }}>
-          <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-          <div className="tut-arrow" onClick={() => { setTutorialStep(27); localStorage.setItem('sandbox_tutorial_step', '27'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-        </div>
-      </div>
-    </>
-  )}
-
-  {tutorialStep === 27 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <style>{`
-        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-        @keyframes craftingGlow {
-          0%, 100% { transform: scale(1.1); }
-          50% { transform: scale(1); }
-        }
-      `}</style>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(28); localStorage.setItem('sandbox_tutorial_step', '28'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 28 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(29); localStorage.setItem('sandbox_tutorial_step', '29'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 29 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <style>{`
-        a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }
-        @keyframes craftingGlow {
-          0%, 100% { transform: scale(1.1); }
-          50% { transform: scale(1); }
-        }
-      `}</style>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(30); localStorage.setItem('sandbox_tutorial_step', '30'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 30 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <style>{`a[href*="/house"], a[href*="/valley"], a[href*="/market"], a[href*="/tavern"] { pointer-events: none !important; }`}</style>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(31); localStorage.setItem('sandbox_tutorial_step', '31'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
-
-  {tutorialStep === 31 && (
-    <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 100000 }}>
-      <div style={{ position: 'relative', width: '490px' }}>
-        <img src="/images/tutorial/tutmessagep1.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain' }} />
-        <div className="tut-arrow" onClick={() => { setTutorialStep(32); localStorage.setItem('sandbox_tutorial_step', '32'); window.dispatchEvent(new CustomEvent('tutorialStepChanged')); }}><img src="/images/tutorial/next.png" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
-      </div>
-    </div>
-  )}
-
-
-  {/* Tutorial Gem Skip Popup (tutp9 step) */}
-  {tutGemPopupOpen && tutorialStep === 3 && tutPage === 11 && (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* tutp9 image visible above the dark overlay */}
-      <div style={{ position: 'absolute', right: '20px', bottom: '20px' }}>
-        <img src="/images/tutorial/tutp9.png" alt="Tutorial" style={{ width: '490px', objectFit: 'contain', display: 'block' }} />
-      </div>
-      {/* Centered popup card */}
-      <div style={{ background: 'linear-gradient(135deg, #3a2010, #5a3520)', border: '4px solid #a67c00', borderRadius: '20px', padding: '36px 40px', textAlign: 'center', maxWidth: '360px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-        <div style={{ fontFamily: 'Cartoonist', fontSize: '22px', color: '#fff', marginBottom: '12px', textShadow: '1px 1px 0 #000' }}>
-          Your crop is still growing!
-        </div>
-        <div style={{ fontFamily: 'Cartoonist', fontSize: '16px', color: '#ffd700', marginBottom: '24px' }}>
-          Skip the wait for 50 💎?
-        </div>
-        <div
-          onClick={() => {
-            const currentGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
-            if (currentGems < 50) { show("Not enough gems!", "error"); return; }
-            localStorage.setItem('sandbox_gems', String(currentGems - 50));
-            window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
-            trackGemSpend(50);
-            // Mark crop as skipped and visually ready AFTER payment
-            const plotIdx = tutGemPlotIndex;
-            if (plotIdx !== null) {
-              const skipped = JSON.parse(localStorage.getItem('sandbox_skipped_crops') || '{}');
-              skipped[plotIdx] = true;
-              localStorage.setItem('sandbox_skipped_crops', JSON.stringify(skipped));
-              setCropArray(prev => {
-                const newArr = new CropItemArrayClass(30);
-                newArr.copyFrom(prev);
-                const item = newArr.getItem(plotIdx);
-                if (item) { item.growStatus = 2; }
-                return newArr;
-              });
-            }
-            setTutGemPopupOpen(false);
-          }}
-          style={{ display: 'inline-block', background: 'linear-gradient(135deg, #f5c842, #e0a800)', border: '3px solid #a67c00', borderRadius: '12px', padding: '12px 32px', fontFamily: 'Cartoonist', fontSize: '18px', color: '#3a2010', cursor: 'pointer', userSelect: 'none' }}
-        >
-          Pay 50 💎
-        </div>
-      </div>
-    </div>
-  )}
 
   {/* Easter Basket Dialog */}
       {tutorialStep >= 9 && showEasterBasket && <EasterBasketDialog onClose={() => setShowEasterBasket(false)} />}
@@ -7694,37 +8282,64 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
       {/* FestivalsDialog — temporarily hidden */}
 
       {/* Fixed Tool Belt — stays on screen regardless of zoom/pan */}
-      {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 4)) && (
-        <div style={{ position: 'fixed', bottom: '-7px', left: '50%', transform: 'translateX(-50%) scale(0.85)', transformOrigin: 'bottom center', width: '896px', height: '144px', zIndex: 500, pointerEvents: 'none' }}>
-          <img src="/images/farming/realbeltbottom.png" alt="" draggable={false} style={{ position: 'absolute', bottom: 0, left: 0, width: '896px', pointerEvents: 'none', zIndex: 1 }} />
-          {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 5)) && (
-            <img src="/images/farming/realshovel.png" alt="Shovel" draggable={false}
-              onClick={() => { toggleTool('shovel'); const next = selectedTool !== 'shovel'; setIsDigging(next); setIsHoeing(false); setIsWatering(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
-              onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'shovel' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.filter = selectedTool === 'shovel' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = selectedTool === 'shovel' ? 'translateY(-24px)' : 'none'; }}
-              style={{ position: 'absolute', bottom: '43px', left: '167px', width: '48px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 2, transform: selectedTool === 'shovel' ? 'translateY(-24px)' : 'none', filter: selectedTool === 'shovel' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: (tutorialStep === 3 && tutPage === 5) || selectedTool === 'shovel' ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
+      {(tutorialStep >= 36 || (tutorialStep >= 11 && tutorialStep <= 35) || (tutorialStep === 3 && tutPage >= 4)) && (
+        <div style={{ position: 'fixed', bottom: '-7px', left: '50%', transform: 'translateX(-50%) scale(0.85)', transformOrigin: 'bottom center', width: '896px', height: '144px', zIndex: (isSelectCropDialog || (tutorialStep >= 25 && tutorialStep <= 35)) ? 500 : ((tutorialStep >= 11 && tutorialStep <= 35) ? 100001 : 500), pointerEvents: 'none', filter: ((isSelectCropDialog && tutorialStep === 16) || tutorialStep === 32) ? 'blur(4px) brightness(0.6)' : ((tutorialStep >= 25 && tutorialStep <= 35) ? 'brightness(0.6)' : 'none'), transition: 'filter 0.2s ease' }}>
+          {tutorialStep === 11 && (
+            <style>{`@keyframes beltGlow { 0%,100% { filter: drop-shadow(0 0 8px gold) drop-shadow(0 0 18px rgba(255,210,0,0.7)); } 50% { filter: drop-shadow(0 0 18px gold) drop-shadow(0 0 36px rgba(255,210,0,0.9)); } }`}</style>
           )}
-          {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 6)) && (
-            <img src="/images/farming/realsoil.png" alt="Soil" draggable={false}
-              onClick={() => { toggleTool('soil'); const next = selectedTool !== 'soil'; setIsDirting(next); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsSeeding(false); setIsPlanting(false); }}
-              onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'soil' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.filter = selectedTool === 'soil' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = selectedTool === 'soil' ? 'translateY(-24px)' : 'none'; }}
-              style={{ position: 'absolute', bottom: '59px', left: '268px', width: '83px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 2, transform: selectedTool === 'soil' ? 'translateY(-24px)' : 'none', filter: selectedTool === 'soil' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: (tutorialStep === 3 && tutPage === 6) || selectedTool === 'soil' ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
-          )}
-          {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 7)) && (
-            <img src="/images/farming/realseeds.png" alt="Seeds" draggable={false}
-              onClick={() => { toggleTool('seeds'); const next = selectedTool !== 'seeds'; setIsSeeding(next); setIsDirting(false); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsPlanting(false); }}
-              onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'seeds' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.filter = selectedTool === 'seeds' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = selectedTool === 'seeds' ? 'translateY(-24px)' : 'none'; }}
-              style={{ position: 'absolute', bottom: '61px', left: '413px', width: '69px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 2, transform: selectedTool === 'seeds' ? 'translateY(-24px)' : 'none', filter: selectedTool === 'seeds' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: (tutorialStep === 3 && tutPage === 7) || selectedTool === 'seeds' ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
-          )}
-          {(tutorialStep >= 32 || (tutorialStep === 3 && tutPage >= 8)) && (
-            <img src="/images/farming/realbucket.png" alt="Bucket" draggable={false}
-              onClick={() => { toggleTool('bucket'); const next = selectedTool !== 'bucket'; setIsWatering(next); setIsHoeing(false); setIsDigging(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
-              onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'bucket' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
-              onMouseLeave={e => { e.currentTarget.style.filter = selectedTool === 'bucket' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = selectedTool === 'bucket' ? 'translateY(-24px)' : 'none'; }}
-              style={{ position: 'absolute', bottom: '59px', left: '535px', width: '101px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 2, transform: selectedTool === 'bucket' ? 'translateY(-24px)' : 'none', filter: selectedTool === 'bucket' ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: (tutorialStep === 3 && tutPage === 8) || selectedTool === 'bucket' ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
-          )}
+          <img src="/images/farming/realbeltbottom.png" alt="" draggable={false} style={{ position: 'absolute', bottom: 0, left: 0, width: '896px', pointerEvents: 'none', zIndex: 1, animation: (tutorialStep === 11) ? 'beltGlow 1.4s ease-in-out infinite' : 'none' }} />
+          {(() => {
+            const shovelVisible = (tutorialStep >= 36 || tutorialStep === 13 || tutorialStep === 14 || (tutorialStep >= 25 && tutorialStep <= 35) || (tutorialStep === 3 && tutPage >= 5));
+            const shovelHighlighted = (selectedTool === 'shovel' || flashTool === 'shovel' || tutorialStep === 13 || tutorialStep === 14);
+            return (
+              <div style={{ position: 'absolute', bottom: '43px', left: '167px', width: '48px', zIndex: 2, transform: shovelVisible ? 'scale(1)' : 'scale(0)', transformOrigin: 'center', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', pointerEvents: shovelVisible ? 'auto' : 'none' }}>
+                <img src="/images/farming/realshovel.png" alt="Shovel" draggable={false}
+                  onClick={() => { toggleTool('shovel'); const next = selectedTool !== 'shovel'; setIsDigging(next); setIsHoeing(false); setIsWatering(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'shovel' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = shovelHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = shovelHighlighted ? 'translateY(-24px)' : 'none'; }}
+                  style={{ width: '100%', cursor: 'pointer', transform: shovelHighlighted ? 'translateY(-24px)' : 'none', filter: shovelHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: shovelHighlighted || (tutorialStep === 3 && tutPage === 5) ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
+              </div>
+            );
+          })()}
+          {(() => {
+            const soilVisible = (tutorialStep >= 36 || tutorialStep === 15 || (tutorialStep >= 25 && tutorialStep <= 35) || (tutorialStep === 3 && tutPage >= 6)) && tutorialStep !== 16;
+            const soilHighlighted = (selectedTool === 'soil' || flashTool === 'soil' || tutorialStep === 15);
+            return (
+              <div style={{ position: 'absolute', bottom: '59px', left: '268px', width: '83px', zIndex: 2, transform: soilVisible ? 'scale(1)' : 'scale(0)', transformOrigin: 'center', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', pointerEvents: soilVisible ? 'auto' : 'none' }}>
+                <img src="/images/farming/realsoil.png" alt="Soil" draggable={false}
+                  onClick={() => { toggleTool('soil'); const next = selectedTool !== 'soil'; setIsDirting(next); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsSeeding(false); setIsPlanting(false); }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'soil' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = soilHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = soilHighlighted ? 'translateY(-24px)' : 'none'; }}
+                  style={{ width: '100%', cursor: 'pointer', transform: soilHighlighted ? 'translateY(-24px)' : 'none', filter: soilHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: soilHighlighted || (tutorialStep === 3 && tutPage === 6) ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
+              </div>
+            );
+          })()}
+          {(() => {
+            const seedsVisible = (tutorialStep >= 36 || tutorialStep === 16 || (tutorialStep >= 25 && tutorialStep <= 35) || (tutorialStep === 3 && tutPage >= 7));
+            const seedsHighlighted = (selectedTool === 'seeds' || flashTool === 'seeds' || tutorialStep === 16);
+            return (
+              <div style={{ position: 'absolute', bottom: '61px', left: '413px', width: '69px', zIndex: 2, transform: seedsVisible ? 'scale(1)' : 'scale(0)', transformOrigin: 'center', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', pointerEvents: seedsVisible ? 'auto' : 'none' }}>
+                <img src="/images/farming/realseeds.png" alt="Seeds" draggable={false}
+                  onClick={() => { toggleTool('seeds'); const next = selectedTool !== 'seeds'; setIsSeeding(next); setIsDirting(false); setIsHoeing(false); setIsWatering(false); setIsDigging(false); setIsPlanting(false); }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'seeds' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = seedsHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = seedsHighlighted ? 'translateY(-24px)' : 'none'; }}
+                  style={{ width: '100%', cursor: 'pointer', transform: seedsHighlighted ? 'translateY(-24px)' : 'none', filter: seedsHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: seedsHighlighted || (tutorialStep === 3 && tutPage === 7) ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
+              </div>
+            );
+          })()}
+          {(() => {
+            const bucketVisible = (tutorialStep >= 36 || tutorialStep === 17 || (tutorialStep >= 25 && tutorialStep <= 35) || (tutorialStep === 3 && tutPage >= 8));
+            const bucketHighlighted = (selectedTool === 'bucket' || flashTool === 'bucket' || tutorialStep === 17);
+            return (
+              <div style={{ position: 'absolute', bottom: '59px', left: '535px', width: '101px', zIndex: 2, transform: bucketVisible ? 'scale(1)' : 'scale(0)', transformOrigin: 'center', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', pointerEvents: bucketVisible ? 'auto' : 'none' }}>
+                <img src="/images/farming/realbucket.png" alt="Bucket" draggable={false}
+                  onClick={() => { toggleTool('bucket'); const next = selectedTool !== 'bucket'; setIsWatering(next); setIsHoeing(false); setIsDigging(false); setIsDirting(false); setIsSeeding(false); setIsPlanting(false); }}
+                  onMouseEnter={e => { e.currentTarget.style.filter = 'drop-shadow(0px 0px 6px rgba(255,255,255,0.8))'; e.currentTarget.style.transform = selectedTool === 'bucket' ? 'scale(1.15) translateY(-24px)' : 'scale(1.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.filter = bucketHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none'; e.currentTarget.style.transform = bucketHighlighted ? 'translateY(-24px)' : 'none'; }}
+                  style={{ width: '100%', cursor: 'pointer', transform: bucketHighlighted ? 'translateY(-24px)' : 'none', filter: bucketHighlighted ? 'drop-shadow(0px 0px 6px gold) drop-shadow(0px 0px 14px rgba(255,210,0,0.8))' : 'none', transition: 'transform 0.4s ease, filter 0.2s ease', animation: bucketHighlighted || (tutorialStep === 3 && tutPage === 8) ? 'mapFloat 2s ease-in-out infinite' : 'none' }} />
+              </div>
+            );
+          })()}
           {false && (
             <img src="/images/farming/realfork.png" alt="Fork" draggable={false} />
           )}

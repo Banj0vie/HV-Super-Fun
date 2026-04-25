@@ -104,6 +104,17 @@ const CropItem = ({
   const [plotPrep, setPlotPrep] = useState(() => JSON.parse(localStorage.getItem('sandbox_plot_prep') || '{}'));
   const [soilColor, setSoilColor] = useState(() => localStorage.getItem('sandbox_active_soil_color') || null);
   const [digPhase, setDigPhase] = useState('none');
+  const [isShaking, setIsShaking] = useState(false);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail === index) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+      }
+    };
+    window.addEventListener('tutorialPlotShake', handler);
+    return () => window.removeEventListener('tutorialPlotShake', handler);
+  }, [index]);
   const [waterPhase, setWaterPhase] = useState('none');
   const [checkmarkPhase, setCheckmarkPhase] = useState('none');
   const prevNeedsWaterRef = useRef(data.needsWater);
@@ -550,9 +561,12 @@ const CropItem = ({
   return (
     <div
       ref={rootRef}
+      data-plot-index={index}
+      data-plot-prep-status={prep.status || 0}
+      data-plot-hover={isHovered ? 'true' : 'false'}
       className={`crop-item ${getStatusClass()} ${
         jiggling && data.growStatus < 1 ? "jiggling" : ""
-      } ${highlighted ? "selected" : ""}`}
+      } ${highlighted ? "selected" : ""} ${isShaking ? "shaking" : ""}`}
       style={{
         ...position,
         backgroundPositionX:
@@ -606,31 +620,63 @@ const CropItem = ({
             @keyframes xAppear  { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
             @keyframes holeShrink { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
             @keyframes dirtFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes xPulseIdle { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
           `}</style>
-          {(prep.status === 0 || digPhase === 'x-shrink' || digPhase === 'x-appear') && digPhase !== 'x-hidden' && (
-            <img
-              src={isHovered && prep.status === 0 ? '/images/farming/xhover.png' : '/images/farming/x.png'}
-              alt="X"
-              style={{
-                width: '115px', height: '115px', objectFit: 'contain', marginTop: '115px', marginLeft: '-34px',
-                animation: digPhase === 'x-shrink' ? 'xShrink 0.18s ease-in forwards'
-                         : digPhase === 'x-appear' ? 'xAppear 0.2s ease-out forwards'
-                         : 'none',
-              }}
-            />
-          )}
-          {prep.status === 1 && digPhase !== 'x-shrink' && (
-            <img
-              src="/images/farming/hole.png"
-              alt="Hole"
-              style={{ width: '220px', height: '220px', objectFit: 'contain', marginTop: '115px', marginLeft: '-48px' }}
-            />
-          )}
+          {(prep.status === 0 || digPhase === 'x-shrink' || digPhase === 'x-appear') && digPhase !== 'x-hidden' && ![0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10)) && (() => {
+            const curStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            // Step 11: Xs pop in one-by-one left→right across the 3 starter plots
+            const staggerMap = { 8: 0, 7: 0.3, 6: 0.6 };
+            const tutDelay = curStep === 11 ? (staggerMap[index] ?? 0) : 0;
+            return (
+              <img
+                className="plot-x-marker"
+                data-plot-x={index}
+                data-hover={isHovered && prep.status === 0 ? 'true' : 'false'}
+                src={isHovered && prep.status === 0 ? '/images/farming/xhover.png' : '/images/farming/x.png'}
+                alt="X"
+                style={{
+                  width: '115px', height: '115px', objectFit: 'contain', marginTop: '115px', marginLeft: '-34px',
+                  // On step 11, hide the real X — a bright overlay takes its place at the exact same position
+                  visibility: (curStep === 12 || curStep === 14) ? 'hidden' : 'visible',
+                  animation: (curStep === 12 || curStep === 14) ? 'none'
+                           : digPhase === 'x-shrink' ? 'xShrink 0.18s ease-in forwards'
+                           : digPhase === 'x-appear' ? 'xAppear 0.2s ease-out forwards'
+                           : 'xPulseIdle 1.4s ease-in-out infinite',
+                }}
+              />
+            );
+          })()}
+          {prep.status === 1 && digPhase !== 'x-shrink' && (() => {
+            const curStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+            return (
+              <img
+                className="plot-hole-marker"
+                data-plot-hole={index}
+                data-hover={isHovered ? 'true' : 'false'}
+                src="/images/farming/hole.png"
+                alt="Hole"
+                style={{ width: '220px', height: '220px', objectFit: 'contain', marginTop: '115px', marginLeft: '-48px', visibility: (curStep === 14 || curStep === 15) ? 'hidden' : 'visible' }}
+              />
+            );
+          })()}
           {prep.status === 2 && (
             <div style={{ position: 'relative', width: '40px', height: '15px', backgroundColor: '#1a1008', borderRadius: '50%', border: '2px solid #000', boxShadow: 'inset 0 5px 10px rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <img src={ALL_ITEMS[prep.fishId]?.image} alt="fish" style={{ width: '35px', height: '35px', position: 'absolute', top: '-15px', transform: 'rotate(-20deg)', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }} />
             </div>
           )}
+        </div>
+      )}
+
+
+      {/* Invisible dirt marker — lets tutorial overlay query the dirt plot position (matches hole position) */}
+      {prep.status === 3 && (!data.seedId || data.seedId === 0n) && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', pointerEvents: 'none' }}>
+          <div
+            className="plot-dirt-marker"
+            data-plot-dirt={index}
+            data-hover={isHovered ? 'true' : 'false'}
+            style={{ width: '220px', height: '220px', marginTop: '115px', marginLeft: '-48px', visibility: 'hidden' }}
+          />
         </div>
       )}
 
@@ -683,7 +729,7 @@ const CropItem = ({
         data.seedId !== 0n &&
         !isPreview &&
         portalContainer &&
-        parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) !== 3 && (
+        parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10) >= 35 && (
           <CropTooltip
             container={portalContainer}
             pos={tooltipPos}

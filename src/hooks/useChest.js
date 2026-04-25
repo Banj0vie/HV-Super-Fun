@@ -63,7 +63,6 @@ export const useChest = () => {
     }, []);
 
     const openChest = useCallback(async (chestType) => {
-        console.log("🚀 ~ useChest ~ chestType:", chestType)
         setChestData(p => ({ ...p, loading: true, error: null }));
         try {
             // --- SANDBOX HACK: Instant Chest Opening ---

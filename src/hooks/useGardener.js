@@ -81,7 +81,6 @@ export const useGardener = () => {
       await fetchGardenerData();
       return tx;
     } catch (err) {
-      console.log("🚀 ~ useGardener ~ err:", err)
       const { message } = handleContractError(err, 'leveling up valley');
       setGardenerData(p => ({ ...p, loading: false, error: message }));
       throw new Error(message);

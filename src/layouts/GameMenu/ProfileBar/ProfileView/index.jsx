@@ -10,7 +10,19 @@ const ProfileView = ({ username }) => {
   const [renaming, setRenaming] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const [renameError, setRenameError] = useState('');
+  const [tutorialStep, setTutorialStep] = useState(() => parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    const handler = () => setTutorialStep(parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10));
+    const nameHandler = (e) => setCustomName(e.detail || localStorage.getItem('sandbox_username') || null);
+    window.addEventListener('tutorialStepChanged', handler);
+    window.addEventListener('sandboxUsernameChanged', nameHandler);
+    return () => {
+      window.removeEventListener('tutorialStepChanged', handler);
+      window.removeEventListener('sandboxUsernameChanged', nameHandler);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e) => setBannerImg(e.detail || null);
@@ -31,6 +43,9 @@ const ProfileView = ({ username }) => {
   const isHoneyDrip = savedBgId === 'bg_honeydrop';
 
   const openRename = () => {
+    const tutStep = parseInt(localStorage.getItem('sandbox_tutorial_step') || '0', 10);
+    const skipped = localStorage.getItem('sandbox_tutorial_skipped') === 'true';
+    if (tutStep < 36 && !skipped) return;
     setInputVal(displayName || '');
     setRenameError('');
     setRenaming(true);
@@ -39,7 +54,7 @@ const ProfileView = ({ username }) => {
   const confirmRename = () => {
     const trimmed = inputVal.trim();
     if (!trimmed) { setRenameError('Name cannot be empty.'); return; }
-    if (trimmed.length > 20) { setRenameError('Max 20 characters.'); return; }
+    if (trimmed.length > 12) { setRenameError('Max 12 characters.'); return; }
     const gems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
     if (gems < RENAME_COST) {
       setRenameError(`Need ${RENAME_COST} 💎 gems.`);
@@ -62,7 +77,7 @@ setRenaming(false);
           <img src="/images/banner/hdripextentsion.png" alt="" style={{ position: 'absolute', bottom: '-23px', left: '-4.5%', width: '109%', pointerEvents: 'none', zIndex: 10 }} />
         )}
         <div className="name-pill-content">
-          <div>{displayName}</div>
+          <div>{[0, 2, 3, 4, 5, 6, 7].includes(tutorialStep) ? '' : displayName}</div>
         </div>
       </div>
 
@@ -94,7 +109,7 @@ setRenaming(false);
               value={inputVal}
               onChange={e => { setInputVal(e.target.value); setRenameError(''); }}
               onKeyDown={e => { if (e.key === 'Enter') confirmRename(); if (e.key === 'Escape') setRenaming(false); }}
-              maxLength={20}
+              maxLength={12}
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: '16px',

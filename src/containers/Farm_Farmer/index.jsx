@@ -22,8 +22,6 @@ const FarmerDialog = ({
         <BaseButton
           label="Plant All"
           onClick={() => {
-            console.log('=== FARMER DIALOG PLANT ALL CLICKED ===');
-            console.log('actions.plantAll:', actions.plantAll);
             onClose();
             if (actions.plantAll) {
               actions.plantAll();
