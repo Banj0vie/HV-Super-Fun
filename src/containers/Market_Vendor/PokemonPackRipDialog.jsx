@@ -229,6 +229,7 @@ const DRAG_PX_FULL = 600;
 
 const PACK_CONFIGS = {
   pico_pack: { idleDir: 'card1idle/idle_1',         idlePrefix: 'idle_1',                idleFrames: 11, openDir: 'card1open/open_1',           openPrefix: 'open_1',                openFrames: 15, openFrameOffset: 13, sep: '_', alt: 'Pico Seeds Pack' },
+  tutorial_farewell_pack: { idleDir: 'card1idle/idle_1', idlePrefix: 'idle_1',           idleFrames: 11, openDir: 'card1open/open_1',           openPrefix: 'open_1',                openFrames: 15, openFrameOffset: 13, sep: '_', alt: 'Pico Seeds Pack' },
   pabee_pack: { idleDir: 'card1idle/chest_wood',      idlePrefix: 'New_idle_chest_wood_',  idleFrames: 21, openDir: 'card1open/new_open_chest_wood',  openPrefix: 'NEW_open_chest_wood_',  openFrames: 27, openFrameOffset: 21, sep: '', alt: 'Seeds Pack' },
   2:         { idleDir: 'card1idle/chest_wood',      idlePrefix: 'New_idle_chest_wood_',  idleFrames: 21, openDir: 'card1open/new_open_chest_wood',  openPrefix: 'NEW_open_chest_wood_',  openFrames: 27, openFrameOffset: 21, sep: '', alt: 'Seeds Pack' },
   3:         { idleDir: 'basicseedidle/idle_2',      idlePrefix: 'idle_2',                openDir: 'basicseedopen/open_2',       openPrefix: 'open_2',                sep: '_', alt: 'Basic Seeds Pack' },
@@ -550,6 +551,20 @@ const PokemonPackRipDialog = ({ rollingInfo, onClose, onBack, onBuyAgain }) => {
           {bonus.cardImage ? (
             <div className="card-face card-front-face">
               <img src={bonus.cardImage} alt={bonus.label} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }} />
+              <span style={{
+                position: 'absolute',
+                bottom: '10%',
+                left: 0,
+                right: 0,
+                textAlign: 'center',
+                fontFamily: 'Cartoonist, GROBOLD, sans-serif',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#fff',
+                textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 8px rgba(0,0,0,0.6)',
+                letterSpacing: 1,
+                pointerEvents: 'none',
+              }}>{bonus.label}</span>
             </div>
           ) : (
             <div className="card-face card-front-face" style={{ backgroundColor: '#1a1a2e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>

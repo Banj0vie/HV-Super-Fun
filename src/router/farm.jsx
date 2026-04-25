@@ -94,12 +94,19 @@ const TutorialPapabee = ({ step, dimmedBehind = false }) => {
   const shiftY = step === 11 ? 50 : 0;
 
   const [revealed, setRevealed] = useState(!reveal);
+  const [exiting, setExiting] = useState(false);
   useEffect(() => {
     if (!reveal) { setRevealed(true); return; }
     setRevealed(false);
     const t = setTimeout(() => setRevealed(true), 600);
     return () => clearTimeout(t);
   }, [reveal, step]);
+  useEffect(() => {
+    const onExit = () => setExiting(true);
+    window.addEventListener('tutorialExit', onExit);
+    return () => window.removeEventListener('tutorialExit', onExit);
+  }, []);
+  useEffect(() => { if (step < 35) setExiting(false); }, [step]);
 
   if (!visible) return null;
 
@@ -119,8 +126,10 @@ const TutorialPapabee = ({ step, dimmedBehind = false }) => {
           pointerEvents: 'none',
           userSelect: 'none',
           zIndex: effectiveDimmed ? 500 : 100002,
-          animation: 'papabeeFloat 2.4s ease-in-out infinite',
-          transition: 'filter 0.25s ease-out',
+          animation: exiting ? 'none' : 'papabeeFloat 2.4s ease-in-out infinite',
+          transform: exiting ? 'scale(0)' : undefined,
+          transformOrigin: 'center bottom',
+          transition: 'filter 0.25s ease-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
           filter: effectiveDimmed
             ? 'blur(4px) brightness(0.6)'
             : (silhouette || (reveal && !revealed))
@@ -326,7 +335,7 @@ const TutorialNamePrompt = ({ setTutorialStep, advanceTo }) => {
   );
 };
 
-const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc = '/images/tutorial/bubblequestion.png', showPapabee = false, papabeeSilhouette = false, papabeeReveal = false, fontSize = '56px', textMaxWidth = null, shiftX = 0, shiftY = 0, textShiftY = 0, noDim = false, noAdvance = false }) => {
+const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc = '/images/tutorial/bubblequestion.png', showPapabee = false, papabeeSilhouette = false, papabeeReveal = false, fontSize = '56px', textMaxWidth = null, shiftX = 0, shiftY = 0, textShiftY = 0, noDim = false, noAdvance = false, exitOnAdvance = false }) => {
   const [typed, setTyped] = useState('');
   const [revealed, setRevealed] = useState(!papabeeReveal);
   const [revealComplete, setRevealComplete] = useState(!papabeeReveal);
@@ -359,8 +368,19 @@ const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc
     };
   }, [fullText, papabeeReveal]);
 
+  const [exiting, setExiting] = useState(false);
   const advance = () => {
     if (noAdvance) return;
+    if (exitOnAdvance) {
+      setExiting(true);
+      window.dispatchEvent(new CustomEvent('tutorialExit'));
+      setTimeout(() => {
+        setTutorialStep(advanceTo);
+        localStorage.setItem('sandbox_tutorial_step', String(advanceTo));
+        window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
+      }, 600);
+      return;
+    }
     setTutorialStep(advanceTo);
     localStorage.setItem('sandbox_tutorial_step', String(advanceTo));
     window.dispatchEvent(new CustomEvent('tutorialStepChanged'));
@@ -374,7 +394,7 @@ const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc
       {/* Bubble — above papabee */}
       <div
         onClick={advance}
-        style={{ position: 'fixed', right: `${20 + shiftX}px`, bottom: `${-70 + shiftY}px`, width: '820px', cursor: 'pointer', pointerEvents: 'auto', userSelect: 'none', zIndex: 100003 }}
+        style={{ position: 'fixed', right: `${20 + shiftX}px`, bottom: `${-70 + shiftY}px`, width: '820px', cursor: 'pointer', pointerEvents: 'auto', userSelect: 'none', zIndex: 100003, transform: exiting ? 'scale(0)' : 'scale(1)', transformOrigin: 'center bottom', transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }}
       >
         <img
           src={(papabeeReveal && !revealComplete) ? '/images/tutorial/bubblequestion.png' : bubbleSrc}
@@ -409,26 +429,6 @@ const TutorialBubbleOverlay = ({ setTutorialStep, fullText, advanceTo, bubbleSrc
 export const getQuestData = () => [
 
   // Wave 1: Early Bliss (0-60 min)
-
-  {
-    id: "q1b_pabee_first_crop",
-    type: "main",
-    sender: "Pabee",
-    subject: "Keep It Growing",
-    mailImage: "/images/mail/mailpapabee.png",
-    body: [
-      "Looking good out there, son!",
-      "Go ahead and plant those seeds I left you and bring me your first harvest.",
-      "Farming is simple once you get the hang of it — and I want to make sure you get started right!"
-    ],
-    rewards: [
-      { id: 'pico_pack', seeds: [getRaritySeedId(ID_SEEDS.CARROT, 1), getRaritySeedId(ID_SEEDS.TOMATO, 1)], count: 1, name: "Pico Seeds Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
-    ],
-    reqs: [
-      { id: ID_PRODUCE_ITEMS?.CARROT, count: 2, name: "Carrots", pos: 3 }
-    ],
-    unlockCondition: (step, completed) => step >= 36
-  },
 
   {
     id: "q1_beejamin_welcome",
@@ -523,7 +523,7 @@ export const getQuestData = () => [
       { id: 'pico_pack', seeds: [getRaritySeedId(ID_SEEDS.LETTUCE, 1), getRaritySeedId(ID_SEEDS.LETTUCE, 1)], count: 1, name: "Pico Seeds Pack", image: "/images/cardfront/card1idle/idle_1/idle_1_00000.png" },
     ],
     reqs: [],
-    unlockCondition: (step, completed) => completed.includes("q1b_pabee_first_crop")
+    unlockCondition: (step, completed) => step >= 36
   },
 
   {
@@ -4150,9 +4150,10 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
         getRaritySeedId(ID_SEEDS.CARROT, 2),  // uncommon
         getRaritySeedId(ID_SEEDS.ONION, 3),   // rare
       ];
-      const curGold = parseInt(localStorage.getItem('sandbox_gold') || '0', 10);
-      localStorage.setItem('sandbox_gold', String(curGold + 2000));
-      window.dispatchEvent(new CustomEvent('goldChanged', { detail: String(curGold + 2000) }));
+      const curHoney = parseFloat(localStorage.getItem('sandbox_honey') || '0');
+      const newHoney = (curHoney + 2000).toString();
+      localStorage.setItem('sandbox_honey', newHoney);
+      window.dispatchEvent(new CustomEvent('sandboxHoneyChanged', { detail: newHoney }));
       const curGems = parseInt(localStorage.getItem('sandbox_gems') || '0', 10);
       localStorage.setItem('sandbox_gems', String(curGems + 250));
       window.dispatchEvent(new CustomEvent('sandboxGemsChanged'));
@@ -7400,7 +7401,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', top: '-32vh', left: 0, width: '70vw', height: '55vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.14) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftE 160s linear infinite',
+          animation: 'cloudDriftE 80s linear infinite',
           animationDelay: '0s',
           filter: 'blur(28px)',
         }} />
@@ -7409,8 +7410,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', top: '-25vh', left: 0, width: '55vw', height: '45vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftSE 160s linear infinite',
-          animationDelay: '-20s',
+          animation: 'cloudDriftSE 80s linear infinite',
+          animationDelay: '-10s',
           filter: 'blur(30px)',
         }} />
         {/* ↓ South, along left edge */}
@@ -7418,8 +7419,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', top: 0, left: '-35vw', width: '55vw', height: '70vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftS 160s linear infinite',
-          animationDelay: '-40s',
+          animation: 'cloudDriftS 80s linear infinite',
+          animationDelay: '-20s',
           filter: 'blur(32px)',
         }} />
         {/* ↙ Southwest diagonal */}
@@ -7427,8 +7428,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', top: '-25vh', right: 0, width: '55vw', height: '45vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftSW 160s linear infinite',
-          animationDelay: '-60s',
+          animation: 'cloudDriftSW 80s linear infinite',
+          animationDelay: '-30s',
           filter: 'blur(30px)',
         }} />
         {/* ← West, along bottom */}
@@ -7436,8 +7437,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', bottom: '-32vh', left: 0, width: '70vw', height: '55vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.23) 0%, rgba(0,0,0,0.13) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftW 160s linear infinite',
-          animationDelay: '-80s',
+          animation: 'cloudDriftW 80s linear infinite',
+          animationDelay: '-40s',
           filter: 'blur(28px)',
         }} />
         {/* ↖ Northwest diagonal */}
@@ -7445,8 +7446,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', bottom: '-25vh', right: 0, width: '55vw', height: '45vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftNW 160s linear infinite',
-          animationDelay: '-100s',
+          animation: 'cloudDriftNW 80s linear infinite',
+          animationDelay: '-50s',
           filter: 'blur(30px)',
         }} />
         {/* ↑ North, along right edge */}
@@ -7454,8 +7455,8 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', top: 0, right: '-35vw', width: '55vw', height: '70vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.12) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftN 160s linear infinite',
-          animationDelay: '-120s',
+          animation: 'cloudDriftN 80s linear infinite',
+          animationDelay: '-60s',
           filter: 'blur(32px)',
         }} />
         {/* ↗ Northeast diagonal */}
@@ -7463,9 +7464,30 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
           position: 'fixed', bottom: '-25vh', left: 0, width: '55vw', height: '45vh',
           background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.11) 45%, transparent 75%)',
           borderRadius: '50%', pointerEvents: 'none', zIndex: 400,
-          animation: 'cloudDriftNE 160s linear infinite',
-          animationDelay: '-140s',
+          animation: 'cloudDriftNE 80s linear infinite',
+          animationDelay: '-70s',
           filter: 'blur(30px)',
+        }} />
+
+        {/* Soft sun gleam — warm light gradient that gently drifts across the farm */}
+        <style>{`
+          @keyframes sunGleam {
+            0%   { transform: translate(-30vw, -10vh); opacity: 0.0; }
+            20%  { opacity: 0.55; }
+            80%  { opacity: 0.55; }
+            100% { transform: translate(60vw, 0vh); opacity: 0.0; }
+          }
+        `}</style>
+        <div aria-hidden="true" style={{
+          position: 'fixed',
+          top: '-15vh', left: 0,
+          width: '70vw', height: '90vh',
+          background: 'radial-gradient(ellipse at center, rgba(255,240,180,0.55) 0%, rgba(255,220,140,0.30) 35%, rgba(255,210,120,0.10) 60%, transparent 80%)',
+          mixBlendMode: 'screen',
+          pointerEvents: 'none',
+          zIndex: 401,
+          filter: 'blur(40px)',
+          animation: 'sunGleam 28s ease-in-out infinite',
         }} />
 
         {/* Wind streaks — thin horizontal lines that sweep across occasionally */}
@@ -8180,7 +8202,7 @@ const [tutGemPopupOpen, setTutGemPopupOpen] = useState(false);
   {/* Tutorial Part 34 — Heading off */}
   {tutorialStep === 34 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText="Well I think ill be heading off now" advanceTo={35} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
   {/* Tutorial Part 35 — Farewell (uses username) */}
-  {tutorialStep === 35 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText={`so long ${localStorage.getItem('sandbox_username') || 'friend'}, Make me proud!`} advanceTo={36} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" />}
+  {tutorialStep === 35 && <TutorialBubbleOverlay setTutorialStep={setTutorialStep} fullText={`so long ${localStorage.getItem('sandbox_username') || 'friend'}, Make me proud!`} advanceTo={36} bubbleSrc="/images/tutorial/papabeebubble.png" showPapabee={true} fontSize="22px" textMaxWidth="620px" exitOnAdvance={true} />}
 
 
   {/* Easter Basket Dialog */}
